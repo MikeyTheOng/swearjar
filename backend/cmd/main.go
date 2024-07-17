@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
-	// "github.com/mikeytheong/swearjar/backend/pkg/authentication"
 	"github.com/joho/godotenv"
+	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 	"github.com/mikeytheong/swearjar/backend/pkg/database/mongodb"
 	"github.com/mikeytheong/swearjar/backend/pkg/http/rest"
+	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
 )
 
 func main() {
@@ -19,13 +19,11 @@ func main() {
 
 	r := mongodb.NewMongoRepository()
 
-	// authService := authentication.NewService(r)
+	authService := authentication.NewService(r)
 	swearService := swearJar.NewService(r)
 
-	handler := rest.NewHandler(
-		// authService,
-		swearService) // Initialize the handler with the services
-	handler.RegisterRoutes() // Register routes
+	handler := rest.NewHandler(authService, swearService) // Initialize the handler with the services
+	handler.RegisterRoutes()                              // Register routes
 
 	log.Println("Server is listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil)) // Start the server

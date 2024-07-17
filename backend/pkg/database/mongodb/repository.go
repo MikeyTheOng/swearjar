@@ -9,13 +9,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
 	// "github.com/mikeytheong/swearjar/backend/pkg/authentication"
+	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
 )
 
 type MongoRepository struct {
 	client *mongo.Client
-	db *mongo.Database
+	db     *mongo.Database
 	swears *mongo.Collection
 }
 
