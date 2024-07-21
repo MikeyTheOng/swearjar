@@ -60,21 +60,25 @@ func (s *service) Login(u User) (string, error) {
 		return "", err
 	}
 
+	tokenString, err := CreateToken(storedUser)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
+
+func CreateToken(u User) (string, error) {
 	jwtExpirationTime, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_TIME"))
 	expirationTime := time.Now().Add(time.Duration(jwtExpirationTime) * time.Minute)
 	claims := &Claims{
-		Email: storedUser.Email,
-		Name:  storedUser.Name,
+		Email: u.Email,
+		Name:  u.Name,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt: jwt.NewNumericDate(time.Now()),
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString(jwtKey)
 }
