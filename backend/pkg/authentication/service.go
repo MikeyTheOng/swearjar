@@ -1,12 +1,16 @@
 package authentication
 
 import (
+	"errors"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
+var ErrUnauthorized = errors.New("unauthorized")
+
 type Repository interface {
 	SignUp(User) error
-	// Login() (User, error)
+	GetUserByEmail(string) (User, error)
 }
 
 type Service interface {

@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -83,6 +84,15 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 	return nil
 }
 
-// func (r *MongoRepository) Login() (authentication.User, error) {
-// 	return struct{}{}, nil
-// }
+func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) {
+	filter := bson.D{{Key: "Email", Value: e}}
+	var result authentication.User
+	err := r.users.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return result, authentication.ErrUnauthorized
+		}
+		return result, err
+	}
+	return result, nil
+}
