@@ -3,13 +3,14 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"os"
 
-	// "github.com/mikeytheong/swearjar/backend/pkg/authentication"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
 )
 
@@ -17,13 +18,15 @@ type MongoRepository struct {
 	client *mongo.Client
 	db     *mongo.Database
 	swears *mongo.Collection
+	users  *mongo.Collection
 }
 
 func NewMongoRepository() *MongoRepository {
 	client := ConnectToDB()
 	db := client.Database(os.Getenv("DB_NAME"))
 	swears := db.Collection(os.Getenv("DB_COLLECTION_SWEARJAR"))
-	return &MongoRepository{client, db, swears}
+	users := db.Collection(os.Getenv("DB_COLLECTION_USERS"))
+	return &MongoRepository{client, db, swears, users}
 }
 
 func ConnectToDB() *mongo.Client {
@@ -50,9 +53,9 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	_, err := r.swears.InsertOne(
 		context.TODO(),
 		bson.D{
-			{"DateTime", s.DateTime},
-			{"UserID", s.UserID},
-			{"Active", s.Active},
+			{Key: "DateTime", Value: s.DateTime},
+			{Key: "UserID", Value: s.UserID},
+			{Key: "Active", Value: s.Active},
 		},
 	)
 	if err != nil {
@@ -62,6 +65,21 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	// // Debugging
 	// const layout = "Jan 2, 2006 at 3:04pm (MST)"
 	// fmt.Printf("Added Swear{DateTime: %v, Active: %v, UserID: %V}\n", s.DateTime.Format(layout), s.Active, s.UserID.Hex())
+	return nil
+}
+
+func (r *MongoRepository) SignUp(u authentication.User) error {
+	_, err := r.users.InsertOne(
+		context.TODO(),
+		bson.D{
+			{Key: "Email", Value: u.Email},
+			{Key: "Name", Value: u.Name},
+			{Key: "Password", Value: u.Password},
+		},
+	)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

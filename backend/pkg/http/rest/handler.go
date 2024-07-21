@@ -7,19 +7,18 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
 )
 
 type Handler struct {
-	// authService  authentication.Service
+	authService  authentication.Service
 	sjService swearJar.Service
 }
 
-func NewHandler(
-	// a authentication.Service,
-	s swearJar.Service) *Handler {
+func NewHandler(a authentication.Service, s swearJar.Service) *Handler {
 	return &Handler{
-		// authService:  a,
+		authService:  a,
 		sjService: s,
 	}
 }
@@ -27,6 +26,16 @@ func NewHandler(
 func (h *Handler) RegisterRoutes() {
 	http.HandleFunc("/", h.Listening)
 
+	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			// h.login
+		case http.MethodPost:
+			h.SignUp(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 	// http.HandleFunc("/login", h.Login)
 	http.HandleFunc("/swear", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -48,6 +57,24 @@ func (h *Handler) Listening(w http.ResponseWriter, r *http.Request) {
 // 	// Delegate to the authentication service
 // 	h.authService.Login()
 // }
+
+func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
+	var req authentication.User
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.authService.SignUp(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("User signed up successfully"))
+}
 
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
@@ -73,6 +100,6 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("Swear added successfully"))
 }
