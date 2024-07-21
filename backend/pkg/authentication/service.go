@@ -2,11 +2,22 @@ package authentication
 
 import (
 	"errors"
+	"os"
+	"strconv"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var ErrUnauthorized = errors.New("unauthorized")
+var jwtKey = []byte(os.Getenv("JWT_SECRET"))
+
+type Claims struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+	jwt.RegisteredClaims
+}
 
 type Repository interface {
 	SignUp(User) error
@@ -15,7 +26,7 @@ type Repository interface {
 
 type Service interface {
 	SignUp(User) error
-	// Login() (User, error)
+	Login(User) (string, error)
 }
 
 type service struct {
@@ -35,7 +46,35 @@ func (s *service) SignUp(u User) error {
 	return s.r.SignUp(u)
 }
 
-// func (s *service) Login() (User, error) {
-// 	// bcrypt.CompareHashAndPassword
-// 	return s.r.Login()
-// }
+func (s *service) Login(u User) (string, error) {
+	storedUser, err := s.r.GetUserByEmail(u.Email)
+	if err != nil {
+		return "", err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(u.Password))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return "", ErrUnauthorized
+		}
+		return "", err
+	}
+
+	jwtExpirationTime, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_TIME"))
+	expirationTime := time.Now().Add(time.Duration(jwtExpirationTime) * time.Minute)
+	claims := &Claims{
+		Email: storedUser.Email,
+		Name:  storedUser.Name,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
