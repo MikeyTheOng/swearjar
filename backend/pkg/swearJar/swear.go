@@ -11,5 +11,5 @@ type Swear struct {
 	UserID     primitive.ObjectID `bson:"user_id"`
 	DateTime   time.Time          `bson:"swear_time"`
 	Active     bool               `bson:"active"`
-	swearJarId primitive.ObjectID `bson:"swear_jar_id"`
+	SwearJarId primitive.ObjectID `bson:"swear_jar_id"`
 }
