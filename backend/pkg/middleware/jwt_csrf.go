@@ -40,7 +40,6 @@ func Logging(r *http.Request) {
 
 func validateJWT(r *http.Request) error {
 	var jwtKey = []byte(os.Getenv("JWT_SECRET"))
-	fmt.Println("JWT Secret (Validation):", jwtKey) // ! Debugging JWT Secret
 	cookie, err := r.Cookie("jwt")
 	if err != nil {
 		if err == http.ErrNoCookie {
@@ -50,11 +49,9 @@ func validateJWT(r *http.Request) error {
 	}
 
 	tokenString := cookie.Value
-	fmt.Println("Token string:", tokenString) // ! Debugging token string
 
 	token, err := jwt.Parse(tokenString,
 		func(token *jwt.Token) (interface{}, error) {
-			fmt.Println("Signing method:", token.Method) // ! Debugging signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
