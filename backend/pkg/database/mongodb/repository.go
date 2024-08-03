@@ -16,18 +16,20 @@ import (
 )
 
 type MongoRepository struct {
-	client *mongo.Client
-	db     *mongo.Database
-	swears *mongo.Collection
-	users  *mongo.Collection
+	client    *mongo.Client
+	db        *mongo.Database
+	swearJars *mongo.Collection
+	swears    *mongo.Collection
+	users     *mongo.Collection
 }
 
 func NewMongoRepository() *MongoRepository {
 	client := ConnectToDB()
 	db := client.Database(os.Getenv("DB_NAME"))
+	swearJars := db.Collection(os.Getenv("DB_COLLECTION_SWEARJARS"))
 	swears := db.Collection(os.Getenv("DB_COLLECTION_SWEARJAR"))
 	users := db.Collection(os.Getenv("DB_COLLECTION_USERS"))
-	return &MongoRepository{client, db, swears, users}
+	return &MongoRepository{client, db, swearJars, swears, users}
 }
 
 func ConnectToDB() *mongo.Client {
@@ -48,6 +50,39 @@ func ConnectToDB() *mongo.Client {
 	}
 
 	return client
+}
+
+func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
+	requiredFields := []string{"Name", "Desc", "Owners"}
+	err := validateRequiredFields(requiredFields, map[string]interface{}{
+		"Name":   sj.Name,
+		"Desc":   sj.Desc,
+		"Owners": sj.Owners,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Check if all owner IDs are valid users
+	for _, ownerID := range sj.Owners {
+		count, err := r.users.CountDocuments(context.TODO(), bson.M{"_id": ownerID})
+		if err != nil {
+			return err
+		}
+		if count == 0 {
+			return fmt.Errorf("invalid owner ID: %s", ownerID.Hex())
+		}
+	}
+
+	_, err = r.swearJars.InsertOne(
+		context.TODO(),
+		bson.D{
+			{Key: "Name", Value: sj.Name},
+			{Key: "Desc", Value: sj.Desc},
+			{Key: "Owners", Value: sj.Owners},
+		},
+	)
+	return err
 }
 
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
