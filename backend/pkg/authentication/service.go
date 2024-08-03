@@ -1,6 +1,8 @@
 package authentication
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"os"
 	"strconv"
@@ -25,7 +27,7 @@ type Repository interface {
 
 type Service interface {
 	SignUp(User) error
-	Login(User) (string, error)
+	Login(User) (string, string, error)
 }
 
 type service struct {
@@ -45,25 +47,31 @@ func (s *service) SignUp(u User) error {
 	return s.r.SignUp(u)
 }
 
-func (s *service) Login(u User) (string, error) {
+func (s *service) Login(u User) (string, string, error) {
 	storedUser, err := s.r.GetUserByEmail(u.Email)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(u.Password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return "", ErrUnauthorized
+			return "", "", ErrUnauthorized
 		}
-		return "", err
+		return "", "", err
 	}
 
 	tokenString, err := CreateToken(storedUser)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return tokenString, nil
+
+	csrfToken, err := generateCSRFToken()
+	if err != nil {
+		return "", "", err
+	}
+
+	return tokenString, csrfToken, nil
 }
 
 func CreateToken(u User) (string, error) {
@@ -80,6 +88,14 @@ func CreateToken(u User) (string, error) {
 		},
 	}
 
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString(jwtKey)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtKey)
+}
+
+func generateCSRFToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
