@@ -11,7 +11,6 @@ import (
 )
 
 var ErrUnauthorized = errors.New("unauthorized")
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
 type Claims struct {
 	Email string `json:"email"`
@@ -68,6 +67,8 @@ func (s *service) Login(u User) (string, error) {
 }
 
 func CreateToken(u User) (string, error) {
+	var jwtKey = []byte(os.Getenv("JWT_SECRET"))
+
 	jwtExpirationTime, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_TIME"))
 	expirationTime := time.Now().Add(time.Duration(jwtExpirationTime) * time.Minute)
 	claims := &Claims{
@@ -75,7 +76,7 @@ func CreateToken(u User) (string, error) {
 		Name:  u.Name,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			IssuedAt: jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
