@@ -23,8 +23,8 @@ func main() {
 	swearService := swearJar.NewService(r)
 
 	handler := rest.NewHandler(authService, swearService) // Initialize the handler with the services
-	handler.RegisterRoutes()                              // Register routes
+	mux := handler.RegisterRoutes()                       // Register routes
 
 	log.Println("Server is listening on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil)) // Start the server
+	log.Fatal(http.ListenAndServe(":8080", mux)) // Start the server
 }
