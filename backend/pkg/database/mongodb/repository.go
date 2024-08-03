@@ -70,7 +70,17 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 }
 
 func (r *MongoRepository) SignUp(u authentication.User) error {
-	_, err := r.users.InsertOne(
+	requiredFields := []string{"Email", "Name", "Password"}
+	err := validateRequiredFields(requiredFields, map[string]interface{}{
+		"Email":    u.Email,
+		"Name":     u.Name,
+		"Password": u.Password,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = r.users.InsertOne(
 		context.TODO(),
 		bson.D{
 			{Key: "Email", Value: u.Email},
@@ -78,10 +88,7 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 			{Key: "Password", Value: u.Password},
 		},
 	)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) {
