@@ -2,28 +2,32 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"os"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
-	// "github.com/mikeytheong/swearjar/backend/pkg/authentication"
 )
 
 type MongoRepository struct {
 	client *mongo.Client
-	db *mongo.Database
+	db     *mongo.Database
 	swears *mongo.Collection
+	users  *mongo.Collection
 }
 
 func NewMongoRepository() *MongoRepository {
 	client := ConnectToDB()
 	db := client.Database(os.Getenv("DB_NAME"))
 	swears := db.Collection(os.Getenv("DB_COLLECTION_SWEARJAR"))
-	return &MongoRepository{client, db, swears}
+	users := db.Collection(os.Getenv("DB_COLLECTION_USERS"))
+	return &MongoRepository{client, db, swears, users}
 }
 
 func ConnectToDB() *mongo.Client {
@@ -50,9 +54,9 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	_, err := r.swears.InsertOne(
 		context.TODO(),
 		bson.D{
-			{"DateTime", s.DateTime},
-			{"UserID", s.UserID},
-			{"Active", s.Active},
+			{Key: "DateTime", Value: s.DateTime},
+			{Key: "UserID", Value: s.UserID},
+			{Key: "Active", Value: s.Active},
 		},
 	)
 	if err != nil {
@@ -65,6 +69,37 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	return nil
 }
 
-// func (r *MongoRepository) Login() (authentication.User, error) {
-// 	return struct{}{}, nil
-// }
+func (r *MongoRepository) SignUp(u authentication.User) error {
+	requiredFields := []string{"Email", "Name", "Password"}
+	err := validateRequiredFields(requiredFields, map[string]interface{}{
+		"Email":    u.Email,
+		"Name":     u.Name,
+		"Password": u.Password,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = r.users.InsertOne(
+		context.TODO(),
+		bson.D{
+			{Key: "Email", Value: u.Email},
+			{Key: "Name", Value: u.Name},
+			{Key: "Password", Value: u.Password},
+		},
+	)
+	return err
+}
+
+func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) {
+	filter := bson.D{{Key: "Email", Value: e}}
+	var result authentication.User
+	err := r.users.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return result, authentication.ErrUnauthorized
+		}
+		return result, err
+	}
+	return result, nil
+}
