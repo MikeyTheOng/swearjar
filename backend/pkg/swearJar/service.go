@@ -2,10 +2,11 @@ package swearJar
 
 import (
 	"fmt"
+	"time"
 )
 
 type Service interface {
-	CreateSwearJar(SwearJar) error
+	CreateSwearJar(Name string, Desc string, Owners []string) error
 	AddSwear(Swear) error
 	// TODO: GetSwears() []Swear
 }
@@ -26,7 +27,14 @@ func NewService(r Repository) Service {
 	return &service{r}
 }
 
-func (s *service) CreateSwearJar(sj SwearJar) error {
+func (s *service) CreateSwearJar(Name string, Desc string, Owners []string) error {
+	sj := SwearJar{
+		Name:      Name,
+		Desc:      Desc,
+		Owners:    Owners,
+		CreatedAt: time.Now(),
+	}
+
 	return s.r.CreateSwearJar(sj)
 }
 
@@ -37,16 +45,16 @@ func (s *service) AddSwear(swear Swear) error {
 		return err
 	}
 
-	// Check if UserID is an owner of the SwearJar
+	// Check if UserId is an owner of the SwearJar
 	isOwner := false
 	for _, ownerID := range owners {
-		if ownerID == swear.UserID {
+		if ownerID == swear.UserId {
 			isOwner = true
 			break
 		}
 	}
 	if !isOwner {
-		return fmt.Errorf("User ID: %s is not an owner of SwearJar ID: %s", swear.UserID, swear.SwearJarId)
+		return fmt.Errorf("User ID: %s is not an owner of SwearJar ID: %s", swear.UserId, swear.SwearJarId)
 	}
 
 	return s.r.AddSwear(swear)

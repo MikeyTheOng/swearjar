@@ -146,13 +146,7 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sj := swearJar.SwearJar{
-		Name:   req.Name,
-		Desc:   req.Desc,
-		Owners: req.Owners,
-	}
-
-	err = h.sjService.CreateSwearJar(sj)
+	err = h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -164,7 +158,7 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
-		UserID     string `json:"userID"`
+		UserId     string `json:"userId"`
 		SwearJarId string `json:"SwearJarId"`
 	}
 
@@ -178,7 +172,7 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	s := swearJar.Swear{
 		DateTime:   time.Now(),
 		Active:     true,
-		UserID:     req.UserID,
+		UserId:     req.UserId,
 		SwearJarId: req.SwearJarId,
 	}
 	err = h.sjService.AddSwear(s)

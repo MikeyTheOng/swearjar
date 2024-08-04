@@ -5,7 +5,7 @@ import (
 )
 
 type Swear struct {
-	UserID     string
+	UserId     string
 	DateTime   time.Time
 	Active     bool
 	SwearJarId string
