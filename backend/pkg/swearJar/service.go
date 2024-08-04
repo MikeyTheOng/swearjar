@@ -13,7 +13,7 @@ type Service interface {
 type Repository interface {
 	CreateSwearJar(SwearJar) error
 	AddSwear(Swear) error
-	GetSwearJarOwners(swearJarId string) (owners []string, err error) 
+	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	// TODO: GetSwears() []Swear
 }
 

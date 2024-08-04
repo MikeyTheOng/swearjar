@@ -124,14 +124,14 @@ func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string,
 
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	userIDHex, err := primitive.ObjectIDFromHex(s.UserID)
-    if err != nil {
-        return fmt.Errorf("invalid UserID: %v", err)
-    }
+	if err != nil {
+		return fmt.Errorf("invalid UserID: %v", err)
+	}
 
-    swearJarIdHex, err := primitive.ObjectIDFromHex(s.SwearJarId)
-    if err != nil {
-        return fmt.Errorf("invalid SwearJarId: %v", err)
-    }
+	swearJarIdHex, err := primitive.ObjectIDFromHex(s.SwearJarId)
+	if err != nil {
+		return fmt.Errorf("invalid SwearJarId: %v", err)
+	}
 
 	_, err = r.swears.InsertOne(
 		context.TODO(),
