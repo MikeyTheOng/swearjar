@@ -9,7 +9,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -28,7 +27,6 @@ type MongoRepository struct {
 func NewMongoRepository() *MongoRepository {
 	client := ConnectToDB()
 	db := client.Database(os.Getenv("DB_NAME"))
-	swearJars := db.Collection(os.Getenv("DB_COLLECTION_SWEARJARS"))
 	swearJars := db.Collection(os.Getenv("DB_COLLECTION_SWEARJARS"))
 	swears := db.Collection(os.Getenv("DB_COLLECTION_SWEARJAR"))
 	users := db.Collection(os.Getenv("DB_COLLECTION_USERS"))
@@ -125,9 +123,9 @@ func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string,
 }
 
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
-	userIDHex, err := primitive.ObjectIDFromHex(s.UserID)
+	userIdHex, err := primitive.ObjectIDFromHex(s.UserId)
 	if err != nil {
-		return fmt.Errorf("invalid UserID: %v", err)
+		return fmt.Errorf("invalid UserId: %v", err)
 	}
 
 	swearJarIdHex, err := primitive.ObjectIDFromHex(s.SwearJarId)
@@ -140,14 +138,14 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 		bson.D{
 			{Key: "DateTime", Value: s.DateTime},
 			{Key: "Active", Value: s.Active},
-			{Key: "UserID", Value: userIDHex},
+			{Key: "UserId", Value: userIDHex},
 			{Key: "SwearJarId", Value: swearJarIdHex},
 		},
 	)
 
 	// Debugging
 	// const layout = "Jan 2, 2006 at 3:04pm (MST)"
-	// fmt.Printf("Added Swear{DateTime: %v, Active: %v, UserID: %V}\n", s.DateTime.Format(layout), s.Active, s.UserID.Hex())
+	// fmt.Printf("Added Swear{DateTime: %v, Active: %v, UserId: %V}\n", s.DateTime.Format(layout), s.Active, s.UserId.Hex())
 	return err
 }
 
