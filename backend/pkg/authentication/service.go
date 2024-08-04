@@ -27,7 +27,7 @@ type Repository interface {
 
 type Service interface {
 	SignUp(User) error
-	Login(User) (string, string, error)
+	Login(User) (jwt string, csrfToken string, err error)
 }
 
 type service struct {
@@ -47,7 +47,7 @@ func (s *service) SignUp(u User) error {
 	return s.r.SignUp(u)
 }
 
-func (s *service) Login(u User) (string, string, error) {
+func (s *service) Login(u User) (jwt string, csrfToken string, err error) {
 	storedUser, err := s.r.GetUserByEmail(u.Email)
 	if err != nil {
 		return "", "", err
@@ -66,7 +66,7 @@ func (s *service) Login(u User) (string, string, error) {
 		return "", "", err
 	}
 
-	csrfToken, err := generateCSRFToken()
+	csrfToken, err = generateCSRFToken()
 	if err != nil {
 		return "", "", err
 	}
