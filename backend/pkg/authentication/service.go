@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 )
 
 var ErrUnauthorized = errors.New("unauthorized")
+var ErrNoDocuments = errors.New("no documents found")
 
 type Claims struct {
 	Email string `json:"email"`
@@ -39,12 +42,48 @@ func NewService(r Repository) Service {
 }
 
 func (s *service) SignUp(u User) error {
+	// Check if email is valid
+	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	re := regexp.MustCompile(emailRegex)
+	if !re.MatchString(u.Email) {
+		log.Printf("Invalid email format: %s", u.Email)
+		return errors.New("invalid email format")
+	}
+
+	// Check if email is used
+	result, err := s.r.GetUserByEmail(u.Email)
+	if err != nil && !errors.Is(err, ErrNoDocuments) {
+		log.Printf("Error fetching user by email: %v", err)
+		return err
+	}
+	if result.Email == u.Email {
+		log.Printf("Email already used: %s", u.Email)
+		return errors.New("email is already used")
+	}
+
+	// Check if password is empty
+	if u.Password == "" {
+		log.Printf("Password is required")
+		return errors.New("password is required")
+	}
+
+	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Printf("Error hashing password: %v", err)
 		return err
 	}
 	u.Password = string(hashedPassword)
-	return s.r.SignUp(u)
+
+	// Insert the user into the database
+	err = s.r.SignUp(u)
+	if err != nil {
+		log.Printf("Error inserting user into database: %v", err)
+		return err
+	}
+
+	log.Printf("User signed up successfully: %s", u.Email)
+	return nil
 }
 
 func (s *service) Login(u User) (jwt string, csrfToken string, err error) {

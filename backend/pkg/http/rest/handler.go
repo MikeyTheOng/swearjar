@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	// "os"
 	"net/http"
@@ -124,6 +125,7 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	err = h.authService.SignUp(req)
 	if err != nil {
+		log.Printf("Error during SignUp: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
