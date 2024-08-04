@@ -178,7 +178,7 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	s := swearJar.Swear{
 		DateTime:   time.Now(),
 		Active:     true,
-		UserID:     req.UserId,
+		UserId:     req.UserId,
 		SwearJarId: req.SwearJarId,
 	}
 	err = h.sjService.AddSwear(s)
