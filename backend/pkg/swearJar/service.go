@@ -2,11 +2,10 @@ package swearJar
 
 import (
 	"fmt"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Service interface {
+	CreateSwearJar(SwearJar) error
 	CreateSwearJar(SwearJar) error
 	AddSwear(Swear) error
 	// TODO: GetSwears() []Swear
@@ -14,8 +13,9 @@ type Service interface {
 
 type Repository interface {
 	CreateSwearJar(SwearJar) error
+	CreateSwearJar(SwearJar) error
 	AddSwear(Swear) error
-	GetSwearJarOwners(swearJarId primitive.ObjectID) (owners []primitive.ObjectID, err error) 
+	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	// TODO: GetSwears() []Swear
 }
 
@@ -48,7 +48,7 @@ func (s *service) AddSwear(swear Swear) error {
 		}
 	}
 	if !isOwner {
-		return fmt.Errorf("User ID: %s is not an owner of SwearJar ID: %s", swear.UserID.Hex(), swear.SwearJarId.Hex())
+		return fmt.Errorf("User ID: %s is not an owner of SwearJar ID: %s", swear.UserID, swear.SwearJarId)
 	}
 
 	return s.r.AddSwear(swear)
