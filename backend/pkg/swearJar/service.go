@@ -15,7 +15,7 @@ type Service interface {
 type Repository interface {
 	CreateSwearJar(SwearJar) error
 	AddSwear(Swear) error
-	GetSwearJarOwners(swearJarId primitive.ObjectID) (owners []primitive.ObjectID, err error) 
+	GetSwearJarOwners(swearJarId primitive.ObjectID) (owners []primitive.ObjectID, err error)
 	// TODO: GetSwears() []Swear
 }
 
