@@ -9,7 +9,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -28,7 +27,6 @@ type MongoRepository struct {
 func NewMongoRepository() *MongoRepository {
 	client := ConnectToDB()
 	db := client.Database(os.Getenv("DB_NAME"))
-	swearJars := db.Collection(os.Getenv("DB_COLLECTION_SWEARJARS"))
 	swearJars := db.Collection(os.Getenv("DB_COLLECTION_SWEARJARS"))
 	swears := db.Collection(os.Getenv("DB_COLLECTION_SWEARJAR"))
 	users := db.Collection(os.Getenv("DB_COLLECTION_USERS"))
@@ -92,7 +90,7 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
 		bson.D{
 			{Key: "Name", Value: sj.Name},
 			{Key: "Desc", Value: sj.Desc},
-			{Key: "Owners", Value: sj.Owners},
+			{Key: "Owners", Value: ownerIDs},
 		},
 	)
 	return err
@@ -125,7 +123,7 @@ func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string,
 }
 
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
-	userIDHex, err := primitive.ObjectIDFromHex(s.UserID)
+	userIdHex, err := primitive.ObjectIDFromHex(s.UserID)
 	if err != nil {
 		return fmt.Errorf("invalid UserID: %v", err)
 	}
@@ -140,7 +138,7 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 		bson.D{
 			{Key: "DateTime", Value: s.DateTime},
 			{Key: "Active", Value: s.Active},
-			{Key: "UserID", Value: userIDHex},
+			{Key: "UserId", Value: userIdHex},
 			{Key: "SwearJarId", Value: swearJarIdHex},
 		},
 	)
