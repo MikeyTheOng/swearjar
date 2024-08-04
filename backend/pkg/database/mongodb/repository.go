@@ -123,7 +123,7 @@ func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string,
 }
 
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
-	userIDHex, err := primitive.ObjectIDFromHex(s.UserId)
+	userIdHex, err := primitive.ObjectIDFromHex(s.UserId)
 	if err != nil {
 		return fmt.Errorf("invalid UserId: %v", err)
 	}
