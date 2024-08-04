@@ -1,8 +1,12 @@
 package swearJar
 
+import (
+	"time"
+)
+
 type SwearJar struct {
-	ID     string
-	Name   string
-	Desc   string
-	Owners []string
+	Name      string
+	Desc      string
+	Owners    []string
+	CreatedAt time.Time
 }

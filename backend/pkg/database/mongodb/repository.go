@@ -54,16 +54,6 @@ func ConnectToDB() *mongo.Client {
 }
 
 func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
-	requiredFields := []string{"Name", "Desc", "Owners"}
-	err := validateRequiredFields(requiredFields, map[string]interface{}{
-		"Name":   sj.Name,
-		"Desc":   sj.Desc,
-		"Owners": sj.Owners,
-	})
-	if err != nil {
-		return err
-	}
-
 	// Convert []string to []primitive.ObjectID in one go
 	ownerIDs := make([]primitive.ObjectID, len(sj.Owners))
 	for i, ownerID := range sj.Owners {
@@ -85,12 +75,13 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
 		}
 	}
 
-	_, err = r.swearJars.InsertOne(
+	_, err := r.swearJars.InsertOne(
 		context.TODO(),
 		bson.D{
 			{Key: "Name", Value: sj.Name},
 			{Key: "Desc", Value: sj.Desc},
-			{Key: "Owners", Value: sj.Owners},
+			{Key: "Owners", Value: ownerIDs},
+			{Key: "CreatedAt", Value: sj.CreatedAt},
 		},
 	)
 	return err
@@ -138,7 +129,7 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 		bson.D{
 			{Key: "DateTime", Value: s.DateTime},
 			{Key: "Active", Value: s.Active},
-			{Key: "UserId", Value: userIDHex},
+			{Key: "UserId", Value: userIdHex},
 			{Key: "SwearJarId", Value: swearJarIdHex},
 		},
 	)
@@ -150,17 +141,7 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 }
 
 func (r *MongoRepository) SignUp(u authentication.User) error {
-	requiredFields := []string{"Email", "Name", "Password"}
-	err := validateRequiredFields(requiredFields, map[string]interface{}{
-		"Email":    u.Email,
-		"Name":     u.Name,
-		"Password": u.Password,
-	})
-	if err != nil {
-		return err
-	}
-
-	_, err = r.users.InsertOne(
+	_, err := r.users.InsertOne(
 		context.TODO(),
 		bson.D{
 			{Key: "Email", Value: u.Email},
