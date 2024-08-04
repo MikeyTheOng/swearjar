@@ -146,13 +146,7 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sj := swearJar.SwearJar{
-		Name:   req.Name,
-		Desc:   req.Desc,
-		Owners: req.Owners,
-	}
-
-	err = h.sjService.CreateSwearJar(sj)
+	err = h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

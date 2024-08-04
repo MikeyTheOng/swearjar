@@ -2,10 +2,11 @@ package swearJar
 
 import (
 	"fmt"
+	"time"
 )
 
 type Service interface {
-	CreateSwearJar(SwearJar) error
+	CreateSwearJar(Name string, Desc string, Owners []string) error
 	AddSwear(Swear) error
 	// TODO: GetSwears() []Swear
 }
@@ -26,7 +27,14 @@ func NewService(r Repository) Service {
 	return &service{r}
 }
 
-func (s *service) CreateSwearJar(sj SwearJar) error {
+func (s *service) CreateSwearJar(Name string, Desc string, Owners []string) error {
+	sj := SwearJar{
+		Name:      Name,
+		Desc:      Desc,
+		Owners:    Owners,
+		CreatedAt: time.Now(),
+	}
+
 	return s.r.CreateSwearJar(sj)
 }
 
