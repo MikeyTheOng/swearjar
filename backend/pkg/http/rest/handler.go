@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	// "os"
 	"net/http"
 	// "strconv"
@@ -138,7 +136,7 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
 		Name   string               `bson:"name"`
 		Desc   string               `bson:"desc"`
-		Owners []primitive.ObjectID `bson:"owners"`
+		Owners []string `bson:"owners"`
 	}
 
 	var req Request
@@ -166,8 +164,8 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
-		UserID     primitive.ObjectID `json:"userID"`
-		SwearJarId primitive.ObjectID `json:"SwearJarId"`
+		UserID     string `json:"userID"`
+		SwearJarId string `json:"SwearJarId"`
 	}
 
 	var req Request
