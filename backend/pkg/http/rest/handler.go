@@ -51,6 +51,17 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	})
 
 	// Wrap the /swear route with the ProtectedRouteMiddleware middleware
+	mux.Handle("/swearjar", middleware.ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			// h.GetSwears(w, r)
+		case http.MethodPost:
+			h.CreateSwearJar(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})))
+
 	mux.Handle("/swear", middleware.ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -123,9 +134,40 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("User signed up successfully"))
 }
 
+func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
+	type Request struct {
+		Name   string               `bson:"name"`
+		Desc   string               `bson:"desc"`
+		Owners []primitive.ObjectID `bson:"owners"`
+	}
+
+	var req Request
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sj := swearJar.SwearJar{
+		Name:   req.Name,
+		Desc:   req.Desc,
+		Owners: req.Owners,
+	}
+
+	err = h.sjService.CreateSwearJar(sj)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("SwearJar created successfully"))
+}
+
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
-		UserID primitive.ObjectID `json:"userID"`
+		UserID     primitive.ObjectID `json:"userID"`
+		SwearJarId primitive.ObjectID `json:"SwearJarId"`
 	}
 
 	var req Request
@@ -139,8 +181,8 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 		DateTime: time.Now(),
 		Active:   true,
 		UserID:   req.UserID,
+		SwearJarId: req.SwearJarId,
 	}
-
 	err = h.sjService.AddSwear(s)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

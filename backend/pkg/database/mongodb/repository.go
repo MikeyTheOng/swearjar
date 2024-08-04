@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -16,18 +17,20 @@ import (
 )
 
 type MongoRepository struct {
-	client *mongo.Client
-	db     *mongo.Database
-	swears *mongo.Collection
-	users  *mongo.Collection
+	client    *mongo.Client
+	db        *mongo.Database
+	swearJars *mongo.Collection
+	swears    *mongo.Collection
+	users     *mongo.Collection
 }
 
 func NewMongoRepository() *MongoRepository {
 	client := ConnectToDB()
 	db := client.Database(os.Getenv("DB_NAME"))
+	swearJars := db.Collection(os.Getenv("DB_COLLECTION_SWEARJARS"))
 	swears := db.Collection(os.Getenv("DB_COLLECTION_SWEARJAR"))
 	users := db.Collection(os.Getenv("DB_COLLECTION_USERS"))
-	return &MongoRepository{client, db, swears, users}
+	return &MongoRepository{client, db, swearJars, swears, users}
 }
 
 func ConnectToDB() *mongo.Client {
@@ -50,6 +53,61 @@ func ConnectToDB() *mongo.Client {
 	return client
 }
 
+func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
+	requiredFields := []string{"Name", "Desc", "Owners"}
+	err := validateRequiredFields(requiredFields, map[string]interface{}{
+		"Name":   sj.Name,
+		"Desc":   sj.Desc,
+		"Owners": sj.Owners,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Check if all owner IDs are valid users
+	for _, ownerID := range sj.Owners {
+		count, err := r.users.CountDocuments(context.TODO(), bson.M{"_id": ownerID})
+		if err != nil {
+			return err
+		}
+		if count == 0 {
+			return fmt.Errorf("invalid owner ID: %s", ownerID.Hex())
+		}
+	}
+
+	_, err = r.swearJars.InsertOne(
+		context.TODO(),
+		bson.D{
+			{Key: "Name", Value: sj.Name},
+			{Key: "Desc", Value: sj.Desc},
+			{Key: "Owners", Value: sj.Owners},
+		},
+	)
+	return err
+}
+
+func (r *MongoRepository) GetSwearJarOwners(swearJarId primitive.ObjectID) (owners []primitive.ObjectID, err error) {
+	type SwearJarOwners struct {
+		Owners []primitive.ObjectID `bson:"Owners"`
+	}
+
+	var result SwearJarOwners
+	err = r.swearJars.FindOne(
+		context.TODO(),
+		bson.M{"_id": swearJarId},
+		options.FindOne().SetProjection(bson.M{"Owners": 1}),
+	).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("invalid SwearJar ID: %s", swearJarId.Hex())
+		}
+		return nil, err
+	}
+
+	owners = result.Owners
+	return owners, nil
+}
+
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	_, err := r.swears.InsertOne(
 		context.TODO(),
@@ -57,16 +115,14 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 			{Key: "DateTime", Value: s.DateTime},
 			{Key: "UserID", Value: s.UserID},
 			{Key: "Active", Value: s.Active},
+			{Key: "SwearJarId", Value: s.SwearJarId},
 		},
 	)
-	if err != nil {
-		return err
-	}
 
-	// // Debugging
+	// Debugging
 	// const layout = "Jan 2, 2006 at 3:04pm (MST)"
 	// fmt.Printf("Added Swear{DateTime: %v, Active: %v, UserID: %V}\n", s.DateTime.Format(layout), s.Active, s.UserID.Hex())
-	return nil
+	return err
 }
 
 func (r *MongoRepository) SignUp(u authentication.User) error {
