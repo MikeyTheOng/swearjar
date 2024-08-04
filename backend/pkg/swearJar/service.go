@@ -6,11 +6,13 @@ import (
 
 type Service interface {
 	CreateSwearJar(SwearJar) error
+	CreateSwearJar(SwearJar) error
 	AddSwear(Swear) error
 	// TODO: GetSwears() []Swear
 }
 
 type Repository interface {
+	CreateSwearJar(SwearJar) error
 	CreateSwearJar(SwearJar) error
 	AddSwear(Swear) error
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
