@@ -57,8 +57,8 @@ func (s *service) SignUp(u User) error {
 		return err
 	}
 	if result.Email == u.Email {
-		log.Printf("Email already used: %s", u.Email)
-		return errors.New("email is already used")
+		log.Printf("User with email{%s} already exists", u.Email)
+		return errors.New("User already exists")
 	}
 
 	// Check if password is empty
