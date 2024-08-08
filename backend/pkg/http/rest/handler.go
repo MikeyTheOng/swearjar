@@ -88,7 +88,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwt, csrfToken, err := h.authService.Login(req)
+	ur, jwt, csrfToken, err := h.authService.Login(req)
 	if err != nil {
 		if errors.Is(err, authentication.ErrUnauthorized) {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -105,6 +105,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"msg": "Logged in successfully",
+		"user": ur,
 	}
 
 	w.WriteHeader(http.StatusOK)

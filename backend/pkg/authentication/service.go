@@ -30,7 +30,7 @@ type Repository interface {
 
 type Service interface {
 	SignUp(User) error
-	Login(User) (jwt string, csrfToken string, err error)
+	Login(User) (u UserResponse, jwt string, csrfToken string, err error)
 }
 
 type service struct {
@@ -86,31 +86,35 @@ func (s *service) SignUp(u User) error {
 	return nil
 }
 
-func (s *service) Login(u User) (jwt string, csrfToken string, err error) {
+func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, err error) {
 	storedUser, err := s.r.GetUserByEmail(u.Email)
 	if err != nil {
-		return "", "", err
+		return UserResponse{}, "", "", err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(u.Password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return "", "", ErrUnauthorized
+			return UserResponse{},"", "", ErrUnauthorized
 		}
-		return "", "", err
+		return UserResponse{},"", "", err
 	}
 
 	tokenString, err := CreateToken(storedUser)
 	if err != nil {
-		return "", "", err
+		return UserResponse{}, "", "", err
 	}
 
 	csrfToken, err = generateCSRFToken()
 	if err != nil {
-		return "", "", err
+		return UserResponse{},"", "", err
 	}
 
-	return tokenString, csrfToken, nil
+	return UserResponse{
+        UserID: storedUser.UserID,
+        Email:  storedUser.Email,
+        Name:   storedUser.Name,
+    },tokenString, csrfToken, nil
 }
 
 func CreateToken(u User) (string, error) {
