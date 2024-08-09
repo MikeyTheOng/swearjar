@@ -15,7 +15,7 @@ export async function apiRequest({
   method: string,
   body?: any
 }) {
-  const apiUrl = `${process.env.BACKEND_DOMAIN}${route}`;
+  const apiUrl = `${process.env.BACKEND_URL}${route}`;
 
   const config = {
     method: method,
