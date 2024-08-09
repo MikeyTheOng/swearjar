@@ -27,6 +27,7 @@ const config = {
         background: {
           100: "hsl(var(--background-1) / <alpha-value>)",
           200: "hsl(var(--background-2) / <alpha-value>)",
+          300: "hsl(var(--background-3) / <alpha-value>)",
         },
         foreground: "hsl(var(--foreground) / <alpha-value>)",
         primary: {
