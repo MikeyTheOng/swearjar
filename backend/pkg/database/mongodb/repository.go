@@ -153,16 +153,30 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 }
 
 func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) {
-	filter := bson.D{{Key: "Email", Value: e}}
-	var result authentication.User
-	err := r.users.FindOne(context.TODO(), filter).Decode(&result)
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.Printf("No user found with email: %s", e)
-			return result, authentication.ErrNoDocuments
-		}
-		log.Printf("Error fetching user by email: %v", err)
-		return result, err
-	}
-	return result, nil
+    filter := bson.D{{Key: "Email", Value: e}}
+    var result struct {
+        ID       primitive.ObjectID `bson:"_id"`
+        Email    string             `bson:"Email"`
+        Name     string             `bson:"Name"`
+        Password string             `bson:"Password"`
+    }
+    var user authentication.User
+
+    err := r.users.FindOne(context.TODO(), filter).Decode(&result)
+    if err != nil {
+        if errors.Is(err, mongo.ErrNoDocuments) {
+            return user, authentication.ErrNoDocuments
+        }
+        log.Printf("Error fetching user by email: %v", err)
+        return user, err
+    }
+
+    user = authentication.User{
+        UserID:   result.ID.Hex(), // Convert ObjectId to string
+        Email:    result.Email,
+        Name:     result.Name,
+        Password: result.Password,
+    }
+
+    return user, nil
 }

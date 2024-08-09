@@ -1,6 +1,9 @@
 package rest
 
 import (
+	"encoding/json"
+	"log"
+
 	"net/http"
 	"os"
 	"strconv"
@@ -22,4 +25,13 @@ func SetCookie(w http.ResponseWriter, cookienName, value string, isHttpOnly bool
 		Path:     "/",
 		Expires:  time.Now().Add(time.Duration(jwtExpirationTime) * time.Minute), // Set the expiration time to be same as that of jwt
 	})
+}
+
+func RespondWithError(w http.ResponseWriter, statusCode int, message string) {
+	w.WriteHeader(statusCode)
+	err := json.NewEncoder(w).Encode(map[string]string{"error": message})
+	if err != nil {
+		log.Printf("Error encoding JSON error response: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }

@@ -30,7 +30,7 @@ type Repository interface {
 
 type Service interface {
 	SignUp(User) error
-	Login(User) (jwt string, csrfToken string, err error)
+	Login(User) (u UserResponse, jwt string, csrfToken string, err error)
 }
 
 type service struct {
@@ -57,14 +57,36 @@ func (s *service) SignUp(u User) error {
 		return err
 	}
 	if result.Email == u.Email {
-		log.Printf("Email already used: %s", u.Email)
-		return errors.New("email is already used")
+		log.Printf("User with email{%s} already exists", u.Email)
+		return errors.New("User already exists")
 	}
 
 	// Check if password is empty
 	if u.Password == "" {
 		log.Printf("Password is required")
 		return errors.New("password is required")
+	}
+
+	// Validate password length
+	if len(u.Password) < 8 {
+		log.Printf("Password must be at least 8 characters")
+		return errors.New("password must be at least 8 characters")
+	}
+	if len(u.Password) >= 30 {
+		log.Printf("Password must be less than 30 characters")
+		return errors.New("password must be less than 30 characters")
+	}
+
+	// Validate password contains at least one uppercase letter
+	if !regexp.MustCompile(`[A-Z]`).MatchString(u.Password) {
+		log.Printf("Password must contain at least one uppercase letter")
+		return errors.New("password must contain at least one uppercase letter")
+	}
+
+	// Validate password contains at least one special character
+	if !regexp.MustCompile(`[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]`).MatchString(u.Password) {
+		log.Printf("Password must contain at least one special character")
+		return errors.New("password must contain at least one special character")
 	}
 
 	// Hash the password
@@ -86,31 +108,35 @@ func (s *service) SignUp(u User) error {
 	return nil
 }
 
-func (s *service) Login(u User) (jwt string, csrfToken string, err error) {
+func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, err error) {
 	storedUser, err := s.r.GetUserByEmail(u.Email)
 	if err != nil {
-		return "", "", err
+		return UserResponse{}, "", "", err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(u.Password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return "", "", ErrUnauthorized
+			return UserResponse{}, "", "", ErrUnauthorized
 		}
-		return "", "", err
+		return UserResponse{}, "", "", err
 	}
 
 	tokenString, err := CreateToken(storedUser)
 	if err != nil {
-		return "", "", err
+		return UserResponse{}, "", "", err
 	}
 
 	csrfToken, err = generateCSRFToken()
 	if err != nil {
-		return "", "", err
+		return UserResponse{}, "", "", err
 	}
 
-	return tokenString, csrfToken, nil
+	return UserResponse{
+		UserID: storedUser.UserID,
+		Email:  storedUser.Email,
+		Name:   storedUser.Name,
+	}, tokenString, csrfToken, nil
 }
 
 func CreateToken(u User) (string, error) {
