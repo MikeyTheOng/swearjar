@@ -18,14 +18,14 @@ export default function SignUp() {
     const router = useRouter();
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
-            // Name : "",
-            // Email: "",
-            // Password: ""
+            Name : "",
+            Email: "",
+            Password: ""
 
             // ! Testing
-            Name: "Test",
-            Email: "test1@gmail.com",
-            Password: "12345678A!"
+            // Name: "Test",
+            // Email: "test1@gmail.com",
+            // Password: "12345678A!"
         }
     });
     const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {

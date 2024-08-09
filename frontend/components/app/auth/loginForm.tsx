@@ -16,8 +16,12 @@ interface SignUpFormData {
 export default function LoginForm() {
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
-            Email: "test1@gmail.com",
-            Password: "12345678A!"
+            Email: "",
+            Password: "",
+
+            // ! Testing
+            // Email: "test1@gmail.com",
+            // Password: "12345678A!"
         }
     });
 
