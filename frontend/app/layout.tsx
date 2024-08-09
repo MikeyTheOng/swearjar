@@ -29,12 +29,16 @@ export default async function RootLayout({
   const session = await auth()
 
   return (
-    <html lang="en" className={cn(poppins.className, "bg-background")}>
+    <html lang="en" className={cn(poppins.className, "bg-background-100")}>
       <body
-        className={cn("h-screen w-screen bg-background font-sans antialiased relative")}
+        className={cn("bg-background-100 font-sans antialiased relative")}
       >
         <SessionProvider session={session}>
-          {children}
+          {/* <nav className="bg-red-500 w-full h-12"></nav> */}
+          <main className="h-screen">
+            {children}
+          </main>
+          <Footer />
           <Toaster
             position="bottom-center"
             containerStyle={{
