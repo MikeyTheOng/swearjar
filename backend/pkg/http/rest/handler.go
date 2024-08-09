@@ -132,7 +132,12 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("User signed up successfully"))
+	err = json.NewEncoder(w).Encode(map[string]string{"msg": "User signed up successfully"})
+	if err != nil {
+		log.Printf("Error encoding JSON response: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
