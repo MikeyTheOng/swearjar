@@ -11,7 +11,7 @@ interface AuthCardProps {
     className?: string;
 }
 
-export default function AuthCard({children, greetingMessage, className}: AuthCardProps) {
+export default function AuthCard({ children, greetingMessage, className }: AuthCardProps) {
     return (
         <Card className={`w-full h-max border-none shadow-none ${className}`}>
             <CardHeader className="text-center">
@@ -19,7 +19,7 @@ export default function AuthCard({children, greetingMessage, className}: AuthCar
                     <p className="font-normal tracking-tighter">
                         {greetingMessage} <br />
                     </p>
-                    <p className="text-4xl tracking-tight font-bold">SwearJar</p>
+                    <p className="text-4xl tracking-tight font-bold text-primary">SwearJar</p>
                 </CardTitle>
             </CardHeader>
             <CardContent className="pb-0">
