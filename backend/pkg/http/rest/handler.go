@@ -120,14 +120,14 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	var req authentication.User
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	err = h.authService.SignUp(req)
 	if err != nil {
 		log.Printf("Error during SignUp: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(map[string]string{"msg": "User signed up successfully"})
 	if err != nil {
 		log.Printf("Error encoding JSON response: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 }
