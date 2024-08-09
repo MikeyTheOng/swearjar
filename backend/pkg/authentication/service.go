@@ -67,6 +67,28 @@ func (s *service) SignUp(u User) error {
 		return errors.New("password is required")
 	}
 
+	// Validate password length
+	if len(u.Password) < 8 {
+		log.Printf("Password must be at least 8 characters")
+		return errors.New("password must be at least 8 characters")
+	}
+	if len(u.Password) >= 30 {
+		log.Printf("Password must be less than 30 characters")
+		return errors.New("password must be less than 30 characters")
+	}
+
+	// Validate password contains at least one uppercase letter
+	if !regexp.MustCompile(`[A-Z]`).MatchString(u.Password) {
+		log.Printf("Password must contain at least one uppercase letter")
+		return errors.New("password must contain at least one uppercase letter")
+	}
+
+	// Validate password contains at least one special character
+	if !regexp.MustCompile(`[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]`).MatchString(u.Password) {
+		log.Printf("Password must contain at least one special character")
+		return errors.New("password must contain at least one special character")
+	}
+
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -95,9 +117,9 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(u.Password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return UserResponse{},"", "", ErrUnauthorized
+			return UserResponse{}, "", "", ErrUnauthorized
 		}
-		return UserResponse{},"", "", err
+		return UserResponse{}, "", "", err
 	}
 
 	tokenString, err := CreateToken(storedUser)
@@ -107,14 +129,14 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 
 	csrfToken, err = generateCSRFToken()
 	if err != nil {
-		return UserResponse{},"", "", err
+		return UserResponse{}, "", "", err
 	}
 
 	return UserResponse{
-        UserID: storedUser.UserID,
-        Email:  storedUser.Email,
-        Name:   storedUser.Name,
-    },tokenString, csrfToken, nil
+		UserID: storedUser.UserID,
+		Email:  storedUser.Email,
+		Name:   storedUser.Name,
+	}, tokenString, csrfToken, nil
 }
 
 func CreateToken(u User) (string, error) {
