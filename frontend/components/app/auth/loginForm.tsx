@@ -75,7 +75,7 @@ export default function LoginForm() {
                 <a>Forgot password?</a>
               </div> */}
                 <div>
-                    <Button className="w-full bg-gradient-to-r from-primary to-accent">Login</Button>
+                    <Button className="w-full bg-gradient-to-r from-primary to-secondary">Login</Button>
                 </div>
             </div>
         </form>
