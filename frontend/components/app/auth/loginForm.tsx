@@ -34,10 +34,11 @@ export default function LoginForm() {
             if (!response || !response.ok) {
                 const errorMessage = response?.error || response?.status || 'Unknown error';
                 toast(
-                    <span className='bg-background'>
+                    <span className='bg-background-100'>
                         {errorMessage}
                     </span>,
                     {
+                        id: "login-error",
                         duration: 1500,
                         position: 'top-center',
                         style: {

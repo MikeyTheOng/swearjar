@@ -1,7 +1,7 @@
 "use client"
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from "react-hook-form";
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,10 +41,11 @@ export default function SignUp() {
             if (!response.ok) {
                 const errorData = await response.json();
                 toast(
-                    <span className='bg-background'>
+                    <span className='bg-background-100'>
                         {errorData.error || response.statusText}
                     </span>,
                     {
+                        id: "sign-up-error",
                         duration: 1500,
                         position: 'top-center',
                         style: {
@@ -54,8 +55,8 @@ export default function SignUp() {
                     }
                 );
                 throw new Error(`Sign-up failed: ${errorData.error || response.statusText}`);
-            } 
-            
+            }
+
             router.push('/auth/login');
         } catch (error) {
             console.error('Sign-up failed:', error);
