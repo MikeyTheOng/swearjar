@@ -82,7 +82,7 @@ export default function SignUp() {
                     <PasswordInput register={register} errors={errors} />
                 </div>
                 <div>
-                    <Button className="w-full bg-gradient-to-r from-primary to-secondary">Sign Up</Button>
+                    <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary hover:text-foreground hover:scale-105">Sign Up</Button>
                 </div>
             </div>
         </form>
