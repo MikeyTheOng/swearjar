@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -97,6 +98,9 @@ func (s *service) SignUp(u User) error {
 	}
 	u.Password = string(hashedPassword)
 
+	// Convert email to lowercase
+	u.Email = strings.ToLower(u.Email)
+
 	// Insert the user into the database
 	err = s.r.SignUp(u)
 	if err != nil {
@@ -133,7 +137,7 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 	}
 
 	return UserResponse{
-		UserID: storedUser.UserID,
+		UserId: storedUser.UserId,
 		Email:  storedUser.Email,
 		Name:   storedUser.Name,
 	}, tokenString, csrfToken, nil
