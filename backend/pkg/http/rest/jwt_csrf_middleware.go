@@ -1,4 +1,4 @@
-package middleware
+package rest
 
 import (
 	"errors"
@@ -18,7 +18,7 @@ func ProtectedRouteMiddleware(next http.Handler) http.Handler {
 		err := validateJWT(r)
 		if err != nil {
 			fmt.Println("JWT validation error:", err)
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			RespondWithError(w, http.StatusUnauthorized, err.Error())
 			return
 		}
 
@@ -26,7 +26,7 @@ func ProtectedRouteMiddleware(next http.Handler) http.Handler {
 		err = validateCSRFToken(r)
 		if err != nil {
 			fmt.Println("CSRF token validation error:", err)
-			http.Error(w, err.Error(), http.StatusForbidden)
+			RespondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
 
