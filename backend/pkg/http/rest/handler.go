@@ -50,7 +50,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	})
 
 	// Wrap the /swear route with the ProtectedRouteMiddleware middleware
-	mux.Handle("/swearjar", middleware.ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/swearjar", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			// h.GetSwears(w, r)
@@ -61,7 +61,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})))
 
-	mux.Handle("/swear", middleware.ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/swear", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			// h.GetSwears(w, r)
@@ -73,7 +73,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	})))
 
 	// Wrap the entire mux with the CORSMiddleware
-	return middleware.CORSMiddleware(mux)
+	return CORSMiddleware(mux)
 }
 
 func (h *Handler) Listening(w http.ResponseWriter, r *http.Request) {
