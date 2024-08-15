@@ -14,14 +14,16 @@ export async function apiRequest({
   route: string,
   method: string,
   body?: any
-}) {
+}): Promise<{ response: Response, data: any, status: number }> {
   const apiUrl = `${process.env.BACKEND_URL}${route}`;
 
   const config = {
     method: method,
     headers: {
       'Content-Type': 'application/json',
+      'Origin': `${process.env.AUTH_URL}`,
     },
+    Credentials: 'include',
     ...(body && { body: JSON.stringify(body) }), // Conditionally include of the body
   };
 
@@ -35,9 +37,10 @@ export async function apiRequest({
     }
 
     return {
-      status: response.status,
-      response: responseData,
-    }
+      response: response,
+      data: responseData,
+      status: response.status
+    };
   } catch (error) {
     if (error instanceof Error) {
       console.error(`Fetch error: ${error.message}`);
