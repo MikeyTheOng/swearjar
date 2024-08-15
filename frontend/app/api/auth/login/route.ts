@@ -16,7 +16,23 @@ export async function POST(request: Request) {
                 password: parsedBody.Password,
             },
         });
-        return new Response(JSON.stringify(response), { status: status });
+
+        // Forward Set-Cookie headers from the backend response
+        const headers = new Headers();
+        const backendCookies = response.headers.get('set-cookie');
+        if (backendCookies) {
+            // Split the combined cookies string into individual cookies
+            const cookiesArray = backendCookies.split(/,(?=\s*\w+=)/);
+            cookiesArray.forEach((cookie) => {
+                console.log("cookie:", cookie)
+                headers.append('Set-Cookie', cookie.trim());
+            });
+        }
+        
+        return new Response(JSON.stringify(data), {
+            status: status,
+            headers: headers
+        });
     } catch (error) {
         let errorMessage = 'Unknown error';
 
@@ -26,7 +42,7 @@ export async function POST(request: Request) {
         } else if (error instanceof Error) {
             errorMessage = error.message;
         }
-        
+
         return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
     }
 }
