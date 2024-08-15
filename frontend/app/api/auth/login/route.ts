@@ -8,7 +8,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         const parsedBody = loginSchema.parse(body);
 
-        const { response, status } = await apiRequest({
+        const { response, data, status } = await apiRequest({
             route: '/users?action=login',
             method: 'POST',
             body: {

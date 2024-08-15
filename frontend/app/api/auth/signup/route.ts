@@ -9,7 +9,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         const parsedBody = signUpSchema.parse(body);
 
-        const { response, status } = await apiRequest({
+        const { data, status } = await apiRequest({
             route: '/users?action=signup',
             method: 'POST',
             body: {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
                 Password: parsedBody.Password,
             },
         });
-        return new Response(JSON.stringify(response), { status: status });
+        return new Response(JSON.stringify(data), { status: status });
     } catch (error) {
         console.log("Error:", error)
         let errorMessage = 'Unknown error';
