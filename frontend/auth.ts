@@ -41,7 +41,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           // Load environment variables
-          const isProdEnv = Boolean(process.env.PRODUCTION_ENV);
           const jwtExpirationTime = parseInt(process.env.JWT_EXPIRATION_TIME!, 10); // 1440 minutes
 
           const backendCookies = response.headers.get('set-cookie');
@@ -60,7 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               // Convert the expires attribute to a Date object or use the JWT expiration time
               const expiresString = attributes.find(attr => attr.startsWith('Expires'))?.split('=')[1];
               const expires = expiresString ? new Date(expiresString) : new Date(Date.now() + jwtExpirationTime * 60 * 1000);
-
+              
               // ! Debugging
               // console.log(`Setting ${name} cookie with attributes:`, {
               //   name,
@@ -75,7 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               cookiesHandler.set(name, value, {
                 path: '/',
                 httpOnly: isHttpOnly,
-                secure: isProdEnv,
+                secure: true,
                 sameSite: 'none', // Using 'None' for all cookies
                 expires: expires,
               });
