@@ -3,6 +3,7 @@ package rest
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -14,10 +15,17 @@ func ProtectedRouteMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		Logging(r)
 
+		// ! Debug
+        // Log cookies received in the request
+        // log.Printf("Cookies received in the request:")
+        // for _, cookie := range r.Cookies() {
+        //     log.Printf("Cookie: %s\n", cookie.Name)
+        // }
+
 		// Validate JWT
 		err := validateJWT(r)
 		if err != nil {
-			fmt.Println("JWT validation error:", err)
+			log.Println("JWT validation error:", err)
 			RespondWithError(w, http.StatusUnauthorized, err.Error())
 			return
 		}
@@ -25,7 +33,7 @@ func ProtectedRouteMiddleware(next http.Handler) http.Handler {
 		// Validate CSRF Token
 		err = validateCSRFToken(r)
 		if err != nil {
-			fmt.Println("CSRF token validation error:", err)
+			log.Println("CSRF token validation error:", err)
 			RespondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
@@ -35,7 +43,7 @@ func ProtectedRouteMiddleware(next http.Handler) http.Handler {
 }
 
 func Logging(r *http.Request) {
-	fmt.Printf("Method: %s, Route: %s\n", r.Method, r.URL.Path)
+	log.Printf("Method: %s, Route: %s\n", r.Method, r.URL.Path)
 }
 
 func validateJWT(r *http.Request) error {
