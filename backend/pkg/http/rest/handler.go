@@ -50,7 +50,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	})
 
 	// Wrap the /swear route with the ProtectedRouteMiddleware middleware
-	mux.Handle("/swearjar", middleware.ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/swearjar", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			// h.GetSwears(w, r)
@@ -61,7 +61,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})))
 
-	mux.Handle("/swear", middleware.ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/swear", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			// h.GetSwears(w, r)
@@ -73,7 +73,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	})))
 
 	// Wrap the entire mux with the CORSMiddleware
-	return middleware.CORSMiddleware(mux)
+	return CORSMiddleware(mux)
 }
 
 func (h *Handler) Listening(w http.ResponseWriter, r *http.Request) {
@@ -84,16 +84,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req authentication.User
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	ur, jwt, csrfToken, err := h.authService.Login(req)
 	if err != nil {
 		if errors.Is(err, authentication.ErrUnauthorized) {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
@@ -104,14 +104,14 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	SetCookie(w, "csrf_token", csrfToken, false)
 
 	response := map[string]interface{}{
-		"msg": "Logged in successfully",
+		"msg":  "Logged in successfully",
 		"user": ur,
 	}
 
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 }

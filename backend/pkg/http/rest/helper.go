@@ -11,13 +11,13 @@ import (
 )
 
 // SetCookie sets a cookie with the provided name and value.
-func SetCookie(w http.ResponseWriter, cookienName, value string, isHttpOnly bool) {
+func SetCookie(w http.ResponseWriter, cookieName, value string, isHttpOnly bool) {
 	isProdEnvVar := os.Getenv("PRODUCTION_ENV")
 	isProdEnv, _ := strconv.ParseBool(isProdEnvVar)
 	jwtExpirationTime, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_TIME"))
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     cookienName,
+		Name:     cookieName,
 		Value:    value,
 		HttpOnly: isHttpOnly, // ! determines if cookie is HttpOnly / non-HttpOnly
 		Secure:   isProdEnv,
