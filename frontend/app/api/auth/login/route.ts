@@ -1,5 +1,5 @@
 import { loginSchema } from '@/lib/schema';
-import { apiRequest } from '@/lib/utils';
+import { apiRequest } from '@/lib/server/apiRequest';
 import { ZodError } from 'zod';
 
 // /api/auth/login
