@@ -28,10 +28,12 @@ export const fetcher = async <T>(
     credentials: 'include', // Automatically include credentials (e.g., cookies)
     ...options,             // Spread any other options passed in (e.g., headers, method)
   });
+
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.error || 'An error occurred while fetching data');
   }
+
   const data = await response.json();
   return data;
 };
