@@ -1,22 +1,27 @@
 import { apiRequest } from '@/lib/server/apiRequest';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
+
+const QuerySchema = z.object({
+    query: z.string().min(1, 'Query parameter is required'),
+});
 
 // /api/search/user?query=...
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');
 
-    if (!query) {
-        return Response.json({ error: 'Query parameter is required' }, { status: 400 });
-    }
-
     // Extract cookies using next/headers
     // const cookieStore = nextCookies();
     // const cookies = cookieStore.getAll(); 
 
     try {
+        // Validate the query parameters using Zod
+        const params = QuerySchema.parse({
+            query: searchParams.get('query'),
+        });
+
         const { data, status } = await apiRequest({
-            route: `/search/user?query=${encodeURIComponent(query)}`,
+            route: `/search/user?query=${encodeURIComponent(params.query)}`,
             method: 'GET',
             // cookies
         });
