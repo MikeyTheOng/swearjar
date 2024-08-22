@@ -161,18 +161,29 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 	var req Request
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("Error decoding JSON request: %v", err)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
+	sj, err := h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("Error creating SwearJar: %v", err)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+
+	response := map[string]interface{}{
+		"msg":      "SwearJar created successfully",
+		"swearjar": sj,
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("SwearJar created successfully"))
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {

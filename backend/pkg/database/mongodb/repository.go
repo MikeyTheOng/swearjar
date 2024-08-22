@@ -54,13 +54,13 @@ func ConnectToDB() *mongo.Client {
 	return client
 }
 
-func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
+func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) (swearJar.SwearJar, error) {
 	// Convert []string to []primitive.ObjectID in one go
 	ownerIDs := make([]primitive.ObjectID, len(sj.Owners))
 	for i, ownerID := range sj.Owners {
 		oid, err := primitive.ObjectIDFromHex(ownerID)
 		if err != nil {
-			return fmt.Errorf("invalid owner ID: %s", ownerID)
+			return swearJar.SwearJar{}, fmt.Errorf("invalid owner ID: %s", ownerID)
 		}
 		ownerIDs[i] = oid
 	}
@@ -69,14 +69,14 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
 	for _, ownerID := range ownerIDs {
 		count, err := r.users.CountDocuments(context.TODO(), bson.M{"_id": ownerID})
 		if err != nil {
-			return err
+			return swearJar.SwearJar{}, err
 		}
 		if count == 0 {
-			return fmt.Errorf("invalid owner ID: %s", ownerID)
+			return swearJar.SwearJar{}, fmt.Errorf("invalid owner ID: %s", ownerID)
 		}
 	}
 
-	_, err := r.swearJars.InsertOne(
+	result, err := r.swearJars.InsertOne(
 		context.TODO(),
 		bson.D{
 			{Key: "Name", Value: sj.Name},
@@ -85,7 +85,20 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
 			{Key: "CreatedAt", Value: sj.CreatedAt},
 		},
 	)
-	return err
+	if err != nil {
+		return swearJar.SwearJar{}, err
+	}
+
+	// Get the inserted document
+	insertedID := result.InsertedID.(primitive.ObjectID)
+	filter := bson.M{"_id": insertedID}
+	var createdSwearJar swearJar.SwearJar
+	err = r.swearJars.FindOne(context.TODO(), filter).Decode(&createdSwearJar)
+	if err != nil {
+		return swearJar.SwearJar{}, err
+	}
+
+	return createdSwearJar, nil
 }
 
 func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string, err error) {
