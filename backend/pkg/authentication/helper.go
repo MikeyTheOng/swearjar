@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"errors"
 	"log"
 	"os"
 	"strconv"
@@ -29,7 +30,7 @@ func CreateToken(u User) (string, error) {
 }
 
 // DecodeJWT decodes a JWT token string and returns the token object or an error if the token is invalid.
-func DecodeJWT(tokenString string) (*jwt.Token, error) {
+func DecodeJWT(tokenString string) (jwt.MapClaims, error) {
 	// Parse the token without validating the signature, as previously validated in the middleware
 	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
 	if err != nil {
@@ -39,9 +40,9 @@ func DecodeJWT(tokenString string) (*jwt.Token, error) {
 	// Extract claims and print them in a human-readable format
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		log.Printf("Decoded JWT Token: UserId: %s, Email: %s, Name: %s, Issued At: %v, Expires At: %v", claims["UserId"], claims["Email"], claims["Name"], claims["iat"], claims["exp"])
+		return claims, nil
 	} else {
 		log.Printf("Unable to extract claims from token")
+		return nil, errors.New("Unable to extract claims from token")
 	}
-
-	return token, nil
 }
