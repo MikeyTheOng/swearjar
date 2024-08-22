@@ -5,7 +5,6 @@ import DefaultContentLayout from "@/components/layout/content";
 import MainContent from "./mainContent";
 
 import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader"
-import { useSession } from 'next-auth/react';
 import { auth } from '@/auth';
 
 
