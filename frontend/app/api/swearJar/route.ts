@@ -10,37 +10,37 @@ const swearJarPropsSchema = z.object({
 });
 
 // POST /api/swear - Create new swear jar
-export async function POST(request: Request) {
-    // Extract cookies using next/headers
-    // const cookieStore = nextCookies();
-    // const cookies = cookieStore.getAll();
-
-    // TODO: Get User's Id and add it to the Owners array
-    // const session = await auth();
-    const body = await request.json();
+export const POST = auth(async function POST(req) {
     try {
+        const body = await req.json();
+
+        const session = req.auth;
+        const userId = session?.user.UserId;
+
+        if (!userId) {
+            return new Response(JSON.stringify({ status: 'error', message: 'User not authenticated' }), { status: 401 });
+        }
+
         // Validate the incoming request body
         const params = swearJarPropsSchema.parse(body);
 
         // Transform additionalOwners to an array of UserIds and add the UserId of the current user
-        // TODO: ADD OWNER INTO OWNERS
-        const transformedBody = {
-            ...params,
-            Owners: params.additionalOwners?.map(owner => owner.UserId),
+        const owners = [...(params.additionalOwners?.map(user => user.UserId) || []), userId];
+        const transformedBody: { Name: string; Owners: string[]; Desc?: string } = {
+            Name: params.Name,
+            Owners: owners
         };
+        if (params.Desc) {
+            transformedBody.Desc = params.Desc;
+        }
         // Validate the transformed body with the swearJarSchema
         const validatedBody = swearJarSchema.parse(transformedBody);
-
-        return new Response(JSON.stringify({ params: validatedBody, status: 'success' }), { status: 200 });
-
-        // const { data, status } = await apiRequest({
-        //     route: '/swearjar',
-        //     method: 'POST',
-        //     body: {
-        //         title: params.title,
-        //     }
-        // });
-        // return new Response(JSON.stringify(data.results), { status: status });
+        const { data, status } = await apiRequest({
+            route: '/swearjar',
+            method: 'POST',
+            body: validatedBody
+        });
+        return new Response(JSON.stringify(data), { status: status });
     } catch (error) {
         let errorMessage = 'Unknown error';
 
@@ -53,4 +53,4 @@ export async function POST(request: Request) {
 
         return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
     }
-}
+})
