@@ -216,6 +216,29 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
+	// ! Excludes the current user from the search results
+	cookie, err := r.Cookie("jwt")
+	// log.Printf("JWT: %v", cookie.Value)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	// Decode the UserId claim from the cookie
+	claims, err := authentication.DecodeJWT(cookie.Value)
+	if err != nil {
+		log.Printf("Error decoding JWT: %v", err)
+		RespondWithError(w, http.StatusUnauthorized, "Error decoding JWT")
+		return
+	}
+
+	// Extract the UserId from the claims
+	userId, ok := claims["UserId"].(string)
+	if !ok {
+		RespondWithError(w, http.StatusUnauthorized, "UserId not found in token")
+		return
+	}
+
 	query := r.URL.Query().Get("query")
 	if query == "" {
 		RespondWithError(w, http.StatusBadRequest, "Query parameter is required")
@@ -223,7 +246,7 @@ func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Query received: %s", query)
 
-	results, err := h.seService.GetTopClosestEmails(query)
+	results, err := h.seService.GetTopClosestEmails(query, userId)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return

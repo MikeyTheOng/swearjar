@@ -195,21 +195,30 @@ func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) 
 	return user, nil
 }
 
-func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults int) ([]authentication.UserResponse, error) {
+func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults int, currentUserId string) ([]authentication.UserResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Use a regular expression to match emails that contain similar patterns
+	// Convert currentUserId from string to ObjectId
+    currentUserObjectId, err := primitive.ObjectIDFromHex(currentUserId)
+    if err != nil {
+        log.Printf("Invalid UserId: %v", err)
+        return nil, err
+    }
+
+	// Use a regular expression to match emails that contain similar patterns and exclude the current user
 	filter := bson.M{
 		"Email": bson.M{
 			"$regex":   ".*" + query + ".*",
 			"$options": "i", // Case-insensitive search
 		},
+		"_id": bson.M{
+			"$ne": currentUserObjectId, // Exclude the current user
+		},
 	}
 
-	// Define options to retrieve only the top 5 results
-	var numResults int64 = int64(maxNumResults)
-	findOptions := options.Find().SetLimit(numResults)
+	// Define options to retrieve only the top results
+	findOptions := options.Find().SetLimit(int64(maxNumResults))
 
 	// Perform the search
 	cursor, err := r.users.Find(ctx, filter, findOptions)
@@ -246,3 +255,4 @@ func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults in
 
 	return decodedUsers, nil
 }
+

@@ -8,11 +8,11 @@ import (
 )
 
 type Service interface {
-	GetTopClosestEmails(query string) ([]authentication.UserResponse, error)
+	GetTopClosestEmails(query string, currentUserId string) ([]authentication.UserResponse, error)
 }
 
 type Repository interface {
-	FindUsersByEmailPattern(query string, maxNumResults int) ([]authentication.UserResponse, error)
+	FindUsersByEmailPattern(query string, maxNumResults int, currentUserId string) ([]authentication.UserResponse, error)
 }
 
 type service struct {
@@ -23,10 +23,10 @@ func NewService(r Repository) Service {
 	return &service{r}
 }
 
-func (s *service) GetTopClosestEmails(query string) ([]authentication.UserResponse, error) {
+func (s *service) GetTopClosestEmails(query string, currentUserId string) ([]authentication.UserResponse, error) {
 	// Retrieve the users that match the regex pattern
 	maxNumResults := 5
-	users, err := s.r.FindUsersByEmailPattern(query, maxNumResults)
+	users, err := s.r.FindUsersByEmailPattern(query, maxNumResults, currentUserId)
 	if err != nil {
 		return nil, err
 	}
