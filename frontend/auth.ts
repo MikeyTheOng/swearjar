@@ -122,16 +122,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token
     },
     session({ session, token }) {
-      console.log("Token:", token);
       if (token) {
-        console.log("Setting session.user.Email to:", token.Email);
         session.user.Email = token.Email as string;
         session.user.Name = token.Name as string;
         session.user.UserId = token.UserId as string;
       } else {
         console.log("Token is missing or invalid");
       }
-      console.log("Session object after modification:", session);
       return session;
     }
     
