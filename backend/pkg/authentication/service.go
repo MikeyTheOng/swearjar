@@ -5,11 +5,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"log"
-	"os"
 	"regexp"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -19,8 +16,9 @@ var ErrUnauthorized = errors.New("unauthorized")
 var ErrNoDocuments = errors.New("no documents found")
 
 type Claims struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	Email  string
+	Name   string
+	UserId string
 	jwt.RegisteredClaims
 }
 
@@ -141,24 +139,6 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 		Email:  storedUser.Email,
 		Name:   storedUser.Name,
 	}, tokenString, csrfToken, nil
-}
-
-func CreateToken(u User) (string, error) {
-	var jwtKey = []byte(os.Getenv("JWT_SECRET"))
-
-	jwtExpirationTime, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_TIME"))
-	expirationTime := time.Now().Add(time.Duration(jwtExpirationTime) * time.Minute)
-	claims := &Claims{
-		Email: u.Email,
-		Name:  u.Name,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
 }
 
 func generateCSRFToken() (string, error) {

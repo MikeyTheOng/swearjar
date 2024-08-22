@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -53,13 +54,13 @@ func ConnectToDB() *mongo.Client {
 	return client
 }
 
-func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
+func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) (swearJar.SwearJar, error) {
 	// Convert []string to []primitive.ObjectID in one go
 	ownerIDs := make([]primitive.ObjectID, len(sj.Owners))
 	for i, ownerID := range sj.Owners {
 		oid, err := primitive.ObjectIDFromHex(ownerID)
 		if err != nil {
-			return fmt.Errorf("invalid owner ID: %s", ownerID)
+			return swearJar.SwearJar{}, fmt.Errorf("invalid owner ID: %s", ownerID)
 		}
 		ownerIDs[i] = oid
 	}
@@ -68,14 +69,14 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
 	for _, ownerID := range ownerIDs {
 		count, err := r.users.CountDocuments(context.TODO(), bson.M{"_id": ownerID})
 		if err != nil {
-			return err
+			return swearJar.SwearJar{}, err
 		}
 		if count == 0 {
-			return fmt.Errorf("invalid owner ID: %s", ownerID)
+			return swearJar.SwearJar{}, fmt.Errorf("invalid owner ID: %s", ownerID)
 		}
 	}
 
-	_, err := r.swearJars.InsertOne(
+	result, err := r.swearJars.InsertOne(
 		context.TODO(),
 		bson.D{
 			{Key: "Name", Value: sj.Name},
@@ -84,7 +85,20 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) error {
 			{Key: "CreatedAt", Value: sj.CreatedAt},
 		},
 	)
-	return err
+	if err != nil {
+		return swearJar.SwearJar{}, err
+	}
+
+	// Get the inserted document
+	insertedID := result.InsertedID.(primitive.ObjectID)
+	filter := bson.M{"_id": insertedID}
+	var createdSwearJar swearJar.SwearJar
+	err = r.swearJars.FindOne(context.TODO(), filter).Decode(&createdSwearJar)
+	if err != nil {
+		return swearJar.SwearJar{}, err
+	}
+
+	return createdSwearJar, nil
 }
 
 func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string, err error) {
@@ -155,7 +169,7 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) {
 	filter := bson.D{{Key: "Email", Value: e}}
 	var result struct {
-		UserId       primitive.ObjectID `bson:"_id"`
+		UserId   primitive.ObjectID `bson:"_id"`
 		Email    string             `bson:"Email"`
 		Name     string             `bson:"Name"`
 		Password string             `bson:"Password"`
@@ -179,4 +193,65 @@ func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) 
 	}
 
 	return user, nil
+}
+
+func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults int, currentUserId string) ([]authentication.UserResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Convert currentUserId from string to ObjectId
+	currentUserObjectId, err := primitive.ObjectIDFromHex(currentUserId)
+	if err != nil {
+		log.Printf("Invalid UserId: %v", err)
+		return nil, err
+	}
+
+	// Use a regular expression to match emails that contain similar patterns and exclude the current user
+	filter := bson.M{
+		"Email": bson.M{
+			"$regex":   ".*" + query + ".*",
+			"$options": "i", // Case-insensitive search
+		},
+		"_id": bson.M{
+			"$ne": currentUserObjectId, // Exclude the current user
+		},
+	}
+
+	// Define options to retrieve only the top results
+	findOptions := options.Find().SetLimit(int64(maxNumResults))
+
+	// Perform the search
+	cursor, err := r.users.Find(ctx, filter, findOptions)
+	if err != nil {
+		log.Printf("Error finding similar emails: %v", err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var decodedUsers []authentication.UserResponse
+
+	for cursor.Next(ctx) {
+		var mongoUR UserResponse
+		err := cursor.Decode(&mongoUR)
+		if err != nil {
+			log.Printf("Error decoding user response: %v", err)
+			return nil, err
+		}
+
+		// Convert MongoDB UserResponse to authentication.UserResponse
+		authUR := authentication.UserResponse{
+			UserId: mongoUR.UserId,
+			Email:  mongoUR.Email,
+			Name:   mongoUR.Name,
+		}
+
+		decodedUsers = append(decodedUsers, authUR)
+	}
+
+	if err := cursor.Err(); err != nil {
+		log.Printf("Cursor error: %v", err)
+		return nil, err
+	}
+
+	return decodedUsers, nil
 }
