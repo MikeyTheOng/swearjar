@@ -200,11 +200,11 @@ func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults in
 	defer cancel()
 
 	// Convert currentUserId from string to ObjectId
-    currentUserObjectId, err := primitive.ObjectIDFromHex(currentUserId)
-    if err != nil {
-        log.Printf("Invalid UserId: %v", err)
-        return nil, err
-    }
+	currentUserObjectId, err := primitive.ObjectIDFromHex(currentUserId)
+	if err != nil {
+		log.Printf("Invalid UserId: %v", err)
+		return nil, err
+	}
 
 	// Use a regular expression to match emails that contain similar patterns and exclude the current user
 	filter := bson.M{
@@ -255,4 +255,3 @@ func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults in
 
 	return decodedUsers, nil
 }
-
