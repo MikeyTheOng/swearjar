@@ -8,7 +8,6 @@ import { SessionProvider } from 'next-auth/react';
 import { cn } from "@/lib/utils"
 import { auth } from '@/auth';
 
-import Footer from "@/components/layout/footer"
 import { Toaster } from "react-hot-toast";
 
 const poppins = Poppins({
@@ -40,7 +39,6 @@ export default async function RootLayout({
             <main className="h-screen">
               {children}
             </main>
-            <Footer />
             <Toaster
               position="bottom-center"
               containerStyle={{
