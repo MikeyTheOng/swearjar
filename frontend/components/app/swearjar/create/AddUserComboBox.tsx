@@ -115,7 +115,7 @@ export default function AddUserComboBox() {
                                 id="other-owners"
                                 aria-label="Assignees"
                                 onChange={(event) => setQuery(event.target.value)}
-                                className="w-max bg-transparent text-sm placeholder:text-input/50 focus-visible:outline-none"
+                                className="w-max bg-transparent text-sm placeholder:text-input/50 focus-visible:outline-none selection:bg-secondary selection:text-white"
                                 placeholder={fields.length === 0 ? 'Search by email' : ''}
                                 autoComplete='off'
                                 value={query}
