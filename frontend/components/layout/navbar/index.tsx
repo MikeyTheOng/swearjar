@@ -1,15 +1,15 @@
+import { Session } from "next-auth";
+
+import { Button } from "@/components/ui/button";
 import { FaBars } from "react-icons/fa6";
 import Link from 'next/link'
 import {
     Sheet,
     SheetContent,
-    SheetHeader,
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet"
-
-import { Session } from "next-auth";
-import { Button } from "@/components/ui/button";
+import SignOutButton from "@/components/shared/SignOutButton";
 
 export default function Navbar({ session }: { session: Session | null }) {
     return (
@@ -90,9 +90,11 @@ const UserAvatar = ({ name }: { name: string }) => {
                 {name.charAt(0).toUpperCase()}
             </div>
             <ul tabIndex={0} className="daisy-menu daisy-dropdown-content p-0 bg-base-100 rounded-lg border border-neutral-200 z-[1] w-52
-                [&>li>a]:min-h-10 [&>li>a]:rounded-md [&>li>a]:hover:bg-neutral-100 [&>li>a]:text-lg [&>li>a]:sm:text-base 
+                [&>li]:min-h-10 [&>li]:rounded-md [&>li]:hover:bg-neutral-100 [&>li]:text-lg [&>li]:sm:text-base 
                 [&_li>*:not(ul):not(.menu-title):not(details):active]:bg-primary [&_li>*:not(ul):not(.menu-title):not(details):active]:text-foreground">
-                <li><a className="">Logout</a></li>
+                <li>
+                    <SignOutButton />
+                </li>
             </ul>
         </div>
     )
