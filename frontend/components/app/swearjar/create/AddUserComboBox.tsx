@@ -8,7 +8,9 @@ import { User } from '@/lib/types';
 
 import { Label } from '@/components/ui/label';
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, Field } from '@headlessui/react';
-import { FaCheck, FaChevronDown, FaTimes } from "react-icons/fa";
+import { FaChevronDown, FaTimes } from "react-icons/fa";
+import { FaCheck } from "react-icons/fa6";
+
 
 export default function AddUserComboBox() {
     const { control } = useFormContext<FormData>();
@@ -96,9 +98,9 @@ export default function AddUserComboBox() {
                 }}
                 onClose={() => setQuery('')}
             >
-                <div ref={containerRef} className="relative group">
+                <div ref={containerRef} className="relative group mt-1">
                     <label htmlFor="other-owners">
-                        <div className='flex flex-wrap items-center gap-1 border-2 border-input/10 bg-transparent px-3 py-2 rounded-md text-sm placeholder:text-input/50 disabled:cursor-not-allowed disabled:opacity-50 transition ease-in-out duration-150 hover:border-primary'>
+                        <div className="flex flex-wrap items-center gap-1 border border-input/10 bg-white px-3 py-2 rounded-md text-sm placeholder:text-input/50 disabled:cursor-not-allowed disabled:opacity-50 transition ease-in-out duration-150 hover:border-primary focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary focus-within:border-primary">
                             {fields.map((field, index) => (
                                 <button
                                     key={field.id}
