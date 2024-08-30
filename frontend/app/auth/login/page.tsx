@@ -4,8 +4,11 @@ import LoginForm from "@/components/app/auth/loginForm";
 export default function Login() {
   const greetingMessage = "Welcome Back to"
   return (
-    <main className="flex h-screen w-screen justify-between align-middle px-6 md:px-52 lg:px-72 xl:px-[30rem]">
-      <AuthCard greetingMessage={greetingMessage} className="translate-y-[20dvh]">
+    <main className="flex justify-center mt-[20vh]">
+      <AuthCard
+        greetingMessage={greetingMessage}
+        className="p-4 max-w-[380px] shadow-none border-transparent md:border-neutral-200 md:pt-8 md:pb-6 md:rounded-2xl md:bg-white"
+      >
         <LoginForm />
       </AuthCard>
     </main>

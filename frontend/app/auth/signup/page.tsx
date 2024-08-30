@@ -4,8 +4,8 @@ import SignUpForm from "@/components/app/auth/signUpForm";
 export default function SignUp() {
   const greetingMessage = "Welcome to"
   return (
-    <main className="flex w-screen justify-between align-middle px-6 md:px-52 lg:px-72 xl:px-[30rem]">
-      <AuthCard greetingMessage={greetingMessage} className="translate-y-[15dvh]">
+    <main className="flex justify-center mt-[20vh]">
+      <AuthCard greetingMessage={greetingMessage} className="p-4 max-w-[380px] shadow-none border-transparent md:border-neutral-200 md:pt-8 md:pb-6 md:rounded-2xl md:bg-white">
         <SignUpForm />
       </AuthCard>
     </main>
