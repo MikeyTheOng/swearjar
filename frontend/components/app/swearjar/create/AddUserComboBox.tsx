@@ -72,7 +72,7 @@ export default function AddUserComboBox() {
     return (
         <Field>
             <Label htmlFor="other-owners">
-                Add other owners <span className="text-sm text-foreground/30 tracking-tighter italic font-normal">(optional)</span>
+                Add other owners <span className="text-xs text-foreground/30 tracking-tighter italic font-normal">(optional)</span>
             </Label>
             <Combobox
                 multiple
@@ -116,7 +116,7 @@ export default function AddUserComboBox() {
                                 aria-label="Assignees"
                                 onChange={(event) => setQuery(event.target.value)}
                                 className="w-max bg-transparent text-sm placeholder:text-input/50 focus-visible:outline-none"
-                                placeholder={fields.length === 0 ? 'Type to search' : ''}
+                                placeholder={fields.length === 0 ? 'Search by email' : ''}
                                 autoComplete='off'
                                 value={query}
                             />
