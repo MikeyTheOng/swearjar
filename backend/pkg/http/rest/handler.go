@@ -12,21 +12,19 @@ import (
 	"time"
 
 	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
-	"github.com/mikeytheong/swearjar/backend/pkg/search"
+	"github.com/mikeytheong/swearjar/backend/pkg/middleware"
 	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
 )
 
 type Handler struct {
 	authService authentication.Service
 	sjService   swearJar.Service
-	seService   search.Service
 }
 
-func NewHandler(a authentication.Service, sj swearJar.Service, se search.Service) *Handler {
+func NewHandler(a authentication.Service, s swearJar.Service) *Handler {
 	return &Handler{
 		authService: a,
-		sjService:   sj,
-		seService:   se,
+		sjService:   s,
 	}
 }
 
@@ -69,15 +67,6 @@ func (h *Handler) RegisterRoutes() http.Handler {
 			// h.GetSwears(w, r)
 		case http.MethodPost:
 			h.AddSwear(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})))
-
-	mux.Handle("/search/user", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			h.GetTopClosestEmails(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -202,31 +191,4 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("Swear added successfully"))
-}
-
-func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query().Get("query")
-	if query == "" {
-		RespondWithError(w, http.StatusBadRequest, "Query parameter is required")
-		return
-	}
-	log.Printf("Query received: %s", query)
-
-	results, err := h.seService.GetTopClosestEmails(query)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	response := map[string]interface{}{
-		"msg":     "search is successful",
-		"results": results,
-	}
-
-	w.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
 }

@@ -1,4 +1,4 @@
-import { array, object, string } from 'zod';
+import { object, string } from 'zod';
 
 export const signUpSchema = object({
     Name: string({ required_error: "Name is required" })
@@ -19,16 +19,4 @@ export const loginSchema = object({
         .email("Invalid email"),
     Password: string({ required_error: "Password is required" })
         .min(1, "Password is required")
-});
-
-export const userSchema = object({
-    UserId: string().min(1, 'UserId is required'),
-    Email: string().email('Invalid email format'),
-    Name: string().min(1, 'Name is required'),
-});
-
-export const swearJarSchema = object({
-    Name: string().min(1, 'Title is required'),
-    Desc: string().optional(),
-    Owners: array(string()).optional(), // Owners + additionalOwners
 });
