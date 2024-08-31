@@ -1,5 +1,7 @@
 "use client"
+import Confetti from 'react-confetti-boom';
 import { User } from '@/lib/types';
+import { useRouter } from 'next/navigation'
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +11,6 @@ import { useForm, FormProvider, FieldError } from "react-hook-form";
 import AddUserComboBox from "./AddUserComboBox";
 import ErrorMessage from '@/components/shared/ErrorMessage';
 import toast from 'react-hot-toast';
-import ErrorIcon from '@/components/shared/icons/animated/errorIcon';
 
 export type FormData = {
     Name: string;
@@ -18,6 +19,7 @@ export type FormData = {
 }
 
 export default function CreateSwearJarForm() {
+    const router = useRouter()
     const methods = useForm<FormData>({
         defaultValues: {
             Name: "",
@@ -26,11 +28,8 @@ export default function CreateSwearJarForm() {
         }
     });
 
-    const { register, handleSubmit, formState: { errors } } = methods;
+    const { register, handleSubmit, formState: { isSubmitSuccessful, errors } } = methods;
     const onSubmit = async (data: any) => {
-        // TODO: Confetti
-        // TODO: Redirect to the newly created swear jar
-        console.log("Form Data:", data);
         try {
             const response = await fetch('/api/swearJar', {
                 method: 'POST',
@@ -41,23 +40,15 @@ export default function CreateSwearJarForm() {
             })
             if (!response.ok) {
                 const errorData = await response.json();
-                toast(
-                    <span className='bg-background-100'>
-                        {errorData.error || response.statusText}
-                    </span>,
-                    {
-                        id: "sign-up-error",
-                        duration: 1500,
-                        position: 'top-center',
-                        style: {
-                            background: 'var(--background)',
-                        },
-                        icon: <ErrorIcon />
-                    }
-                );
+                toast.error("Something went wrong!", { id: "create-swearjar-error", position: "top-center" });
                 throw new Error(`Create swear jar failed: ${errorData.error || response.statusText}`);
             }
-            toast.success('Swear jar created successfully!', { position: "top-center" });
+            setTimeout(() => {
+                router.push('/swearjar')
+            }, 2000);
+            const resData = await response.json();
+            console.log("response:", resData);
+            toast.success('Swear Jar created successfully!', { position: "top-center" });
         } catch (error) {
             console.error('Create swear jar failed:', error);
         }
@@ -110,12 +101,24 @@ export default function CreateSwearJarForm() {
                         )}
                     </div>
                     <div>
-                        <Button type="submit" className="w-full sm:font-semibold shadow-lg bg-primary hover:opacity-80 hover:text-foreground">
+                        <Button type="submit" className="w-full sm:font-semibold shadow-lg bg-primary hover:opacity-80 hover:text-foreground" disabled={isSubmitSuccessful}>
                             Create!
                         </Button>
                     </div>
                 </form>
             </FormProvider>
+            {isSubmitSuccessful &&
+                <Confetti
+                    mode="boom"
+                    particleCount={100}
+                    shapeSize={24}
+                    deg={270}
+                    launchSpeed={2}
+                    x={0.5}
+                    y={0.5}
+                    colors={['#ff577f', '#ff884b', '#ffd384', '#fff9b0']}
+                />
+            }
         </div>
     );
 }

@@ -6,13 +6,13 @@ import (
 )
 
 type Service interface {
-	CreateSwearJar(Name string, Desc string, Owners []string) error
+	CreateSwearJar(Name string, Desc string, Owners []string) (SwearJar, error)
 	AddSwear(Swear) error
 	// TODO: GetSwears() []Swear
 }
 
 type Repository interface {
-	CreateSwearJar(SwearJar) error
+	CreateSwearJar(SwearJar) (SwearJar, error)
 	AddSwear(Swear) error
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	// TODO: GetSwears() []Swear
@@ -27,7 +27,7 @@ func NewService(r Repository) Service {
 	return &service{r}
 }
 
-func (s *service) CreateSwearJar(Name string, Desc string, Owners []string) error {
+func (s *service) CreateSwearJar(Name string, Desc string, Owners []string) (SwearJar, error) {
 	sj := SwearJar{
 		Name:      Name,
 		Desc:      Desc,

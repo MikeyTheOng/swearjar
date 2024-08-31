@@ -16,10 +16,10 @@ func ProtectedRouteMiddleware(next http.Handler) http.Handler {
 		Logging(r)
 
 		// ! Debug
-		// Log cookies received in the request
+		// // Log cookies received in the request
 		// log.Printf("Cookies received in the request:")
 		// for _, cookie := range r.Cookies() {
-		//     log.Printf("Cookie: %s\n", cookie.Name)
+		//     log.Printf("%s: {%s}\n", cookie.Name, cookie.Value)
 		// }
 
 		// Validate JWT
