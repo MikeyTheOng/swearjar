@@ -3,6 +3,7 @@ module github.com/mikeytheong/swearjar/backend
 go 1.22.5
 
 require (
+	github.com/agnivade/levenshtein v1.1.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1
 	go.mongodb.org/mongo-driver v1.16.0

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Poppins } from "next/font/google"
 
+import Providers from './providers'
 import { SessionProvider } from 'next-auth/react';
 
 import { cn } from "@/lib/utils"
@@ -33,19 +34,21 @@ export default async function RootLayout({
       <body
         className={cn("bg-background-100 font-sans antialiased relative")}
       >
-        <SessionProvider session={session}>
-          {/* <nav className="bg-red-500 w-full h-12"></nav> */}
-          <main className="h-screen">
-            {children}
-          </main>
-          <Footer />
-          <Toaster
-            position="bottom-center"
-            containerStyle={{
-              backgroundColor: "transparent",
-            }}
-          />
-        </SessionProvider>
+        <Providers>
+          <SessionProvider session={session}>
+            {/* <nav className="bg-red-500 w-full h-12"></nav> */}
+            <main className="h-screen">
+              {children}
+            </main>
+            <Footer />
+            <Toaster
+              position="bottom-center"
+              containerStyle={{
+                backgroundColor: "transparent",
+              }}
+            />
+          </SessionProvider>
+        </Providers>
       </body>
     </html>
   );
