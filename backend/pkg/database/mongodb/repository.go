@@ -156,7 +156,7 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) {
 	filter := bson.D{{Key: "Email", Value: e}}
 	var result struct {
-		UserId       primitive.ObjectID `bson:"_id"`
+		UserId   primitive.ObjectID `bson:"_id"`
 		Email    string             `bson:"Email"`
 		Name     string             `bson:"Name"`
 		Password string             `bson:"Password"`

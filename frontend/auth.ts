@@ -1,6 +1,7 @@
 import NextAuth, { AuthError } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { cookies as nextCookies } from "next/headers";
+import { User as CustomUser } from "@/lib/types";
 
 import { loginSchema } from "@/lib/schema"
 
@@ -59,7 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               // Convert the expires attribute to a Date object or use the JWT expiration time
               const expiresString = attributes.find(attr => attr.startsWith('Expires'))?.split('=')[1];
               const expires = expiresString ? new Date(expiresString) : new Date(Date.now() + jwtExpirationTime * 60 * 1000);
-              
+
               // ! Debugging
               // console.log(`Setting ${name} cookie with attributes:`, {
               //   name,
@@ -109,6 +110,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    jwt({ token, user }) {
+      const customUser = user as CustomUser;
+
+      if (customUser) { // User is available during sign-in
+        token.Email = customUser.Email;
+        token.Name = customUser.Name;
+        token.UserId = customUser.UserId;
+      }
+      return token
+    },
+    session({ session, token }) {
+      console.log("Token:", token);
+      if (token) {
+        console.log("Setting session.user.Email to:", token.Email);
+        session.user.Email = token.Email as string;
+        session.user.Name = token.Name as string;
+        session.user.UserId = token.UserId as string;
+      } else {
+        console.log("Token is missing or invalid");
+      }
+      console.log("Session object after modification:", session);
+      return session;
+    }
+    
+  },
   session: {
     strategy: "jwt",
     maxAge: 60 * parseInt(process.env.JWT_EXPIRATION_TIME as string), // 24 hours
