@@ -92,8 +92,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const result = await response.json();
           user = result.user;
-          console.log('Signed in successfully', user);
+          if (!user) {
+            // No user found, so this is their first attempt to login
+            // meaning this is also the place you could do registration
 
+            // throw new Error("User not found.")
+            return null;
+          }
+
+          console.log('Signed in successfully', user);
+          // return user object with their profile data
           return user
         } catch (error) {
           if (error instanceof AuthError) {
@@ -134,7 +142,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     }
-
+    
   },
   session: {
     strategy: "jwt",
