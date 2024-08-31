@@ -1,9 +1,10 @@
-import NextAuth, { AuthError } from "next-auth"
+import NextAuth, { AuthError, CredentialsSignin } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { cookies as nextCookies } from "next/headers";
 import { User as CustomUser } from "@/lib/types";
 
 import { loginSchema } from "@/lib/schema"
+import { ZodError } from "zod";
 
 const AUTH_URL = process.env.AUTH_URL;
 
@@ -37,7 +38,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (!response.ok) {
             const errorResult = await response.json();
-            console.error('Error:', errorResult.error);
+            console.error('Error Result:', errorResult);
+            if (errorResult.error === 'no documents found' || errorResult.error === 'Unauthorized' || errorResult instanceof ZodError) {
+              // No user found, so this is their first attempt to login
+              // meaning this is also the place you could do registration
+              // return null;
+              throw new CredentialsSignin("Check your email and password")
+            }
+
             throw new Error(errorResult.error)
           }
 
@@ -83,7 +91,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const result = await response.json();
-          // TODO: Handle no document found/ invalid
           user = result.user;
           if (!user) {
             // No user found, so this is their first attempt to login
@@ -98,14 +105,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return user
         } catch (error) {
           if (error instanceof AuthError) {
+            console.error("AuthError:", error);
             switch (error.type) {
               case 'CredentialsSignin':
-                return 'Invalid credentials';
+                throw error;
               default:
-                return 'Something went wrong';
+                throw new Error('Something went wrong during sign-in');
             }
           }
-          throw error;
+
+          // Handle all other errors
+          console.error("Error:", error instanceof Error ? error.message : "Unexpected error");
+          throw new Error(error instanceof Error ? error.message : 'An unknown error occurred');
         }
       },
     }),
