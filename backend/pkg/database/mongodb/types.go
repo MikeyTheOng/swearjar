@@ -27,9 +27,3 @@ package mongodb
 // 	Password string             `bson:"password"`
 // 	Email    string             `bson:"email"`
 // }
-
-type UserResponse struct {
-	UserId string `bson:"_id"`
-	Email  string `bson:"Email"`
-	Name   string `bson:"Name"`
-}

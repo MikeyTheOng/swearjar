@@ -8,7 +8,6 @@ import (
 	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 	"github.com/mikeytheong/swearjar/backend/pkg/database/mongodb"
 	"github.com/mikeytheong/swearjar/backend/pkg/http/rest"
-	"github.com/mikeytheong/swearjar/backend/pkg/search"
 	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
 )
 
@@ -22,7 +21,6 @@ func main() {
 
 	authService := authentication.NewService(r)
 	swearService := swearJar.NewService(r)
-	searchService := search.NewService(r)
 
 	handler := rest.NewHandler(authService, swearService, searchService) // Initialize the handler with the services
 	mux := handler.RegisterRoutes()

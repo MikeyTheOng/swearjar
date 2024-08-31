@@ -92,7 +92,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return null;
           }
 
-          console.log('Signed in successfully', user);
+          console.log('Signed in successfully');
           // return user object with their profile data
           return user
         } catch (error) {

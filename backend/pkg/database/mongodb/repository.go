@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -180,56 +179,4 @@ func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) 
 	}
 
 	return user, nil
-}
-
-func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults int) ([]authentication.UserResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Use a regular expression to match emails that contain similar patterns
-	filter := bson.M{
-		"Email": bson.M{
-			"$regex":   ".*" + query + ".*",
-			"$options": "i", // Case-insensitive search
-		},
-	}
-
-	// Define options to retrieve only the top 5 results
-	var numResults int64 = int64(maxNumResults)
-	findOptions := options.Find().SetLimit(numResults)
-
-	// Perform the search
-	cursor, err := r.users.Find(ctx, filter, findOptions)
-	if err != nil {
-		log.Printf("Error finding similar emails: %v", err)
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var decodedUsers []authentication.UserResponse
-
-	for cursor.Next(ctx) {
-		var mongoUR UserResponse
-		err := cursor.Decode(&mongoUR)
-		if err != nil {
-			log.Printf("Error decoding user response: %v", err)
-			return nil, err
-		}
-
-		// Convert MongoDB UserResponse to authentication.UserResponse
-		authUR := authentication.UserResponse{
-			UserId: mongoUR.UserId,
-			Email:  mongoUR.Email,
-			Name:   mongoUR.Name,
-		}
-
-		decodedUsers = append(decodedUsers, authUR)
-	}
-
-	if err := cursor.Err(); err != nil {
-		log.Printf("Cursor error: %v", err)
-		return nil, err
-	}
-
-	return decodedUsers, nil
 }
