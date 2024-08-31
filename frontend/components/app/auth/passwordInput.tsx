@@ -41,9 +41,9 @@ export default function PasswordInput({ register, errors }: PasswordInputProps) 
                 <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="group absolute right-0 top-0 h-full mr-3 z-10"
+                    className="group absolute right-0 top-0 h-full mr-3 z-10 focus-visible:outline-none"
                 >
-                    <IconContext.Provider value={{ className: "bg-transparent fill-input/20 hover:fill-input/70 group-focus-within:fill-input/70 transition ease-in-out duration-150" }}>
+                    <IconContext.Provider value={{ className: "bg-transparent fill-foreground/20 hover:fill-foreground/50 group-focus-within:fill-foreground/50 transition ease-in-out duration-150" }}>
                         {showPassword ? <IoEyeOff size="20" /> : <IoEye size="20" />}
                     </IconContext.Provider>
                 </button>

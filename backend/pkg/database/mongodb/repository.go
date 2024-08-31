@@ -178,10 +178,10 @@ func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) 
 
 	err := r.users.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
+		log.Printf("Error fetching user by email {%v}: %v", e, err)
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return user, authentication.ErrNoDocuments
 		}
-		log.Printf("Error fetching user by email: %v", err)
 		return user, err
 	}
 

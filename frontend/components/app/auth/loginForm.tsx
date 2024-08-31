@@ -77,7 +77,7 @@ export default function LoginForm() {
                 <a>Forgot password?</a>
               </div> */}
                 <div>
-                    <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary hover:text-foreground hover:scale-105">Login</Button>
+                    <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary md:shadow-none hover:text-foreground hover:scale-105">Login</Button>
                 </div>
             </div>
         </form>

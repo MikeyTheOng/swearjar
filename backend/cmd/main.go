@@ -28,12 +28,14 @@ func main() {
 	mux := handler.RegisterRoutes()
 
 	// Paths to your certificate and key files
-	certFile := "../../localhost+2.pem"
-	keyFile := "../../localhost+2-key.pem"
+	// certFile := "../../localhost+2.pem"
+	// keyFile := "../../localhost+2-key.pem"
 
 	log.Println("Server is listening on port 8080")
-	err = http.ListenAndServeTLS(":8080", certFile, keyFile, mux)
+	// err = http.ListenAndServeTLS(":8080", certFile, keyFile, mux)
+	err = http.ListenAndServe(":8080", mux)
 	if err != nil {
-		log.Fatalf("Failed to start HTTPS server: %v", err)
+		// log.Fatalf("Failed to start HTTPS server: %v", err)
+		log.Fatalf("Failed to start HTTP server: %v", err)
 	}
 }
