@@ -55,7 +55,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	mux.Handle("/swearjar", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			// h.GetSwears(w, r)
+			h.GetSwearJarsByUserId(w, r)
 		case http.MethodPost:
 			h.CreateSwearJar(w, r)
 		default:
@@ -255,6 +255,45 @@ func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"msg":     "search is successful",
 		"results": results,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) GetSwearJarsByUserId(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("jwt")
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	claims, err := authentication.DecodeJWT(cookie.Value)
+	if err != nil {
+		log.Printf("Error decoding JWT: %v", err)
+		RespondWithError(w, http.StatusUnauthorized, "Error decoding JWT")
+		return
+	}
+
+	userId, ok := claims["UserId"].(string)
+	if !ok {
+		RespondWithError(w, http.StatusUnauthorized, "UserId not found in token")
+		return
+	}
+
+	swearJars, err := h.sjService.GetSwearJarsByUserId(userId)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":       "fetch successful",
+		"swearJars": swearJars,
 	}
 
 	w.WriteHeader(http.StatusOK)
