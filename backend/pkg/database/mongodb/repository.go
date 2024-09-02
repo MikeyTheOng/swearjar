@@ -54,6 +54,37 @@ func ConnectToDB() *mongo.Client {
 	return client
 }
 
+func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJar, error) {
+	userIdHex, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UserId: %v", err)
+	}
+
+	filter := bson.M{"Owners": userIdHex}
+	cursor, err := r.swearJars.Find(context.TODO(), filter)
+	if err != nil {
+		log.Printf("Error fetching swear jars by user ID: %v", err)
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var swearJars []swearJar.SwearJar
+	for cursor.Next(context.TODO()) {
+		var sj swearJar.SwearJar
+		if err := cursor.Decode(&sj); err != nil {
+			log.Printf("Error decoding swear jar: %v", err)
+			return nil, err
+		}
+		swearJars = append(swearJars, sj)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return swearJars, nil
+}
+
 func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) (swearJar.SwearJar, error) {
 	// Convert []string to []primitive.ObjectID in one go
 	ownerIDs := make([]primitive.ObjectID, len(sj.Owners))

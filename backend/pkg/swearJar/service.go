@@ -6,12 +6,14 @@ import (
 )
 
 type Service interface {
+	GetSwearJarsByUserId(userId string) ([]SwearJar, error)
 	CreateSwearJar(Name string, Desc string, Owners []string) (SwearJar, error)
 	AddSwear(Swear) error
 	// TODO: GetSwears() []Swear
 }
 
 type Repository interface {
+	GetSwearJarsByUserId(swearJarId string) ([]SwearJar, error)
 	CreateSwearJar(SwearJar) (SwearJar, error)
 	AddSwear(Swear) error
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
@@ -58,4 +60,8 @@ func (s *service) AddSwear(swear Swear) error {
 	}
 
 	return s.r.AddSwear(swear)
+}
+
+func (s *service) GetSwearJarsByUserId(userId string) ([]SwearJar, error) {
+	return s.r.GetSwearJarsByUserId(userId)
 }

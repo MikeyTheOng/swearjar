@@ -11,7 +11,7 @@ import { auth } from '@/auth';
 import { Toaster } from "react-hot-toast";
 
 const poppins = Poppins({
-  weight: ['400', '700'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
   subsets: ['latin'],
   display: "swap",
 });
@@ -31,7 +31,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={cn(poppins.className, "bg-background-100")}>
       <body
-        className={cn("bg-background-100 font-sans antialiased relative")}
+        className={cn("bg-background-100 font-sans antialiased relative selection:bg-secondary selection:text-white")}
       >
         <Providers>
           <SessionProvider session={session}>
