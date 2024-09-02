@@ -31,7 +31,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={cn(poppins.className, "bg-background-100")}>
       <body
-        className={cn("bg-background-100 font-sans antialiased relative")}
+        className={cn("bg-background-100 font-sans antialiased relative selection:bg-secondary selection:text-white")}
       >
         <Providers>
           <SessionProvider session={session}>
