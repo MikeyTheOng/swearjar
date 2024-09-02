@@ -2,7 +2,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GiMasonJar } from "react-icons/gi";
 import { SlArrowRight } from "react-icons/sl";
 
-export default function SwearJarCard() {
+import { SwearJar } from "@/lib/types"; 
+
+interface SwearJarCardProps {
+    swearJar: SwearJar; 
+}
+
+export default function SwearJarCard({ swearJar }: SwearJarCardProps) {
     return (
         <Card className="group box-border w-full bg-white rounded-2xl hover:shadow-md hover:translate-y-[-2px] transition-all ease-in-out duration-300">
             <CardContent className="p-4 relative">
@@ -12,9 +18,9 @@ export default function SwearJarCard() {
                             <GiMasonJar size={24} />
                         </div>
                         <div className="ml-2 flex flex-col overflow-hidden w-[80%]">
-                            <p className="text-base font-normal tracking-tight">SwearJar Card</p>
+                            <p className="text-base font-normal tracking-tight">{swearJar.Name}</p> 
                             <span className="-mt-1 text-foreground/50 text-xs font-normal overflow-hidden whitespace-nowrap overflow-ellipsis">
-                                A penny a day, breaks the bad habit A penny a day, breaks the bad habit 
+                                {swearJar.Desc || "A penny a day, breaks the bad habit"} 
                             </span>
                         </div>
                     </div>
