@@ -9,6 +9,31 @@ const swearJarPropsSchema = z.object({
     additionalOwners: z.array(userSchema).optional(),
 });
 
+// GET /api/swear - Retrieve all swear jars by userId
+export const GET = auth(async function GET(req) {
+    try {
+        const session = req.auth;
+
+        if (!session) {
+            return new Response(JSON.stringify({ status: 'error', message: 'User not authenticated' }), { status: 401 });
+        }
+
+        const { data, status } = await apiRequest({
+            route: `/swearjar`,
+            method: 'GET',
+        });
+        return new Response(JSON.stringify(data), { status: status });
+    } catch (error) {
+        let errorMessage = 'Unknown error';
+
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
+    }
+})
+
 // POST /api/swear - Create new swear jar
 export const POST = auth(async function POST(req) {
     try {
