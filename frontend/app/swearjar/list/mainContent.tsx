@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GoPlus } from "react-icons/go";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import SwearJarCard from "@/components/app/swearjar/listing/SwearJarCard";
 
 interface SwearJarApiResponse {
     msg: string;
