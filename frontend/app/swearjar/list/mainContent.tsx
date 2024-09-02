@@ -21,6 +21,7 @@ export default function MainContent() {
         queryKey: ['swearJars'], 
         queryFn: () => fetcher<SwearJarApiResponse>('/api/swearJar')
     });
+    console.log("Data:", data)
 
     return (
         <main className="my-2">
@@ -44,18 +45,24 @@ export default function MainContent() {
                     </Button>
                 </Link>
             </div>
-            {/* Moved loading and error handling below the input */}
-            {isLoading && <span className="daisy-loading daisy-loading-dots daisy-loading-lg text-primary"></span>}
-            {error && (
+            {isLoading ? (
+                <span className="daisy-loading daisy-loading-dots daisy-loading-lg text-primary"></span>
+            ) : error ? (
                 <ErrorAlert message={`Error fetching your Swear Jars`} />
+            ) : data && data.swearJars === null ? (
+                <div className="text-center my-4">
+                    <h2 className="text-lg font-semibold">No Swear Jars Found</h2>
+                    <p className="text-sm text-gray-500">Create a Swear Jar to view them here!</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-1 md:gap-x-5 md:gap-y-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
+                    {data?.swearJars.map((swearJar: SwearJar) => (
+                        <div key={swearJar.Name} className="col-span-1">
+                            <SwearJarCard swearJar={swearJar} />
+                        </div>
+                    ))}
+                </div>
             )}
-            <div className="grid grid-cols-1 gap-1 md:gap-x-5 md:gap-y-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
-                {data?.swearJars?.map((swearJar: SwearJar) => (
-                    <div key={swearJar.Name} className="col-span-1">
-                        <SwearJarCard swearJar={swearJar} />
-                    </div>
-                ))}
-            </div>
         </main>
     )
 }
