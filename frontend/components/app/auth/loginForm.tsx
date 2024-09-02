@@ -1,14 +1,15 @@
 "use client"
 import { useForm, SubmitHandler } from "react-hook-form";
 import { signIn } from 'next-auth/react';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button"
+import ErrorAlert from "@/components/shared/ErrorAlert";
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import PasswordInput from "./passwordInput";
 import toast, { ErrorIcon } from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 interface SignUpFormData {
     Email: string;
@@ -62,7 +63,7 @@ export default function LoginForm() {
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid w-full items-center gap-4">
-                {error && errorMsg()}
+                {error && <ErrorAlert message="Check your email or password" />}
                 <div className="flex flex-col space-y-1.5">
                     <Label>Email</Label>
                     <Input id="email" placeholder="john.doe@example.com" {...register("Email", { required: "Email is required" })} />
@@ -81,26 +82,5 @@ export default function LoginForm() {
                 </div>
             </div>
         </form>
-    )
-}
-
-const errorMsg = () => {
-    return (
-        <div role="alert" className="daisy-alert daisy-alert-error bg-error/10 border-error text-error rounded-lg flex justify-center p-2">
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 shrink-0 stroke-current"
-                fill="none"
-                viewBox="0 0 24 24">
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm text-red-600">
-                Check your email or password
-            </span>
-        </div>
     )
 }
