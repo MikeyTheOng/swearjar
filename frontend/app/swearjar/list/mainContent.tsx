@@ -5,6 +5,7 @@ import { SwearJar } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import ErrorAlert from "@/components/shared/ErrorAlert";
 import { GoPlus } from "react-icons/go";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -20,9 +21,6 @@ export default function MainContent() {
         queryKey: ['swearJars'], 
         queryFn: () => fetcher<SwearJarApiResponse>('/api/swearJar')
     });
-
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error fetching swear jars: {error.message}</div>;
 
     return (
         <main className="my-2">
@@ -46,6 +44,11 @@ export default function MainContent() {
                     </Button>
                 </Link>
             </div>
+            {/* Moved loading and error handling below the input */}
+            {isLoading && <span className="daisy-loading daisy-loading-dots daisy-loading-lg text-primary"></span>}
+            {error && (
+                <ErrorAlert message={`Error fetching your Swear Jars`} />
+            )}
             <div className="grid grid-cols-1 gap-1 md:gap-x-5 md:gap-y-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
                 {data?.swearJars?.map((swearJar: SwearJar) => (
                     <div key={swearJar.Name} className="col-span-1">
