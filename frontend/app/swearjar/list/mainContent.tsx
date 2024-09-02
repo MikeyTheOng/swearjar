@@ -3,6 +3,7 @@
 import { fetcher } from "@/lib/utils";
 import { SwearJar } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import ErrorAlert from "@/components/shared/ErrorAlert";
@@ -19,18 +20,29 @@ interface SwearJarApiResponse {
 export default function MainContent() {
     const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
         queryKey: ['swearJars'], 
-        queryFn: () => fetcher<SwearJarApiResponse>('/api/swearJar')
+        queryFn: () => fetcher<SwearJarApiResponse>('/api/swearJar'),
+        refetchOnWindowFocus: "always",
     });
-    console.log("Data:", data)
+
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filteredSwearJars, setFilteredSwearJars] = useState<SwearJar[]>([]);
+
+    useEffect(() => {
+        if (data?.swearJars) {
+            setFilteredSwearJars(
+                data.swearJars.filter((swearJar) =>
+                    swearJar.Name.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+            );
+        }
+    }, [searchQuery, data]);
 
     return (
         <main className="my-2">
-            <div className="flex gap-1 my-[10px]">
+            <div className="flex gap-2 my-[10px]">
                 <Input
                     placeholder="Find your Swear Jar by name"
-                    onChange={(e) => {
-                        console.log(e.target.value);
-                    }}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Link href="/swearjar/create">
                     <Button className="p-2 hover:text-foreground">
@@ -56,7 +68,7 @@ export default function MainContent() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-1 md:gap-x-5 md:gap-y-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
-                    {data?.swearJars.map((swearJar: SwearJar) => (
+                    {filteredSwearJars.map((swearJar: SwearJar) => (
                         <div key={swearJar.Name} className="col-span-1">
                             <SwearJarCard swearJar={swearJar} />
                         </div>
