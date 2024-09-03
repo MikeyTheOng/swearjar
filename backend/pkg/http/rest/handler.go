@@ -266,22 +266,9 @@ func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetSwearJarsByUserId(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("jwt")
+	userId, err := GetUserIdFromCookie(w, r)
 	if err != nil {
 		RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
-	claims, err := authentication.DecodeJWT(cookie.Value)
-	if err != nil {
-		log.Printf("Error decoding JWT: %v", err)
-		RespondWithError(w, http.StatusUnauthorized, "Error decoding JWT")
-		return
-	}
-
-	userId, ok := claims["UserId"].(string)
-	if !ok {
-		RespondWithError(w, http.StatusUnauthorized, "UserId not found in token")
 		return
 	}
 
