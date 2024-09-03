@@ -51,11 +51,16 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})
 
-	// Wrap the /swear route with the ProtectedRouteMiddleware middleware
+	// Wrap the /swearjar route with the ProtectedRouteMiddleware middleware
 	mux.Handle("/swearjar", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			h.GetSwearJarsByUserId(w, r)
+			swearJarId := r.URL.Query().Get("id")
+			if swearJarId == "" {
+				h.GetSwearJarsByUserId(w, r)
+			} else {
+				h.GetSwearJarById(w, r)
+			}
 		case http.MethodPost:
 			h.CreateSwearJar(w, r)
 		default:
@@ -281,6 +286,33 @@ func (h *Handler) GetSwearJarsByUserId(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"msg":       "fetch successful",
 		"swearJars": swearJars,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) GetSwearJarById(w http.ResponseWriter, r *http.Request) {
+	swearJarId := r.URL.Query().Get("id")
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	swearJar, err := h.sjService.GetSwearJarById(swearJarId, userId)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":      "fetch successful",
+		"swearJar": swearJar,
 	}
 
 	w.WriteHeader(http.StatusOK)
