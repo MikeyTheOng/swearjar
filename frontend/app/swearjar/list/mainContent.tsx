@@ -19,8 +19,8 @@ interface SwearJarApiResponse {
 
 export default function MainContent() {
     const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
-        queryKey: ['swearJars'], 
-        queryFn: () => fetcher<SwearJarApiResponse>('/api/swearJar'),
+        queryKey: ['swearjar'], 
+        queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
         refetchOnWindowFocus: "always",
     });
 
