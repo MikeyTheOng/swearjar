@@ -5,10 +5,10 @@ import { SwearJar } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/shadcn/button";
 import ErrorAlert from "@/components/shared/ErrorAlert";
 import { GoPlus } from "react-icons/go";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/shadcn/input";
 import Link from "next/link";
 import SwearJarCard from "@/components/app/swearjar/listing/SwearJarCard";
 
@@ -19,7 +19,7 @@ interface SwearJarApiResponse {
 
 export default function MainContent() {
     const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
-        queryKey: ['swearjar'], 
+        queryKey: ['swearjar'],
         queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
         refetchOnWindowFocus: "always",
     });

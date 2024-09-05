@@ -6,7 +6,7 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import { useQuery } from '@tanstack/react-query';
 import { User } from '@/lib/types';
 
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/shadcn/label';
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, Field } from '@headlessui/react';
 import { FaChevronDown, FaTimes } from "react-icons/fa";
 import { FaCheck } from "react-icons/fa6";

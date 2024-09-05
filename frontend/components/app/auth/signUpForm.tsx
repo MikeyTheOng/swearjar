@@ -3,9 +3,9 @@ import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from "react-hook-form";
 import toast from 'react-hot-toast';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/shadcn/button"
+import { Input } from "@/components/ui/shadcn/input"
+import { Label } from "@/components/ui/shadcn/label"
 import PasswordInput from "./passwordInput";
 import ErrorIcon from '@/components/shared/icons/animated/errorIcon';
 
@@ -18,7 +18,7 @@ export default function SignUp() {
     const router = useRouter();
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
-            Name : "",
+            Name: "",
             Email: "",
             Password: ""
 
