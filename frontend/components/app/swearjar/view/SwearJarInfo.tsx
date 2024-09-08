@@ -10,7 +10,7 @@ export default function SwearJarInfo(swearJar: SwearJar) {
             <div className="flex justify-between items-center">
                 <div className="flex items-end gap-1">
                     <h1 className="text-[40px] leading-[2.25rem] font-bold tracking-tighter">$100</h1>
-                    <p className="text-xs">Currently in <b>{swearJar.Name}</b></p>
+                    <p className="text-xs">in <b>{swearJar.Name}</b></p>
                 </div>
                 <div>
                     <Button variant="plain" className="rounded-full md:border-none" size="icon">

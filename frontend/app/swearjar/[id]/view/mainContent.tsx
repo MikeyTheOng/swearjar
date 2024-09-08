@@ -6,7 +6,7 @@ import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader";
 import { SwearJar } from "@/lib/types";
 import SwearJarInfo from "@/components/app/swearjar/view/SwearJarInfo";
 import SwearJarTrends from "@/components/app/swearjar/view/SwearJarTrends";
-
+import SwearJarRecent from "@/components/app/swearjar/view/SwearJarRecent";
 interface SwearJarApiResponse {
     msg: string;
     swearJar: SwearJar;
@@ -30,12 +30,14 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
             </div>
             <div className="col-span-1 md:col-span-2 order-2 md:order-3 space-y-2">
                 <SwearJarInfo {...data.swearJar} />
+                <span className="hidden md:block">
+                    <SwearJarRecent />
+                </span>
             </div>
-            {/* <div className="col-span-0 md:col-span-1 md:order-4">GAP</div> */}
-            {/* <div className="col-span-1 order-5 md:order-4">
-                <RecentTransactions />
-                TRANSACTIONS
-            </div> */}
+            {/* <div className="col-span-0 block md:hidden md:col-span-1 md:order-4"></div> */}
+            <div className="col-span-1 block md:hidden order-4">
+                <SwearJarRecent />
+            </div>
         </div>
     )
 }
