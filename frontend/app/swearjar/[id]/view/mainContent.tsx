@@ -18,7 +18,7 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
         queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar?id=${swearJarId}`),
         refetchOnWindowFocus: "always",
     });
-    if (isLoading) return <p>Loading...</p>;
+    if (isLoading) return <span className="daisy-loading daisy-loading-dots daisy-loading-lg text-primary"></span>;
     if (!data?.swearJar) return <p>Swear Jar does not exist</p>;
     return (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-y-3 gap-x-4">
