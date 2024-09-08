@@ -21,14 +21,14 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
     if (isLoading) return <p>Loading...</p>;
     if (!data?.swearJar) return <p>Swear Jar does not exist</p>;
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-4">
-            <div className="col-span-1 md:col-span-2 order-1">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-y-3 gap-x-4">
+            <div className="col-span-1 md:col-span-5 order-1">
                 <BreadcrumbHeader title={data.swearJar.Name} subtitle={data.swearJar.Desc} />
             </div>
-            <div className="col-span-1 order-3 md:order-2">
+            <div className="col-span-1 md:col-span-3 order-3 md:order-2">
                 <SwearJarTrends />
             </div>
-            <div className="col-span-1 order-2 md:order-3">
+            <div className="col-span-1 md:col-span-2 order-2 md:order-3 space-y-2">
                 <SwearJarInfo {...data.swearJar} />
             </div>
             {/* <div className="col-span-0 md:col-span-1 md:order-4">GAP</div> */}
