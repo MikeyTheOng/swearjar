@@ -10,7 +10,7 @@ interface SwearJarCardProps {
 
 export default function SwearJarCard({ swearJar }: SwearJarCardProps) {
     return (
-        <Card className="group box-border w-full bg-white rounded-2xl hover:shadow-md hover:translate-y-[-2px] transition-all ease-in-out duration-300">
+        <Card className="group box-border w-full bg-white rounded-2xl hover:shadow-md hover:translate-y-[-2px] active:shadow-md active:translate-y-[-2px] transition-all ease-in-out duration-300">
             <CardContent className="p-4 relative">
                 <div className="flex flex-col justify-between gap-2 w-full">
                     <div className="flex items-center">
@@ -29,7 +29,7 @@ export default function SwearJarCard({ swearJar }: SwearJarCardProps) {
                     </div>
                 </div>
                 <div className="absolute right-0 inset-y-0 mr-2 flex items-center">
-                    <SlArrowRight size={20} className="text-foreground/50 group-hover:text-foreground group-hover:scale-110 transition-all ease-in-out duration-300" />
+                    <SlArrowRight size={20} className="text-foreground/50 group-hover:text-foreground group-hover:scale-110 transition-all ease-in-out duration-300 group-active:text-foreground group-active:scale-110" />
                 </div>
             </CardContent>
         </Card>
