@@ -1,0 +1,34 @@
+diff --git a/node_modules/recharts/es6/cartesian/getTicks.js b/node_modules/recharts/es6/cartesian/getTicks.js
+index 6c8e95d..96fa58b 100644
+--- a/node_modules/recharts/es6/cartesian/getTicks.js
++++ b/node_modules/recharts/es6/cartesian/getTicks.js
+@@ -103,7 +103,15 @@ function getTicksStart(sign, boundaries, getTickSize, ticks, minTickGap, preserv
+   }
+   return result;
+ }
+-export function getTicks(props, fontSize, letterSpacing) {
++export function getTicks(props, fontSize = '12px', letterSpacing) {
++  // console.log('getTicks es6!!')
++  // if (fontSize === undefined) {
++  //   console.log('fontSize is undefined')
++  // } else if (fontSize == "") {
++  //   console.log('fontSize is empty')
++  // } else {
++  //   console.log('fontSize:', fontSize)
++  // }
+   var tick = props.tick,
+     ticks = props.ticks,
+     viewBox = props.viewBox,
+diff --git a/node_modules/recharts/lib/cartesian/getTicks.js b/node_modules/recharts/lib/cartesian/getTicks.js
+index aa0040f..7382b05 100644
+--- a/node_modules/recharts/lib/cartesian/getTicks.js
++++ b/node_modules/recharts/lib/cartesian/getTicks.js
+@@ -111,6 +111,8 @@ function getTicksStart(sign, boundaries, getTickSize, ticks, minTickGap, preserv
+   return result;
+ }
+ function getTicks(props, fontSize, letterSpacing) {
++  console.log("getTicks lib!")
++  console.log("fontSize:", fontSize)
+   var tick = props.tick,
+     ticks = props.ticks,
+     viewBox = props.viewBox,
