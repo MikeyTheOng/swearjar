@@ -32,7 +32,7 @@ export default function CreateSwearJarForm() {
     const { register, handleSubmit, formState: { isSubmitSuccessful, errors } } = methods;
     const onSubmit = async (data: any) => {
         try {
-            const response = await fetch('/api/swearJar', {
+            const response = await fetch('/api/swearjar', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
