@@ -13,14 +13,14 @@ export default function SwearJarInfo(swearJar: SwearJar) {
                     <p className="text-xs">Currently in <b>{swearJar.Name}</b></p>
                 </div>
                 <div>
-                    <Button variant="outline" className="rounded-full bg-transparent md:border-none md:hover:bg-primary/60" size="icon">
+                    <Button variant="plain" className="rounded-full md:border-none" size="icon">
                         <HiOutlinePencil size={20} />
                     </Button>
                 </div>
             </div>
             <hr className="border-foreground/20" />
             <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 border-secondary text-secondary bg-secondary/10 hover:bg-secondary/30 focus-visible:ring-secondary">Empty</Button>
+                <Button variant="outline" className="flex-1 border-secondary text-secondary bg-secondary/10 hover:bg-secondary/30 focus-visible:ring-secondary active:bg-secondary/30">Empty</Button>
                 <Button className="flex-1">Oops!</Button>
             </div>
         </div>

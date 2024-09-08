@@ -42,7 +42,7 @@ export default function SwearJarTrends() {
         <Card className="border-none shadow-none">
             <div className="p-0 flex flew-row justify-between items-center">
                 <CardTitle className="text-lg font-medium tracking-tighter">Trend</CardTitle>
-                <Button className="py-0 px-2 h-7 text-xs bg-white border border-neutral-200 rounded-full text">Past 7 Days</Button>
+                <Button className="py-0 px-2 h-7 text-xs rounded-full" variant="plain">Past 7 Days</Button>
             </div>
             <CardContent className="mt-2 p-0">
                 <ChartContainer config={chartConfig}>
