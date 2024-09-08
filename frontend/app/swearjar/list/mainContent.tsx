@@ -1,31 +1,31 @@
 "use client"
 
 import { fetcher } from "@/lib/utils";
-import { SwearJar } from "@/lib/types";
+import { SwearJarProp } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/shadcn/button";
 import ErrorAlert from "@/components/shared/ErrorAlert";
 import { GoPlus } from "react-icons/go";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/shadcn/input";
 import Link from "next/link";
 import SwearJarCard from "@/components/app/swearjar/listing/SwearJarCard";
 
 interface SwearJarApiResponse {
     msg: string;
-    swearJars: SwearJar[];
+    swearJars: SwearJarProp[];
 }
 
 export default function MainContent() {
     const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
-        queryKey: ['swearJars'], 
-        queryFn: () => fetcher<SwearJarApiResponse>('/api/swearJar'),
+        queryKey: ['swearjar'],
+        queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
         refetchOnWindowFocus: "always",
     });
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [filteredSwearJars, setFilteredSwearJars] = useState<SwearJar[]>([]);
+    const [filteredSwearJars, setFilteredSwearJars] = useState<SwearJarProp[]>([]);
 
     useEffect(() => {
         if (data?.swearJars) {
@@ -68,10 +68,10 @@ export default function MainContent() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-1 md:gap-x-5 md:gap-y-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
-                    {filteredSwearJars.map((swearJar: SwearJar) => (
-                        <div key={swearJar.Name} className="col-span-1">
+                    {filteredSwearJars.map((swearJar: SwearJarProp) => (
+                        <Link key={swearJar.SwearJarId} href={`/swearjar/${swearJar.SwearJarId}/view`} className="col-span-1">
                             <SwearJarCard swearJar={swearJar} />
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}

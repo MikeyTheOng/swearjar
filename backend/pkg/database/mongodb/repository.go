@@ -85,6 +85,25 @@ func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJ
 	return swearJars, nil
 }
 
+func (r *MongoRepository) GetSwearJarById(swearJarId string) (swearJar.SwearJar, error) {
+	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
+	if err != nil {
+		return swearJar.SwearJar{}, fmt.Errorf("invalid SwearJarId: %v", err)
+	}
+
+	var sj swearJar.SwearJar
+	filter := bson.M{"_id": swearJarIdHex}
+	err = r.swearJars.FindOne(context.TODO(), filter).Decode(&sj)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return swearJar.SwearJar{}, fmt.Errorf("swear jar not found: %v", err)
+		}
+		return swearJar.SwearJar{}, fmt.Errorf("error fetching swear jar: %v", err)
+	}
+
+	return sj, nil
+}
+
 func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) (swearJar.SwearJar, error) {
 	// Convert []string to []primitive.ObjectID in one go
 	ownerIDs := make([]primitive.ObjectID, len(sj.Owners))

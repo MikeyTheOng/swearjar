@@ -1,6 +1,6 @@
-const ErrorMsg = ({ message }: { message: string }) => {
+const ErrorMsg = ({ message, className }: { message: string; className?: string }) => {
     return (
-        <div role="alert" className="daisy-alert daisy-alert-error bg-error/10 border-error text-error rounded-lg flex justify-center p-2">
+        <div role="alert" className={`daisy-alert daisy-alert-error bg-error/10 border-error text-error rounded-lg flex justify-center p-2 ${className}`}>
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6 shrink-0 stroke-current"

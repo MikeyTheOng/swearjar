@@ -1,6 +1,6 @@
 'use client'
 
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/shadcn/input"
 import { useState } from 'react';
 import { IoEye, IoEyeOff } from "react-icons/io5";
 import { IconContext } from "react-icons";

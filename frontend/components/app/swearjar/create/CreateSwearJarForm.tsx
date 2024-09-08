@@ -3,10 +3,10 @@ import Confetti from 'react-confetti-boom';
 import { User } from '@/lib/types';
 import { useRouter } from 'next/navigation'
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/shadcn/button";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
+import { Textarea } from "@/components/ui/shadcn/textarea";
 import { useForm, FormProvider, FieldError } from "react-hook-form";
 import AddUserComboBox from "./AddUserComboBox";
 import ErrorMessage from '@/components/shared/ErrorMessage';
@@ -32,7 +32,7 @@ export default function CreateSwearJarForm() {
     const { register, handleSubmit, formState: { isSubmitSuccessful, errors } } = methods;
     const onSubmit = async (data: any) => {
         try {
-            const response = await fetch('/api/swearJar', {
+            const response = await fetch('/api/swearjar', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

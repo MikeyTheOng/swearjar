@@ -1,6 +1,6 @@
 import { Session } from "next-auth";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/shadcn/button";
 import { FaBars } from "react-icons/fa6";
 import Link from 'next/link'
 import {
@@ -8,7 +8,7 @@ import {
     SheetContent,
     SheetTitle,
     SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/components/ui/shadcn/sheet"
 import SignOutButton from "@/components/shared/SignOutButton";
 
 export default function Navbar({ session }: { session: Session | null }) {

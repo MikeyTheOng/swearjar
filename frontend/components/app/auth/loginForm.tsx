@@ -4,10 +4,10 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/shadcn/button"
 import ErrorAlert from "@/components/shared/ErrorAlert";
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/shadcn/input"
+import { Label } from "@/components/ui/shadcn/label"
 import PasswordInput from "./passwordInput";
 import toast, { ErrorIcon } from "react-hot-toast";
 
