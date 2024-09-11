@@ -191,7 +191,7 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	_, err = r.swears.InsertOne(
 		context.TODO(),
 		bson.D{
-			{Key: "DateTime", Value: s.DateTime},
+			{Key: "CreatedAt", Value: s.CreatedAt},
 			{Key: "Active", Value: s.Active},
 			{Key: "UserId", Value: userIdHex},
 			{Key: "SwearJarId", Value: swearJarIdHex},
@@ -200,7 +200,7 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 
 	// Debugging
 	// const layout = "Jan 2, 2006 at 3:04pm (MST)"
-	// fmt.Printf("Added Swear{DateTime: %v, Active: %v, UserId: %V}\n", s.DateTime.Format(layout), s.Active, s.UserId.Hex())
+	// fmt.Printf("Added Swear{CreatedAt: %v, Active: %v, UserId: %V}\n", s.CreatedAt.Format(layout), s.Active, s.UserId.Hex())
 	return err
 }
 

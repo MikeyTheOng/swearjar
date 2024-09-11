@@ -205,7 +205,7 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := swearJar.Swear{
-		DateTime:   time.Now(),
+		CreatedAt:  time.Now(),
 		Active:     true,
 		UserId:     req.UserId,
 		SwearJarId: req.SwearJarId,
