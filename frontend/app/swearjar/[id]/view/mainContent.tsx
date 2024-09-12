@@ -3,7 +3,7 @@ import { fetcher } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader";
-import { SwearJar } from "@/lib/types";
+import { SwearJar, SwearJarProp } from "@/lib/types";
 import SwearJarInfo from "@/components/app/swearjar/view/SwearJarInfo";
 import SwearJarTrends from "@/components/app/swearjar/view/SwearJarTrends";
 import SwearJarRecent from "@/components/app/swearjar/view/SwearJarRecent";
@@ -29,7 +29,7 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
                 <SwearJarTrends />
             </div>
             <div className="col-span-1 md:col-span-2 order-2 md:order-3 space-y-2">
-                <SwearJarInfo {...data.swearJar} />
+                <SwearJarInfo {...data.swearJar as SwearJarProp} />
                 <span className="hidden md:block">
                     <SwearJarRecent />
                 </span>
