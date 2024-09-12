@@ -17,8 +17,8 @@ type Repository interface {
 	GetSwearJarsByUserId(swearJarId string) ([]SwearJar, error)
 	GetSwearJarById(swearJarId string) (SwearJar, error)
 	CreateSwearJar(SwearJar) (SwearJar, error)
-	AddSwear(Swear) error
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
+	AddSwear(Swear) error
 	// TODO: GetSwears() []Swear
 }
 
