@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from 'next/navigation'
 
+import FloatingActionButton from "@/components/shared/FloatingActionButton";
 import Footer from "@/components/layout/footer";
 import Navbar from "@/components/layout/navbar";
 
@@ -19,6 +20,9 @@ export default async function CreateSJLayout({
             <main className="flex-grow flex justify-center px-4 mt-7 mb-7">
                 {children}
             </main>
+            <div className="sm:hidden">
+                <FloatingActionButton />
+            </div>
             <Footer />
         </section>
     );
