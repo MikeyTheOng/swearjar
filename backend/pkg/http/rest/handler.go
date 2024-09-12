@@ -198,9 +198,16 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req Request
-	err := json.NewDecoder(r.Body).Decode(&req)
+	userId, err := GetUserIdFromCookie(w, r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	req.UserId = userId
+
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -212,12 +219,24 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.sjService.AddSwear(s)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if errors.Is(err, authentication.ErrUnauthorized) {
+			RespondWithError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
+	response := map[string]interface{}{
+		"msg": "Successfully added swear",
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Swear added successfully"))
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
