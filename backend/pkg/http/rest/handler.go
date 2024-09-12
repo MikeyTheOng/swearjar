@@ -193,8 +193,9 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
-		UserId     string `json:"userId"`
-		SwearJarId string `json:"SwearJarId"`
+		UserId           string `json:"userId"`
+		SwearJarId       string `json:"SwearJarId"`
+		SwearDescription string `json:"SwearDescription"`
 	}
 
 	var req Request
@@ -215,7 +216,8 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:  time.Now(),
 		Active:     true,
 		UserId:     req.UserId,
-		SwearJarId: req.SwearJarId,
+		SwearJarId:  req.SwearJarId,
+		SwearDescription: req.SwearDescription,
 	}
 	err = h.sjService.AddSwear(s)
 	if err != nil {

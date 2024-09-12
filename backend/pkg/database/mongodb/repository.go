@@ -195,6 +195,7 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 			{Key: "Active", Value: s.Active},
 			{Key: "UserId", Value: userIdHex},
 			{Key: "SwearJarId", Value: swearJarIdHex},
+			{Key: "SwearDescription", Value: s.SwearDescription},
 		},
 	)
 
