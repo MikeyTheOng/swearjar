@@ -5,7 +5,6 @@ import { SwearJarProp } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
-import { Button } from "@/components/ui/shadcn/button";
 import ErrorAlert from "@/components/shared/ErrorAlert";
 import { GoPlus } from "react-icons/go";
 import { Input } from "@/components/ui/shadcn/input";
@@ -44,17 +43,15 @@ export default function MainContent() {
                     placeholder="Find your Swear Jar by name"
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Link href="/swearjar/create">
-                    <Button className="p-2 hover:text-foreground">
-                        <span className="flex items-center sm:hidden">
-                            <p className="font-semibold">New</p>
-                            <GoPlus size={18} style={{ strokeWidth: 2 }} />
-                        </span>
-                        <span className="hidden sm:flex items-center gap-1">
-                            <p>Swear Jar</p>
-                            <GoPlus size={18} style={{ strokeWidth: 2 }} />
-                        </span>
-                    </Button>
+                <Link href="/swearjar/create" className="h-10 p-2 hover:text-foreground bg-primary text-foreground hover:bg-primary/70 active:bg-primary/70 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transition ease-in-out duration-300">
+                    <span className="flex items-center sm:hidden">
+                        <p className="font-semibold">New</p>
+                        <GoPlus size={18} style={{ strokeWidth: 2 }} className="ml-1 group-hover:rotate-90 transition-transform duration-300" />
+                    </span>
+                    <span className="hidden sm:flex items-center gap-1">
+                        <p>Swear Jar</p>
+                        <GoPlus size={18} style={{ strokeWidth: 2 }} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </span>
                 </Link>
             </div>
             {isLoading ? (
@@ -69,7 +66,7 @@ export default function MainContent() {
             ) : (
                 <div className="grid grid-cols-1 gap-1 md:gap-x-5 md:gap-y-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
                     {filteredSwearJars.map((swearJar: SwearJarProp) => (
-                        <Link key={swearJar.SwearJarId} href={`/swearjar/${swearJar.SwearJarId}/view`} className="col-span-1">
+                        <Link key={swearJar.SwearJarId} href={`/swearjar/${swearJar.SwearJarId}/view`} className="col-span-1 transition ease-in-out duration-300 rounded-xl ring-transparent focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus:outline-none">
                             <SwearJarCard swearJar={swearJar} />
                         </Link>
                     ))}

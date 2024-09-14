@@ -15,7 +15,7 @@ export default function FloatingActionButton() {
     return (
         <Drawer>
             <DrawerTrigger
-                className="flex items-center justify-center bottom-14 w-14 h-14 fixed right-8 bg-primary hover:bg-primary/70 rounded-full shadow-lg z-50"
+                className="flex items-center justify-center bottom-14 w-14 h-14 fixed right-8 bg-primary hover:bg-primary/70 rounded-full shadow-lg z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
 
                 <PiTipJarLight size={40} />

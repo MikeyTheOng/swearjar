@@ -56,7 +56,15 @@ const MobileNavbar = ({ session }: { session: Session | null }) => {
 
 const NavigationLinks = ({ name }: { name?: string }) => {
     return (
-        <ul className='flex flex-col gap-1 text-xl tracking-tight sm:flex-row sm:items-center sm:gap-4 sm:text-base sm:tracking-normal'>
+        <ul
+            className="
+                flex flex-col gap-1 text-xl tracking-tight
+                sm:flex-row sm:items-center sm:gap-4 sm:text-base sm:tracking-normal 
+                [&_a]:rounded-md [&_a]:ring-transparent [&_a]:transition-colors [&_a]:duration-300
+                [&_a:focus]:outline-none
+                [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-primary [&_a:focus-visible]:ring-offset-2
+            "
+        >
             <li>
                 <Link href="/">Home</Link>
             </li>
