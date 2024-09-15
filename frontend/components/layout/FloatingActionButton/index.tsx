@@ -1,7 +1,9 @@
 "use client"
 import { fetcher } from '@/lib/utils';
 import { SwearJarApiResponse } from '@/lib/apiTypes';
-import { SwearJar } from '@/lib/types';
+import { SwearJarProp } from '@/lib/types';
+import { useAddSwear } from '@/components/shared/hooks/useAddSwear';
+
 import { useMediaQuery } from 'usehooks-ts'
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -38,7 +40,8 @@ export default function FloatingActionButton() {
   });
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const [open, setOpen] = useState(false)
-  const [selectedSwearJar, setSelectedSwearJar] = useState<SwearJar | null>(null)
+  const [selectedSwearJar, setSelectedSwearJar] = useState<SwearJarProp | null>(null)
+  const { handleAddSwear } = useAddSwear(selectedSwearJar?.SwearJarId || "")
 
   if (isDesktop) {
     return (
@@ -63,7 +66,16 @@ export default function FloatingActionButton() {
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <Button className="w-fit ml-auto px-5">Confirm</Button>
+                  <Button
+                    className="w-fit ml-auto px-5"
+                    disabled={!selectedSwearJar}
+                    onClick={() => {
+                      handleAddSwear()
+                      setOpen(false)
+                    }}
+                  >
+                    Submit
+                  </Button>
                 </DialogFooter>
               </>
           }
@@ -85,17 +97,27 @@ export default function FloatingActionButton() {
               <DrawerHeader>
                 <DrawerTitle className="text-lg leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground font-bold">Add to Swear Jar?</DrawerTitle>
                 <DrawerDescription className="text-sm text-input/50 tracking-tighter">Adds one swear to selected jar</DrawerDescription>
-              </DrawerHeader><div className="p-4">
+              </DrawerHeader>
+              <div className="px-4">
                 <SwearJarSelector
                   selectedSwearJar={selectedSwearJar}
                   setSelectedSwearJar={setSelectedSwearJar}
                   data={data?.swearJars}
                   isLoading={isLoading} />
-              </div><DrawerFooter>
-                <Button>Submit</Button>
-                <DrawerClose>
+              </div>
+              <DrawerFooter>
+                <Button
+                  disabled={!selectedSwearJar}
+                  onClick={() => {
+                    handleAddSwear()
+                    setOpen(false)
+                  }}
+                >
+                  Submit
+                </Button>
+                {/* <DrawerClose>
                   <Button variant="outline">Cancel</Button>
-                </DrawerClose>
+                </DrawerClose> */}
               </DrawerFooter>
             </>
         }

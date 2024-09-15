@@ -4,12 +4,12 @@ import { useState } from "react"
 import { Button } from "@/components/ui/shadcn/button"
 import { CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandDialog } from "@/components/ui/shadcn/command"
 import { ChevronsUpDown, Check, } from "lucide-react"
-import { SwearJar } from "@/lib/types"
+import { SwearJarProp } from "@/lib/types"
 
 interface SwearJarSelectorProps {
-    selectedSwearJar: SwearJar | null;
-    setSelectedSwearJar: (value: SwearJar | null) => void;
-    data?: SwearJar[];
+    selectedSwearJar: SwearJarProp | null; // Changed to SwearJarProp
+    setSelectedSwearJar: (value: SwearJarProp | null) => void; // Changed to SwearJarProp
+    data?: SwearJarProp[]; // Changed to SwearJarProp
     isLoading: boolean;
 }
 
