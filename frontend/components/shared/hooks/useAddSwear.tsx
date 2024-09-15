@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 import toast, { ErrorIcon } from 'react-hot-toast';
-import { Response } from '@/lib/apiTypes';
+import { BaseResponse } from '@/lib/apiTypes';
 import { swearDescriptions } from '@/lib/constants';
 
 export function useAddSwear(swearJarId: string) {
@@ -27,7 +27,7 @@ export function useAddSwear(swearJarId: string) {
         return data;
     }
 
-    const addSwearMutation = useMutation<Response, Error, undefined, { toastId: string }>({
+    const addSwearMutation = useMutation<BaseResponse, Error, undefined, { toastId: string }>({
         mutationFn: addSwear,
         onMutate: () => {
             const toastId = toast.success(
