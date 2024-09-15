@@ -5,7 +5,7 @@ import FloatingActionButton from "@/components/layout/FloatingActionButton";
 import Footer from "@/components/layout/footer";
 import Navbar from "@/components/layout/navbar";
 
-export default async function CreateSJLayout({
+export default async function SwearJarLayout({
     children,
 }: {
     children: React.ReactNode
