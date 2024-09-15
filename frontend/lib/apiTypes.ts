@@ -1,6 +1,9 @@
 import { SwearJarProp } from "./types";
 
-export interface SwearJarApiResponse {
+export interface BaseResponse {
     msg: string;
+}
+
+export interface SwearJarApiResponse extends BaseResponse {
     swearJars: SwearJarProp[];
 }
