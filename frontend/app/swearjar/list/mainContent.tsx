@@ -2,6 +2,7 @@
 
 import { fetcher } from "@/lib/utils";
 import { SwearJarProp } from "@/lib/types";
+import { SwearJarApiResponse } from "@/lib/apiTypes";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
@@ -10,11 +11,6 @@ import { GoPlus } from "react-icons/go";
 import { Input } from "@/components/ui/shadcn/input";
 import Link from "next/link";
 import SwearJarCard from "@/components/app/swearjar/listing/SwearJarCard";
-
-interface SwearJarApiResponse {
-    msg: string;
-    swearJars: SwearJarProp[];
-}
 
 export default function MainContent() {
     const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
