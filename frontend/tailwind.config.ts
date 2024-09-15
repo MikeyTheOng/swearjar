@@ -21,7 +21,7 @@ const config = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border) / <alpha-value></alpha-value>)",
+        border: "hsl(var(--border) / <alpha-value>)",
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
         background: {
@@ -36,14 +36,14 @@ const config = {
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
-          foreground: "hsl(ar(--secondary-foreground) / <alpha-value>)",
+          foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
           foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted) / <alpha-value)>",
+          DEFAULT: "hsl(var(--muted) / <alpha-value>)",
           foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
         },
         accent: {
@@ -52,7 +52,7 @@ const config = {
         },
         popover: {
           DEFAULT: "hsl(var(--popover) / <alpha-value>)",
-          foreground: "hsl(var(--popover-foreground / <alpha-value>)",
+          foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
         },
         card: {
           DEFAULT: "hsl(var(--card) / <alpha-value>)",
