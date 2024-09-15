@@ -2,31 +2,19 @@ import { cn } from "@/lib/utils"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/shadcn/button"
-import { Popover, PopoverTrigger, PopoverContent } from "@radix-ui/react-popover"
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandDialog } from "@/components/ui/shadcn/command"
+import { CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandDialog } from "@/components/ui/shadcn/command"
 import { ChevronsUpDown, Check, } from "lucide-react"
+import { SwearJar } from "@/lib/types"
 
-import {
-    Calculator,
-    Calendar,
-    CreditCard,
-    Settings,
-    Smile,
-    User,
-} from "lucide-react"
+interface SwearJarSelectorProps {
+    selectedSwearJar: SwearJar | null;
+    setSelectedSwearJar: (value: SwearJar | null) => void;
+    data?: SwearJar[];
+    isLoading: boolean;
+}
 
-export default function SwearJarSelector() {
+export default function SwearJarSelector({ selectedSwearJar, setSelectedSwearJar, data, isLoading }: SwearJarSelectorProps) {
     const [open, setOpen] = useState(false)
-    const [value, setValue] = useState("")
-
-    // TODO: Replace with actual swear jars
-    const frameworks = [
-        { value: "next.js", label: "Next.js" },
-        { value: "sveltekit", label: "SvelteKit" },
-        { value: "nuxt.js", label: "Nuxt.js" },
-        { value: "remix", label: "Remix" },
-        { value: "astro", label: "Astro" },
-    ]
 
     return (
         <>
@@ -34,42 +22,45 @@ export default function SwearJarSelector() {
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-full justify-between bg-transparent"
+                className="w-full justify-between bg-transparent hover:bg-primary/60"
                 onClick={() => setOpen(!open)}
+                disabled={isLoading}
             >
-                {value
-                    ? frameworks.find((framework) => framework.value === value)?.label
-                    : "Select Swear Jar..."}
+                {isLoading
+                    ? <span className="daisy-loading daisy-loading-dots daisy-loading-md text-primary"></span>
+                    : selectedSwearJar
+                        ? data?.find((swearJarOption) => swearJarOption.Name === selectedSwearJar.Name)?.Name || "Select Swear Jar..."
+                        : "Select Swear Jar..."
+                }
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
-            <CommandDialog open={open} onOpenChange={setOpen}>
-                <CommandInput placeholder="Type a command or search..." />
-                <CommandList>
+            <CommandDialog open={open} onOpenChange={setOpen} dialogContentClassName="w-[359px] sm:w-full">
+                <CommandInput placeholder="Search for Swear Jar by name..." className="w-full h-12 bg-white rounded-md border border-input/10" />
+                <CommandList className="bg-white max-h-[204px] sm:max-h-[248px] overflow-y-auto">
                     <CommandEmpty>No results found.</CommandEmpty>
-                    <CommandGroup>
-                        {frameworks.map((framework) => (
-                            <CommandItem 
-                                key={framework.value} 
-                                value={framework.value} 
-                                className="cursor-pointer"
-                                onSelect={(currentValue) => {
-                                    setValue(currentValue)
+                    <CommandGroup heading="Swear Jars">
+                        {data?.map((swearJarOption) => (
+                            <CommandItem
+                                key={swearJarOption.Name}
+                                value={swearJarOption.Name}
+                                className="cursor-pointer hover:bg-primary/60"
+                                onSelect={() => {
+                                    setSelectedSwearJar(swearJarOption)
                                     setOpen(false)
-                                    console.log(currentValue, "selected")
                                 }}
                             >
+                                {swearJarOption.Name}
                                 <Check
                                     className={cn(
-                                        "mr-2 h-4 w-4",
-                                        value === framework.value ? "opacity-100" : "opacity-0"
+                                        "ml-2 h-4 w-4 stroke-secondary",
+                                        selectedSwearJar?.Name === swearJarOption.Name ? "opacity-100" : "opacity-0"
                                     )}
                                 />
-                                {framework.label}
                             </CommandItem>
                         ))}
                     </CommandGroup>
                 </CommandList>
-            </CommandDialog>
+            </CommandDialog >
         </>
     )
 }
