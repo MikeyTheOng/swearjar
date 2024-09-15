@@ -1,9 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from 'next/navigation'
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
 import FloatingActionButton from "@/components/layout/FloatingActionButton";
 import Footer from "@/components/layout/footer";
 import Navbar from "@/components/layout/navbar";
+import { fetcher } from "@/lib/utils";
+import { SwearJarApiResponse } from "@/lib/apiTypes";
 
 export default async function SwearJarLayout({
     children,
@@ -14,14 +17,27 @@ export default async function SwearJarLayout({
     if (!session) {
         redirect('/auth/login')
     }
+    
+    const queryClient = new QueryClient()
+    try {
+        await queryClient.prefetchQuery<SwearJarApiResponse>({
+            queryKey: ['swearjar'],
+            queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
+        })
+    } catch (error) {
+        console.error("Error during prefetch:", error);
+    }
+
     return (
-        <section className="h-dvh flex flex-col">
-            <Navbar session={session} />
-            <main className="flex-grow flex justify-center px-4 mt-7 mb-7">
-                {children}
-            </main>
-            <FloatingActionButton />
-            <Footer />
-        </section>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+            <section className="h-dvh flex flex-col">
+                <Navbar session={session} />
+                <main className="flex-grow flex justify-center px-4 mt-7 mb-7">
+                    {children}
+                </main>
+                <FloatingActionButton />
+                <Footer />
+            </section>
+        </HydrationBoundary>
     );
 }
