@@ -3,6 +3,7 @@ import { fetcher } from '@/lib/utils';
 import { SwearJarApiResponse } from '@/lib/apiTypes';
 import { SwearJarProp } from '@/lib/types';
 import { useAddSwear } from '@/components/shared/hooks/useAddSwear';
+import { usePathname } from 'next/navigation';
 
 import { useMediaQuery } from 'usehooks-ts'
 import { useQuery } from '@tanstack/react-query';
@@ -33,6 +34,13 @@ import SwearJarSelector from './SwearJarSelector';
 import ErrorAlert from '@/components/shared/ErrorAlert';
 
 export default function FloatingActionButton({ userId }: { userId: string }) {
+  // Hide FAB if on `/swearjar/create` page
+  const pathname = usePathname();
+  const shouldHideFAB = pathname === '/swearjar/create';
+  if (shouldHideFAB) {
+    return null;
+  }
+
   const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
     queryKey: [`swearjar`],
     queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar`),
@@ -41,16 +49,16 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const [open, setOpen] = useState(false)
   const [selectedSwearJar, setSelectedSwearJar] = useState<SwearJarProp | null>(() => {
-    const lastSelectedSJString = localStorage.getItem('lastSelectedSwearJar');
-    const lastSelectedSJ: SwearJarProp | null = lastSelectedSJString ? JSON.parse(lastSelectedSJString) : null;
+    // const lastSelectedSJString = localStorage.getItem('lastSelectedSwearJar');
+    // const lastSelectedSJ: SwearJarProp | null = lastSelectedSJString ? JSON.parse(lastSelectedSJString) : null;
 
-    if (lastSelectedSJ?.Owners) {
-      const isOwner = lastSelectedSJ.Owners.includes(userId);
-      if (isOwner) {
-        console.log("isOwner")
-        return lastSelectedSJ;
-      }
-    }
+    // if (lastSelectedSJ?.Owners) {
+    //   const isOwner = lastSelectedSJ.Owners.includes(userId);
+    //   if (isOwner) {
+    //     console.log("isOwner")
+    //     return lastSelectedSJ;
+    //   }
+    // }
     return null;
   });
   const { handleAddSwear } = useAddSwear(selectedSwearJar?.SwearJarId || "")
