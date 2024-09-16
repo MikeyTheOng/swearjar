@@ -2,7 +2,10 @@ package swearJar
 
 import (
 	"fmt"
+	"log"
 	"time"
+
+	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 )
 
 type Service interface {
@@ -17,8 +20,8 @@ type Repository interface {
 	GetSwearJarsByUserId(swearJarId string) ([]SwearJar, error)
 	GetSwearJarById(swearJarId string) (SwearJar, error)
 	CreateSwearJar(SwearJar) (SwearJar, error)
-	AddSwear(Swear) error
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
+	AddSwear(Swear) error
 	// TODO: GetSwears() []Swear
 }
 
@@ -58,7 +61,8 @@ func (s *service) AddSwear(swear Swear) error {
 		}
 	}
 	if !isOwner {
-		return fmt.Errorf("User ID: %s is not an owner of SwearJar ID: %s", swear.UserId, swear.SwearJarId)
+		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", swear.UserId, swear.SwearJarId)
+		return authentication.ErrUnauthorized
 	}
 
 	return s.r.AddSwear(swear)

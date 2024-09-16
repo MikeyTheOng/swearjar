@@ -9,7 +9,7 @@ package mongodb
 // type Swear struct {
 // 	ObjectID   primitive.ObjectID `bson:"_id,omitempty"`
 // 	UserId     primitive.ObjectID `bson:"user_id"`
-// 	DateTime   time.Time          `bson:"date_time"`
+// 	CreatedAt  time.Time          `bson:"created_at"`
 // 	Active     bool               `bson:"active"`
 // 	SwearJarId primitive.ObjectID `bson:"swear_jar_id"`
 // }
