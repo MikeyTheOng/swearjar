@@ -66,7 +66,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger className="flex items-center justify-center bottom-14 w-14 h-14 fixed right-8 bg-primary hover:bg-primary/70 rounded-full shadow-lg z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+        <DialogTrigger className="flex items-center justify-center bottom-20 right-8 w-14 h-14 fixed bg-primary hover:bg-primary/70 rounded-full shadow-lg z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
           <PiTipJarLight size={40} />
         </DialogTrigger>
         <DialogContent className="bg-white w-[425px]">
@@ -107,7 +107,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
   // TODO: Add close button to top-right and replace with down arrow (discord)
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger className="flex items-center justify-center bottom-14 w-14 h-14 fixed right-8 bg-primary hover:bg-primary/70 rounded-full shadow-lg z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+      <DrawerTrigger className="flex items-center justify-center bottom-14 right-8 w-14 h-14 fixed bg-primary hover:bg-primary/70 rounded-full shadow-lg z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
         <PiTipJarLight size={40} />
       </DrawerTrigger>
       <DrawerContent className="bg-white">
