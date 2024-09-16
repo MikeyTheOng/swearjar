@@ -32,7 +32,7 @@ import { PiTipJarLight } from "react-icons/pi";
 import SwearJarSelector from './SwearJarSelector';
 import ErrorAlert from '@/components/shared/ErrorAlert';
 
-export default function FloatingActionButton() {
+export default function FloatingActionButton({ userId }: { userId: string }) {
   const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
     queryKey: [`swearjar`],
     queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar`),
@@ -40,7 +40,19 @@ export default function FloatingActionButton() {
   });
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const [open, setOpen] = useState(false)
-  const [selectedSwearJar, setSelectedSwearJar] = useState<SwearJarProp | null>(null)
+  const [selectedSwearJar, setSelectedSwearJar] = useState<SwearJarProp | null>(() => {
+    const lastSelectedSJString = localStorage.getItem('lastSelectedSwearJar');
+    const lastSelectedSJ: SwearJarProp | null = lastSelectedSJString ? JSON.parse(lastSelectedSJString) : null;
+
+    if (lastSelectedSJ?.Owners) {
+      const isOwner = lastSelectedSJ.Owners.includes(userId);
+      if (isOwner) {
+        console.log("isOwner")
+        return lastSelectedSJ;
+      }
+    }
+    return null;
+  });
   const { handleAddSwear } = useAddSwear(selectedSwearJar?.SwearJarId || "")
 
   if (isDesktop) {
@@ -125,4 +137,3 @@ export default function FloatingActionButton() {
     </Drawer>
   );
 }
-

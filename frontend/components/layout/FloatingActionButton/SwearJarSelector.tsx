@@ -45,8 +45,10 @@ export default function SwearJarSelector({ selectedSwearJar, setSelectedSwearJar
                                 value={swearJarOption.Name}
                                 className="cursor-pointer hover:bg-primary/60"
                                 onSelect={() => {
-                                    setSelectedSwearJar(swearJarOption)
-                                    setOpen(false)
+                                    console.log("Selected Swear Jar:", swearJarOption);
+                                    setSelectedSwearJar(swearJarOption);
+                                    localStorage.setItem('lastSelectedSwearJar', JSON.stringify(swearJarOption));
+                                    setOpen(false);
                                 }}
                             >
                                 {swearJarOption.Name}

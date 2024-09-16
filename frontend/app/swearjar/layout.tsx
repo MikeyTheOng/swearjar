@@ -17,7 +17,7 @@ export default async function SwearJarLayout({
     if (!session) {
         redirect('/auth/login')
     }
-    
+
     const queryClient = new QueryClient()
     try {
         await queryClient.prefetchQuery<SwearJarApiResponse>({
@@ -35,7 +35,7 @@ export default async function SwearJarLayout({
                 <main className="flex-grow flex justify-center px-4 mt-7 mb-7">
                     {children}
                 </main>
-                <FloatingActionButton />
+                <FloatingActionButton userId={session.user.UserId} />
                 <Footer />
             </section>
         </HydrationBoundary>
