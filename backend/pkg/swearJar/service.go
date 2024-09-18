@@ -13,7 +13,7 @@ type Service interface {
 	GetSwearJarById(swearJarId string, userId string) (SwearJar, error)
 	CreateSwearJar(Name string, Desc string, Owners []string) (SwearJar, error)
 	AddSwear(Swear) error
-	// TODO: GetSwears() []Swear
+	GetSwears(swearJarId string, userId string) ([]Swear, error)
 }
 
 type Repository interface {
@@ -22,7 +22,7 @@ type Repository interface {
 	CreateSwearJar(SwearJar) (SwearJar, error)
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	AddSwear(Swear) error
-	// TODO: GetSwears() []Swear
+	GetSwears(swearJarId string, userId string, limit int) ([]Swear, error)
 }
 
 type service struct {
@@ -66,6 +66,16 @@ func (s *service) AddSwear(swear Swear) error {
 	}
 
 	return s.r.AddSwear(swear)
+}
+
+func (s *service) GetSwears(swearJarId string, userId string) ([]Swear, error) {
+	maxSwearsToFetch := 5
+	swears, err := s.r.GetSwears(swearJarId, userId, maxSwearsToFetch)
+	if err != nil {
+		return nil, err
+	}
+
+	return swears, nil
 }
 
 func (s *service) GetSwearJarsByUserId(userId string) ([]SwearJar, error) {

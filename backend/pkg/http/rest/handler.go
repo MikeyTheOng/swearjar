@@ -71,7 +71,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	mux.Handle("/swear", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			// h.GetSwears(w, r)
+			h.GetSwears(w, r)
 		case http.MethodPost:
 			h.AddSwear(w, r)
 		default:
@@ -156,41 +156,6 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
-	type Request struct {
-		Name   string   `bson:"name"`
-		Desc   string   `bson:"desc"`
-		Owners []string `bson:"owners"`
-	}
-
-	var req Request
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		log.Printf("Error decoding JSON request: %v", err)
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	sj, err := h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
-	if err != nil {
-		log.Printf("Error creating SwearJar: %v", err)
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	response := map[string]interface{}{
-		"msg":      "SwearJar created successfully",
-		"swearjar": sj,
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-}
-
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
 		UserId           string `json:"userId"`
@@ -241,6 +206,39 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) GetSwears(w http.ResponseWriter, r *http.Request) {
+	// * Retrieves up to 5 swears from the specified SwearJar. The SwearJarId must be provided as the "id" query parameter
+	swearJarId := r.URL.Query().Get("id")
+	if swearJarId == "" {
+		RespondWithError(w, http.StatusBadRequest, "SwearJarId is required")
+		return
+	}
+
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	swears, err := h.sjService.GetSwears(swearJarId, userId)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg": "swears fetched successfully",
+		"swears": swears,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
 func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
 	// ! Excludes the current user from the search results
 	cookie, err := r.Cookie("jwt")
@@ -284,6 +282,41 @@ func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
+	type Request struct {
+		Name   string   `bson:"name"`
+		Desc   string   `bson:"desc"`
+		Owners []string `bson:"owners"`
+	}
+
+	var req Request
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Printf("Error decoding JSON request: %v", err)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	sj, err := h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
+	if err != nil {
+		log.Printf("Error creating SwearJar: %v", err)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":      "SwearJar created successfully",
+		"swearjar": sj,
+	}
+
+	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

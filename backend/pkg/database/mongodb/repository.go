@@ -205,6 +205,28 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	return err
 }
 
+func (r *MongoRepository) GetSwears(swearJarId string, userId string, limit int) ([]swearJar.Swear, error) {
+	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SwearJarId: %v", err)
+	}
+
+	filter := bson.M{"SwearJarId": swearJarIdHex, "Active": true}
+	findOptions := options.Find().SetSort(bson.D{{Key: "CreatedAt", Value: -1}}).SetLimit(int64(limit))
+	cursor, err := r.swears.Find(context.TODO(), filter, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var swears []swearJar.Swear
+	if err := cursor.All(context.TODO(), &swears); err != nil {
+		return nil, err
+	}
+
+	return swears, nil
+}
+
 func (r *MongoRepository) SignUp(u authentication.User) error {
 	_, err := r.users.InsertOne(
 		context.TODO(),
