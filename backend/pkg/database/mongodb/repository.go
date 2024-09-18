@@ -205,7 +205,7 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	return err
 }
 
-func (r *MongoRepository) GetSwears(swearJarId string, userId string, limit int) ([]swearJar.Swear, error) {
+func (r *MongoRepository) GetSwears(swearJarId string, limit int) ([]swearJar.Swear, error) {
 	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid SwearJarId: %v", err)

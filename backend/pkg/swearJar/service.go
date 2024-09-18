@@ -1,7 +1,7 @@
 package swearJar
 
 import (
-	"fmt"
+	"errors"
 	"log"
 	"time"
 
@@ -9,20 +9,21 @@ import (
 )
 
 type Service interface {
-	GetSwearJarsByUserId(userId string) ([]SwearJar, error)
-	GetSwearJarById(swearJarId string, userId string) (SwearJar, error)
-	CreateSwearJar(Name string, Desc string, Owners []string) (SwearJar, error)
 	AddSwear(Swear) error
+	CreateSwearJar(Name string, Desc string, Owners []string) (SwearJar, error)
+	GetSwearJarById(swearJarId string, userId string) (SwearJar, error)
+	GetSwearJarsByUserId(userId string) ([]SwearJar, error)
 	GetSwears(swearJarId string, userId string) ([]Swear, error)
+	SwearJarTrend(swearJarId string, userId string, period string) (SwearJar, error)
 }
 
 type Repository interface {
-	GetSwearJarsByUserId(swearJarId string) ([]SwearJar, error)
-	GetSwearJarById(swearJarId string) (SwearJar, error)
-	CreateSwearJar(SwearJar) (SwearJar, error)
-	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	AddSwear(Swear) error
-	GetSwears(swearJarId string, userId string, limit int) ([]Swear, error)
+	CreateSwearJar(SwearJar) (SwearJar, error)
+	GetSwearJarById(swearJarId string) (SwearJar, error)
+	GetSwearJarOwners(swearJarId string) (owners []string, err error)
+	GetSwearJarsByUserId(swearJarId string) ([]SwearJar, error)
+	GetSwears(swearJarId string, limit int) ([]Swear, error)
 }
 
 type service struct {
@@ -46,21 +47,9 @@ func (s *service) CreateSwearJar(Name string, Desc string, Owners []string) (Swe
 }
 
 func (s *service) AddSwear(swear Swear) error {
-	// Fetch the owners of the SwearJar
-	owners, err := s.r.GetSwearJarOwners(swear.SwearJarId)
-	if err != nil {
+	if isOwner, err := s.IsOwner(swear.SwearJarId, swear.UserId); err != nil {
 		return err
-	}
-
-	// Check if UserId is an owner of the SwearJar
-	isOwner := false
-	for _, ownerID := range owners {
-		if ownerID == swear.UserId {
-			isOwner = true
-			break
-		}
-	}
-	if !isOwner {
+	} else if !isOwner {
 		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", swear.UserId, swear.SwearJarId)
 		return authentication.ErrUnauthorized
 	}
@@ -69,8 +58,15 @@ func (s *service) AddSwear(swear Swear) error {
 }
 
 func (s *service) GetSwears(swearJarId string, userId string) ([]Swear, error) {
+	if isOwner, err := s.IsOwner(swearJarId, userId); err != nil {
+		return nil, err
+	} else if !isOwner {
+		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", userId, swearJarId)
+		return nil, authentication.ErrUnauthorized
+	}
+
 	maxSwearsToFetch := 5
-	swears, err := s.r.GetSwears(swearJarId, userId, maxSwearsToFetch)
+	swears, err := s.r.GetSwears(swearJarId, maxSwearsToFetch)
 	if err != nil {
 		return nil, err
 	}
@@ -83,22 +79,25 @@ func (s *service) GetSwearJarsByUserId(userId string) ([]SwearJar, error) {
 }
 
 func (s *service) GetSwearJarById(swearJarId string, userId string) (SwearJar, error) {
+	if isOwner, err := s.IsOwner(swearJarId, userId); err != nil {
+		return SwearJar{}, err
+	} else if !isOwner {
+		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", userId, swearJarId)
+		return SwearJar{}, authentication.ErrUnauthorized
+	}
+
 	swearJar, err := s.r.GetSwearJarById(swearJarId)
 	if err != nil {
 		return SwearJar{}, err
 	}
 
-	// Only allow the user to access the SwearJar if they are an owner
-	isOwner := false
-	for _, ownerID := range swearJar.Owners {
-		if ownerID == userId {
-			isOwner = true
-			break
-		}
-	}
-	if !isOwner {
-		return SwearJar{}, fmt.Errorf("User ID: %s is not an owner of SwearJar ID: %s", userId, swearJarId)
+	return swearJar, nil
+}
+
+func (s *service) SwearJarTrend(swearJarId string, userId string, period string) (SwearJar, error) {
+	if period != "days" && period != "weeks" && period != "months" {
+		return SwearJar{}, errors.New("invalid period")
 	}
 
-	return swearJar, nil
+	return SwearJar{}, nil
 }
