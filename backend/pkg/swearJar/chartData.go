@@ -9,7 +9,7 @@ type ChartData struct {
 // {
 // 	"Label": "Saturday",
 // 	"Metrics": {
-// 		"John Doe": 5,
-// 		"Jane Doe": 3
+// 		"userid1": 5,
+// 		"userid2": 3
 // 	}
 // }
