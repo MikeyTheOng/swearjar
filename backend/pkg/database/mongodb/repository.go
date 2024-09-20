@@ -178,33 +178,13 @@ func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string,
 }
 
 func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfDataPoints int) ([]swearJar.ChartData, error) {
-	// ownerIds, err := r.GetSwearJarOwners(swearJarId)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// owners := make(map[string]authentication.UserResponse) // Initialize the map
-	// for _, ownerId := range ownerIds {
-	// 	// log.Printf("OwnerId: %v", ownerId) // ! Debugging
-	// 	user, err := r.GetUserById(ownerId)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	owners[ownerId] = user
-	// }
 
 	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid SwearJarId: %v", err)
 	}
 
-	var results []struct {
-		Date    string         `bson:"date"`
-		Metrics map[string]int `bson:"metrics"`
-	}
-
-	// preallocate formattedResult with expected number of data points
-	formattedResult := make([]swearJar.ChartData, numOfDataPoints)
+	var results []swearJar.ChartData
 
 	switch period {
 	case "days":
@@ -321,8 +301,8 @@ func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfD
 			}}},
 			// Step 11: Project the final structure
 			{{Key: "$project", Value: bson.D{
-				{Key: "date", Value: "$_id"},
-				{Key: "metrics", Value: 1},
+				{Key: "Label", Value: "$_id"},
+				{Key: "Metrics", Value: "$metrics"},
 				{Key: "_id", Value: 0},
 			}}},
 		}
@@ -338,77 +318,12 @@ func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfD
 			return nil, fmt.Errorf("error decoding aggregation results: %v", err)
 		}
 
-		// ! Debugging of pipeline results
-		for _, result := range results {
-			fmt.Printf("Date: %s\n", result.Date)
-			for userID, metric := range result.Metrics {
-				fmt.Printf("  UserID: %s, Count: %d\n", userID, metric)
-				// formattedResult = append(formattedResult, swearJar.ChartData{
-				// 	Label:   result.Date,
-				// 	Metrics: map[string]int{userID: metric},
-				// })
-			}
-		}
-
-		// Define a nested map: date -> userId -> count
-		// userMetrics := make(map[string]map[string]int)
+		// // ! Debugging of pipeline results
 		// for _, result := range results {
-		// 	date, userId := result.ID.Date, result.ID.UserId
-		// 	log.Printf("Date: %s, UserId: %s, Count: %d", date, userId, result.Count)
-		// 	if _, ok := userMetrics[date]; !ok {
-		// 		userMetrics[date] = make(map[string]int)
+		// 	fmt.Printf("Date: %s\n", result.Date)
+		// 	for userID, metric := range result.Metrics {
+		// 		fmt.Printf("  UserID: %s, Count: %d\n", userID, metric)
 		// 	}
-
-		// 	userMetrics[date][userId] = result.Count
-		// }
-
-		// ! Debugging of userMetrics
-		// for date, metrics := range userMetrics {
-		// 	log.Printf("Date: %s", date)
-		// 	for userId, count := range metrics {
-		// 		log.Printf("User: %s, Count: %d", userId, count)
-		// 	}
-		// }
-
-		// * End of aggregation pipeline
-
-		// // * 3. Precompute unique keys for owners -> {`Name|Email}
-		// uniqueKeys := make(map[string]string, len(ownerIds))
-		// for _, ownerId := range ownerIds {
-		// 	owner := owners[ownerId]
-		// 	uniqueKeys[ownerId] = fmt.Sprintf("%s|%s", owner.Name, owner.Email)
-		// }
-
-		// labels := make([]string, numOfDataPoints)
-		// for i := 0; i < numOfDataPoints; i++ {
-		// 	labels[i] = startDate.AddDate(0, 0, i).Format("2006-01-02")
-		// }
-
-		// for _, label := range labels {
-		// 	date, _ := time.Parse("2006-01-02", label)
-		// 	temp := swearJar.ChartData{
-		// 		Label: date.Weekday().String(),
-		// 		Metrics: make(map[string]int),
-		// 	}
-
-		// 	totalCount := 0
-		// 	for _, ownerId := range ownerIds {
-		// 		count := 0
-		// 		for _, result := range results {
-		// 			if result.ID.UserID == ownerId && result.ID.Date == label {
-		// 				count = result.Count
-		// 				break
-		// 			}
-		// 		}
-		// 		owner := owners[ownerId]
-
-		// 		uniqueKey := fmt.Sprintf("%s|%s", owner.Name, owner.Email)
-
-		// 		temp.Metrics[uniqueKey] = count
-		// 		totalCount += count
-		// 	}
-		// 	temp.Metrics["Total"] = totalCount
-		// 	formattedResult = append(formattedResult, temp)
 		// }
 
 	case "weeks":
@@ -420,7 +335,7 @@ func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfD
 	// 	log.Printf("%v, %v", result.Label, result.Metrics)
 	// }
 
-	return formattedResult, nil
+	return results, nil
 }
 
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
