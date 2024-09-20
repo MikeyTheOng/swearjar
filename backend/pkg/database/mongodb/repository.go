@@ -284,7 +284,13 @@ func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfD
 				{Key: "_id", Value: "$dateArray"},
 				{Key: "metrics", Value: bson.D{
 					{Key: "$push", Value: bson.D{
-						{Key: "k", Value: bson.D{{Key: "$toString", Value: "$owners._id"}}},
+						{Key: "k", Value: bson.D{{Key: "$concat", Value: bson.A{
+							bson.D{{Key: "$toString", Value: "$owners._id"}},
+							"|-|",
+							"$owners.Name",
+							"|-|",
+							"$owners.Email",
+						}}}},
 						{Key: "v", Value: "$count"},
 					}},
 				}},
@@ -331,9 +337,6 @@ func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfD
 	case "months":
 	}
 
-	// for _, result := range formattedResult {
-	// 	log.Printf("%v, %v", result.Label, result.Metrics)
-	// }
 
 	return results, nil
 }
