@@ -184,32 +184,28 @@ func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfD
 	}
 	var results []swearJar.ChartData
 
+	var startDate time.Time
 	switch period {
 	case "days":
-		startDate := time.Now().UTC().AddDate(0, 0, -numOfDataPoints+1).Truncate(24 * time.Hour)
-		pipeline := GetSwearJarTrendPipeline(period, numOfDataPoints, startDate, swearJarIdHex)
-
-		cursor, err := r.swearJars.Aggregate(context.TODO(), pipeline)
-		if err != nil {
-			return nil, fmt.Errorf("error aggregating swears: %v", err)
-		}
-		defer cursor.Close(context.TODO())
-
-		if err := cursor.All(context.TODO(), &results); err != nil {
-			return nil, fmt.Errorf("error decoding aggregation results: %v", err)
-		}
-
-		// // ! Debugging of pipeline results
-		// for _, result := range results {
-		// 	fmt.Printf("Date: %s\n", result.Date)
-		// 	for userID, metric := range result.Metrics {
-		// 		fmt.Printf("  UserID: %s, Count: %d\n", userID, metric)
-		// 	}
-		// }
-
+		startDate = time.Now().UTC().AddDate(0, 0, -numOfDataPoints).Truncate(24 * time.Hour)
 	case "weeks":
-
+		startDate = time.Now().UTC().AddDate(0, 0, -numOfDataPoints*7).Truncate(24 * time.Hour)
 	case "months":
+		startDate = time.Now().UTC().AddDate(-numOfDataPoints, 0, 0).Truncate(24 * time.Hour)
+	default:
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+
+	pipeline := SwearJarTrendPipeline(period, numOfDataPoints, startDate, swearJarIdHex)
+
+	cursor, err := r.swearJars.Aggregate(context.TODO(), pipeline)
+	if err != nil {
+		return nil, fmt.Errorf("error aggregating swears: %v", err)
+	}
+	defer cursor.Close(context.TODO())
+
+	if err := cursor.All(context.TODO(), &results); err != nil {
+		return nil, fmt.Errorf("error decoding aggregation results: %v", err)
 	}
 
 	return results, nil
