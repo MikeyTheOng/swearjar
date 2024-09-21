@@ -10,21 +10,18 @@ import (
 func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Time, swearJarIdHex interface{}) mongo.Pipeline {
 	var dateFormat string
 	var dateAdd bson.D
-	var dateRange int
+
 
 	switch period {
 	case "days":
 		dateFormat = "%Y-%m-%d"
 		dateAdd = bson.D{{Key: "$multiply", Value: bson.A{"$$dayOffset", 24 * 60 * 60 * 1000}}}
-		dateRange = numOfDataPoints
 	case "weeks":
 		dateFormat = "%Y-W%V"
 		dateAdd = bson.D{{Key: "$multiply", Value: bson.A{"$$weekOffset", 7 * 24 * 60 * 60 * 1000}}}
-		dateRange = 6 // Past 6 weeks
 	case "months":
 		dateFormat = "%Y-%m"
 		dateAdd = bson.D{{Key: "$multiply", Value: bson.A{"$$monthOffset", 30 * 24 * 60 * 60 * 1000}}}
-		dateRange = 6 // Past 6 months
 	}
 
 	return mongo.Pipeline{
@@ -49,9 +46,9 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 			{Key: "dateArray", Value: bson.D{
 				{Key: "$map", Value: bson.D{
 					{Key: "input", Value: bson.D{
-						{Key: "$range", Value: bson.A{0, dateRange}},
+						{Key: "$range", Value: bson.A{0, numOfDataPoints}},
 					}},
-					{Key: "as", Value: period[:len(period)-1] + "Offset"},
+					{Key: "as", Value: period[:len(period)-1] + "Offset"}, // daysOffset, weeksOffset, monthsOffset
 					{Key: "in", Value: bson.D{
 						{Key: "$dateToString", Value: bson.D{
 							{Key: "format", Value: dateFormat},
