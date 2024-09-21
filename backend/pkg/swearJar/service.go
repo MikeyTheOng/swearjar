@@ -14,7 +14,7 @@ type Service interface {
 	GetSwearJarById(swearJarId string, userId string) (SwearJar, error)
 	GetSwearJarsByUserId(userId string) ([]SwearJar, error)
 	GetSwears(swearJarId string, userId string) ([]Swear, error)
-	SwearJarTrend(swearJarId string, userId string, period string) (SwearJar, error)
+	SwearJarTrend(swearJarId string, userId string, period string) ([]ChartData, error)
 }
 
 type Repository interface {
@@ -24,6 +24,7 @@ type Repository interface {
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	GetSwearJarsByUserId(swearJarId string) ([]SwearJar, error)
 	GetSwears(swearJarId string, limit int) ([]Swear, error)
+	SwearJarTrend(swearJarId string, period string, numOfDataPoints int) ([]ChartData, error)
 }
 
 type service struct {
@@ -94,10 +95,23 @@ func (s *service) GetSwearJarById(swearJarId string, userId string) (SwearJar, e
 	return swearJar, nil
 }
 
-func (s *service) SwearJarTrend(swearJarId string, userId string, period string) (SwearJar, error) {
+func (s *service) SwearJarTrend(swearJarId string, userId string, period string) ([]ChartData, error) {
+	numOfDataPoints := 6
 	if period != "days" && period != "weeks" && period != "months" {
-		return SwearJar{}, errors.New("invalid period")
+		return []ChartData{}, errors.New("invalid period")
 	}
 
-	return SwearJar{}, nil
+	if isOwner, err := s.IsOwner(swearJarId, userId); err != nil {
+		return []ChartData{}, err
+	} else if !isOwner {
+		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", userId, swearJarId)
+		return []ChartData{}, authentication.ErrUnauthorized
+	}
+
+	chartData, err := s.r.SwearJarTrend(swearJarId, period, numOfDataPoints)
+	if err != nil {
+		return []ChartData{}, err
+	}
+
+	return chartData, nil
 }

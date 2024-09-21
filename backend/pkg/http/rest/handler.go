@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	// "os"
 	"net/http"
@@ -63,6 +64,24 @@ func (h *Handler) RegisterRoutes() http.Handler {
 			}
 		case http.MethodPost:
 			h.CreateSwearJar(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})))
+
+	mux.Handle("/swearjar/{id}/trend", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		parts := strings.Split(strings.TrimPrefix(path, "/swearjar/"), "/")
+
+		swearJarId := parts[0]
+
+		switch r.Method {
+		case http.MethodGet:
+			if swearJarId == "" {
+				http.Error(w, "Swear jar ID is required", http.StatusBadRequest)
+				return
+			}
+			h.ServeSwearJarTrend(w, r, swearJarId)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -178,10 +197,10 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := swearJar.Swear{
-		CreatedAt:  time.Now(),
-		Active:     true,
-		UserId:     req.UserId,
-		SwearJarId:  req.SwearJarId,
+		CreatedAt:        time.Now(),
+		Active:           true,
+		UserId:           req.UserId,
+		SwearJarId:       req.SwearJarId,
 		SwearDescription: req.SwearDescription,
 	}
 	err = h.sjService.AddSwear(s)
@@ -227,7 +246,7 @@ func (h *Handler) GetSwears(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"msg": "swears fetched successfully",
+		"msg":    "swears fetched successfully",
 		"swears": swears,
 	}
 
@@ -367,6 +386,38 @@ func (h *Handler) GetSwearJarById(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"msg":      "fetch successful",
 		"swearJar": swearJar,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swearJarId string) {
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		RespondWithError(w, http.StatusBadRequest, "Period is required")
+		return
+	}
+
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	chartData, err := h.sjService.SwearJarTrend(swearJarId, userId, period)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":      "fetch successful",
+		"chartData": chartData,
 	}
 
 	w.WriteHeader(http.StatusOK)
