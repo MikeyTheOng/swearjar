@@ -8,7 +8,7 @@ type User struct {
 }
 
 type UserResponse struct {
-	UserId string
+	UserId string `bson:"_id"`
 	Email  string
 	Name   string
 }
