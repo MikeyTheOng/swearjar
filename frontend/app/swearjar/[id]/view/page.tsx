@@ -4,29 +4,54 @@ import {
   QueryClient,
 } from '@tanstack/react-query'
 import { fetcher } from "@/lib/utils";
-import { SwearJar } from '@/lib/types';
+import { ChartData, SwearJar, Swear, User } from '@/lib/types';
 
 
 import DefaultContentLayout from "@/components/layout/content";
 import MainContent from "./mainContent";
 import ErrorAlert from '@/components/shared/ErrorAlert';
 
-interface SwearJarApiResponse {
+export interface SwearJarApiResponse {
   msg: string;
   swearJar: SwearJar;
+}
+
+export interface RecentSwearsApiResponse {
+  msg: string;
+  data: {
+    swears: Swear[];
+    users: { [key: string]: User };
+  }
+}
+
+export interface SwearJarTrendApiResponse {
+  msg: string;
+  chartData: ChartData[];
 }
 
 export default async function SwearJarPage({ params }: { params: { id: string } }) {
   const queryClient = new QueryClient()
   let errorMessage: string | null = null;
   try {
-    await queryClient.prefetchQuery<SwearJarApiResponse>({
-      queryKey: [`swearjar?id=${params.id}`],
-      queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar?id=${params.id}`),
-    })
+    // Fetch all data in parallel
+    await Promise.all([
+      queryClient.prefetchQuery<SwearJarApiResponse>({
+        queryKey: [`swearjar?id=${params.id}`],
+        queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar?id=${params.id}`),
+      }),
+      queryClient.prefetchQuery<RecentSwearsApiResponse>({
+        queryKey: [`swear?id=${params.id}`],
+        queryFn: () => fetcher<RecentSwearsApiResponse>(`/api/swear?id=${params.id}`),
+      }),
+      queryClient.prefetchQuery<SwearJarTrendApiResponse>({
+        queryKey: [`swear?id=${params.id}`],
+        queryFn: () => fetcher<SwearJarTrendApiResponse>(`/api/swearjar/trend?id=${params.id}&period=days`),
+      })
+    ]);
+    
   } catch (error) {
     console.error("Error during prefetch:", error);
-    errorMessage = "Error fetching Swear Jar data"
+    errorMessage = "Error fetching Swear Jar data";
   }
 
   if (errorMessage) {

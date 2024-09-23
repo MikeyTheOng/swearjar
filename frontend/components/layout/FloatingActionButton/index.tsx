@@ -44,7 +44,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
 
   const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
     queryKey: [`swearjar`],
-    queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar`),
+    queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
     refetchOnWindowFocus: "always",
   });
   const isDesktop = useMediaQuery("(min-width: 768px)")
