@@ -13,7 +13,7 @@ type Service interface {
 	CreateSwearJar(Name string, Desc string, Owners []string) (SwearJar, error)
 	GetSwearJarById(swearJarId string, userId string) (SwearJar, error)
 	GetSwearJarsByUserId(userId string) ([]SwearJar, error)
-	GetSwears(swearJarId string, userId string) ([]Swear, error)
+	GetSwearsWithUsers(swearJarId string, userId string) (RecentSwearsWithUsers, error)
 	SwearJarTrend(swearJarId string, userId string, period string) ([]ChartData, error)
 }
 
@@ -23,7 +23,7 @@ type Repository interface {
 	GetSwearJarById(swearJarId string) (SwearJar, error)
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	GetSwearJarsByUserId(swearJarId string) ([]SwearJar, error)
-	GetSwears(swearJarId string, limit int) ([]Swear, error)
+	GetSwearsWithUsers(swearJarId string, limit int) (RecentSwearsWithUsers, error)
 	SwearJarTrend(swearJarId string, period string, numOfDataPoints int) ([]ChartData, error)
 }
 
@@ -58,21 +58,21 @@ func (s *service) AddSwear(swear Swear) error {
 	return s.r.AddSwear(swear)
 }
 
-func (s *service) GetSwears(swearJarId string, userId string) ([]Swear, error) {
+func (s *service) GetSwearsWithUsers(swearJarId string, userId string) (RecentSwearsWithUsers, error) {
 	if isOwner, err := s.IsOwner(swearJarId, userId); err != nil {
-		return nil, err
+		return RecentSwearsWithUsers{}, err
 	} else if !isOwner {
 		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", userId, swearJarId)
-		return nil, authentication.ErrUnauthorized
+		return RecentSwearsWithUsers{}, authentication.ErrUnauthorized
 	}
 
 	maxSwearsToFetch := 5
-	swears, err := s.r.GetSwears(swearJarId, maxSwearsToFetch)
+	data, err := s.r.GetSwearsWithUsers(swearJarId, maxSwearsToFetch)
 	if err != nil {
-		return nil, err
+		return RecentSwearsWithUsers{}, err
 	}
 
-	return swears, nil
+	return RecentSwearsWithUsers{Swears: data.Swears, Users: data.Users}, nil
 }
 
 func (s *service) GetSwearJarsByUserId(userId string) ([]SwearJar, error) {

@@ -239,26 +239,35 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	return err
 }
 
-func (r *MongoRepository) GetSwears(swearJarId string, limit int) ([]swearJar.Swear, error) {
+func (r *MongoRepository) GetSwearsWithUsers(swearJarId string, limit int) (swearJar.RecentSwearsWithUsers, error) {
 	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
 	if err != nil {
-		return nil, fmt.Errorf("invalid SwearJarId: %v", err)
+		return swearJar.RecentSwearsWithUsers{}, fmt.Errorf("invalid SwearJarId: %v", err)
 	}
 
 	filter := bson.M{"SwearJarId": swearJarIdHex, "Active": true}
 	findOptions := options.Find().SetSort(bson.D{{Key: "CreatedAt", Value: -1}}).SetLimit(int64(limit))
 	cursor, err := r.swears.Find(context.TODO(), filter, findOptions)
 	if err != nil {
-		return nil, err
+		return swearJar.RecentSwearsWithUsers{}, err
 	}
 	defer cursor.Close(context.TODO())
 
 	var swears []swearJar.Swear
 	if err := cursor.All(context.TODO(), &swears); err != nil {
-		return nil, err
+		return swearJar.RecentSwearsWithUsers{}, err
 	}
 
-	return swears, nil
+	var usersMap = make(map[string]authentication.UserResponse)
+	for _, s := range swears {
+		user, err := r.GetUserById(s.UserId)
+		if err != nil {
+			return swearJar.RecentSwearsWithUsers{}, err
+		}
+		usersMap[s.UserId] = user
+	}
+
+	return swearJar.RecentSwearsWithUsers{Swears: swears, Users: usersMap}, nil
 }
 
 func (r *MongoRepository) SignUp(u authentication.User) error {

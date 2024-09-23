@@ -90,7 +90,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	mux.Handle("/swear", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			h.GetSwears(w, r)
+			h.GetSwearsWithUsers(w, r)
 		case http.MethodPost:
 			h.AddSwear(w, r)
 		default:
@@ -225,7 +225,7 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) GetSwears(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetSwearsWithUsers(w http.ResponseWriter, r *http.Request) {
 	// * Retrieves up to 5 swears from the specified SwearJar. The SwearJarId must be provided as the "id" query parameter
 	swearJarId := r.URL.Query().Get("id")
 	if swearJarId == "" {
@@ -239,15 +239,18 @@ func (h *Handler) GetSwears(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	swears, err := h.sjService.GetSwears(swearJarId, userId)
+	data, err := h.sjService.GetSwearsWithUsers(swearJarId, userId)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	response := map[string]interface{}{
-		"msg":    "swears fetched successfully",
-		"swears": swears,
+		"msg": "swears fetched successfully",
+		"data": map[string]interface{}{
+			"swears": data.Swears,
+			"users":  data.Users,
+		},
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -416,7 +419,7 @@ func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swe
 	}
 
 	response := map[string]interface{}{
-		"msg":      "fetch successful",
+		"msg":       "fetch successful",
 		"chartData": chartData,
 	}
 
