@@ -6,3 +6,18 @@ export type SwearJar = z.infer<typeof swearJarSchema>;
 export type SwearJarProp = SwearJar & {
     SwearJarId: string;
 }
+
+export type Swear = {
+    UserId: string;
+    CreatedAt: Date;
+    Active: boolean;
+    SwearJarId: string;
+    SwearDescription: string;
+}
+
+export type ChartData = {
+    Label: string;
+    Metrics: {
+        [key: string]: number;
+    };
+}
