@@ -418,9 +418,22 @@ func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swe
 		return
 	}
 
+	// flatten the data to match the format of the data required in the frontend
+	// const chartData = [{ label: "Week 1", michael: 10, timothy: 8 },];
+	var flattenedData []map[string]interface{}
+	for _, data := range chartData {
+		flattenedEntry := map[string]interface{}{
+			"label": data.Label,
+		}
+		for user, value := range data.Metrics {
+			flattenedEntry[user] = value
+		}
+		flattenedData = append(flattenedData, flattenedEntry)
+	}
+
 	response := map[string]interface{}{
-		"msg":       "fetch successful",
-		"chartData": chartData,
+		"msg":  "SwearJar trend fetched successfully",
+		"data": flattenedData,
 	}
 
 	w.WriteHeader(http.StatusOK)

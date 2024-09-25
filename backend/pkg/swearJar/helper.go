@@ -1,6 +1,5 @@
 package swearJar
 
-
 func (s *service) IsOwner(swearJarId string, userId string) (bool, error) {
 	owners, err := s.r.GetSwearJarOwners(swearJarId)
 	if err != nil {
