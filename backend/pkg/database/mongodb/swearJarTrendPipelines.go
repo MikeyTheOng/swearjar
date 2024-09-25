@@ -109,6 +109,9 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 			}},
 		}}},
 		// Step 8: Group by date to accumulate metrics
+		// $group -> Identifies all documents that share the same group key
+		// Inside each group, you can run various accumulation operations on the data from the individual documents like $push, $sum, $avg, etc.
+		// $push -> Push fields from the input documents to an array in the output document
 		{{Key: "$group", Value: bson.D{
 			{Key: "_id", Value: "$dateArray"},
 			{Key: "metrics", Value: bson.D{
