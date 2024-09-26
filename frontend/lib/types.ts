@@ -15,13 +15,6 @@ export type Swear = {
     SwearDescription: string;
 }
 
-export type ChartData = {
-    Label: string;
-    Metrics: {
-        [key: string]: number;
-    };
-}
-
 export enum SwearJarTrendPeriod {
     Days = "days",
     Weeks = "weeks",
