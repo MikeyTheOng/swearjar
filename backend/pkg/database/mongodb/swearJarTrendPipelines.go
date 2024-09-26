@@ -87,22 +87,22 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 						{Key: "then", Value: "This Week"},
 					},
 					// Case for "Last Week"
-					bson.D{
-						{Key: "case", Value: bson.D{
-							{Key: "$eq", Value: bson.A{
-								"$_id",
-								bson.D{
-									{Key: "$dateToString", Value: bson.D{
-										{Key: "date", Value: bson.D{
-											{Key: "$subtract", Value: bson.A{"$$NOW", 7 * 24 * 60 * 60 * 1000}},
-										}},
-										{Key: "format", Value: dateFormat},
-									}},
-								},
-							}},
-						}},
-						{Key: "then", Value: "Last Week"},
-					},
+					// bson.D{
+					// 	{Key: "case", Value: bson.D{
+					// 		{Key: "$eq", Value: bson.A{
+					// 			"$_id",
+					// 			bson.D{
+					// 				{Key: "$dateToString", Value: bson.D{
+					// 					{Key: "date", Value: bson.D{
+					// 						{Key: "$subtract", Value: bson.A{"$$NOW", 7 * 24 * 60 * 60 * 1000}},
+					// 					}},
+					// 					{Key: "format", Value: dateFormat},
+					// 				}},
+					// 			},
+					// 		}},
+					// 	}},
+					// 	{Key: "then", Value: "Last Week"},
+					// },
 				}},
 				{Key: "default", Value: bson.D{
 					{Key: "$concat", Value: bson.A{
@@ -132,7 +132,7 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 								}},
 							}},
 						},
-						" w ago",
+						" Week(s) Ago",
 					}},
 				}},
 			}},
