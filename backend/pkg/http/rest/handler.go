@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	// "os"
 	"net/http"
@@ -68,10 +69,28 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})))
 
+	mux.Handle("/swearjar/{id}/trend", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		parts := strings.Split(strings.TrimPrefix(path, "/swearjar/"), "/")
+
+		swearJarId := parts[0]
+
+		switch r.Method {
+		case http.MethodGet:
+			if swearJarId == "" {
+				http.Error(w, "Swear jar ID is required", http.StatusBadRequest)
+				return
+			}
+			h.ServeSwearJarTrend(w, r, swearJarId)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})))
+
 	mux.Handle("/swear", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			// h.GetSwears(w, r)
+			h.GetSwearsWithUsers(w, r)
 		case http.MethodPost:
 			h.AddSwear(w, r)
 		default:
@@ -156,41 +175,6 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
-	type Request struct {
-		Name   string   `bson:"name"`
-		Desc   string   `bson:"desc"`
-		Owners []string `bson:"owners"`
-	}
-
-	var req Request
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		log.Printf("Error decoding JSON request: %v", err)
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	sj, err := h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
-	if err != nil {
-		log.Printf("Error creating SwearJar: %v", err)
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	response := map[string]interface{}{
-		"msg":      "SwearJar created successfully",
-		"swearjar": sj,
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-}
-
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
 		UserId           string `json:"userId"`
@@ -213,10 +197,10 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := swearJar.Swear{
-		CreatedAt:  time.Now(),
-		Active:     true,
-		UserId:     req.UserId,
-		SwearJarId:  req.SwearJarId,
+		CreatedAt:        time.Now(),
+		Active:           true,
+		UserId:           req.UserId,
+		SwearJarId:       req.SwearJarId,
 		SwearDescription: req.SwearDescription,
 	}
 	err = h.sjService.AddSwear(s)
@@ -234,6 +218,42 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) GetSwearsWithUsers(w http.ResponseWriter, r *http.Request) {
+	// * Retrieves up to 5 swears from the specified SwearJar. The SwearJarId must be provided as the "id" query parameter
+	swearJarId := r.URL.Query().Get("id")
+	if swearJarId == "" {
+		RespondWithError(w, http.StatusBadRequest, "SwearJarId is required")
+		return
+	}
+
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	data, err := h.sjService.GetSwearsWithUsers(swearJarId, userId)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg": "swears fetched successfully",
+		"data": map[string]interface{}{
+			"swears": data.Swears,
+			"users":  data.Users,
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -291,6 +311,41 @@ func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
+	type Request struct {
+		Name   string   `bson:"name"`
+		Desc   string   `bson:"desc"`
+		Owners []string `bson:"owners"`
+	}
+
+	var req Request
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Printf("Error decoding JSON request: %v", err)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	sj, err := h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
+	if err != nil {
+		log.Printf("Error creating SwearJar: %v", err)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":      "SwearJar created successfully",
+		"swearjar": sj,
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
 func (h *Handler) GetSwearJarsByUserId(w http.ResponseWriter, r *http.Request) {
 	userId, err := GetUserIdFromCookie(w, r)
 	if err != nil {
@@ -334,6 +389,51 @@ func (h *Handler) GetSwearJarById(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"msg":      "fetch successful",
 		"swearJar": swearJar,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swearJarId string) {
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		RespondWithError(w, http.StatusBadRequest, "Period is required")
+		return
+	}
+
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	chartData, err := h.sjService.SwearJarTrend(swearJarId, userId, period)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// flatten the data to match the format of the data required in the frontend
+	// const chartData = [{ label: "Week 1", michael: 10, timothy: 8 },];
+	var flattenedData []map[string]interface{}
+	for _, data := range chartData {
+		flattenedEntry := map[string]interface{}{
+			"label": data.Label,
+		}
+		for user, value := range data.Metrics {
+			flattenedEntry[user] = value
+		}
+		flattenedData = append(flattenedData, flattenedEntry)
+	}
+
+	response := map[string]interface{}{
+		"msg":  "SwearJar trend fetched successfully",
+		"data": flattenedData,
 	}
 
 	w.WriteHeader(http.StatusOK)

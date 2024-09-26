@@ -1,5 +1,6 @@
 "use client"
 import { fetcher } from "@/lib/utils";
+import { SwearJarApiResponse } from "./page";
 import { useQuery } from "@tanstack/react-query";
 
 import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader";
@@ -7,10 +8,6 @@ import { SwearJar, SwearJarProp } from "@/lib/types";
 import SwearJarInfo from "@/components/app/swearjar/view/SwearJarInfo";
 import SwearJarTrends from "@/components/app/swearjar/view/SwearJarTrends";
 import SwearJarRecent from "@/components/app/swearjar/view/SwearJarRecent";
-interface SwearJarApiResponse {
-    msg: string;
-    swearJar: SwearJar;
-}
 
 export default function MainContent({ swearJarId }: { swearJarId: string }) {
     const { data, isLoading } = useQuery<SwearJarApiResponse>({
@@ -26,17 +23,17 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
                 <BreadcrumbHeader title={data.swearJar.Name} subtitle={data.swearJar.Desc} />
             </div>
             <div className="col-span-1 md:col-span-3 order-3 md:order-2">
-                <SwearJarTrends />
+                <SwearJarTrends swearJarId={swearJarId} />
             </div>
             <div className="col-span-1 md:col-span-2 order-2 md:order-3 space-y-2">
                 <SwearJarInfo {...data.swearJar as SwearJarProp} />
                 <span className="hidden md:block">
-                    <SwearJarRecent />
+                    <SwearJarRecent swearJarId={swearJarId} />
                 </span>
             </div>
             {/* <div className="col-span-0 block md:hidden md:col-span-1 md:order-4"></div> */}
             <div className="col-span-1 block md:hidden order-4">
-                <SwearJarRecent />
+                <SwearJarRecent swearJarId={swearJarId} />
             </div>
         </div>
     )

@@ -42,8 +42,11 @@ export function useAddSwear(swearJarId: string) {
             return { toastId };
         },
         onSuccess: (data, variables, context) => {
-            queryClient.invalidateQueries({ queryKey: ['swearjar'] });
             queryClient.invalidateQueries({ queryKey: [`swearjar?id=${swearJarId}`] });
+            queryClient.invalidateQueries({ queryKey: [`swear?id=${swearJarId}`] });
+            queryClient.invalidateQueries({ queryKey: ["swearjar", "trend", swearJarId, "days"] });
+            queryClient.invalidateQueries({ queryKey: ["swearjar", "trend", swearJarId, "weeks"] });
+            queryClient.invalidateQueries({ queryKey: ["swearjar", "trend", swearJarId, "months"] });
         },
         onError: (error: Error, variables, context) => {
             console.error('Failed to add swear:', error);

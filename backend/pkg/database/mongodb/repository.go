@@ -177,6 +177,40 @@ func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string,
 	return owners, nil
 }
 
+func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfDataPoints int) ([]swearJar.ChartData, error) {
+	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SwearJarId: %v", err)
+	}
+	var results []swearJar.ChartData
+
+	var startDate time.Time
+	switch period {
+	case "days":
+		startDate = time.Now().UTC().AddDate(0, 0, -numOfDataPoints).Truncate(24 * time.Hour)
+	case "weeks":
+		startDate = time.Now().UTC().AddDate(0, 0, -numOfDataPoints*7).Truncate(24 * time.Hour)
+	case "months":
+		startDate = time.Now().UTC().AddDate(-numOfDataPoints, 0, 0).Truncate(24 * time.Hour)
+	default:
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+
+	pipeline := SwearJarTrendPipeline(period, numOfDataPoints, startDate, swearJarIdHex)
+
+	cursor, err := r.swearJars.Aggregate(context.TODO(), pipeline)
+	if err != nil {
+		return nil, fmt.Errorf("error aggregating swears: %v", err)
+	}
+	defer cursor.Close(context.TODO())
+
+	if err := cursor.All(context.TODO(), &results); err != nil {
+		return nil, fmt.Errorf("error decoding aggregation results: %v", err)
+	}
+
+	return results, nil
+}
+
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	userIdHex, err := primitive.ObjectIDFromHex(s.UserId)
 	if err != nil {
@@ -203,6 +237,37 @@ func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
 	// const layout = "Jan 2, 2006 at 3:04pm (MST)"
 	// fmt.Printf("Added Swear{CreatedAt: %v, Active: %v, UserId: %V}\n", s.CreatedAt.Format(layout), s.Active, s.UserId.Hex())
 	return err
+}
+
+func (r *MongoRepository) GetSwearsWithUsers(swearJarId string, limit int) (swearJar.RecentSwearsWithUsers, error) {
+	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
+	if err != nil {
+		return swearJar.RecentSwearsWithUsers{}, fmt.Errorf("invalid SwearJarId: %v", err)
+	}
+
+	filter := bson.M{"SwearJarId": swearJarIdHex, "Active": true}
+	findOptions := options.Find().SetSort(bson.D{{Key: "CreatedAt", Value: -1}}).SetLimit(int64(limit))
+	cursor, err := r.swears.Find(context.TODO(), filter, findOptions)
+	if err != nil {
+		return swearJar.RecentSwearsWithUsers{}, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var swears []swearJar.Swear
+	if err := cursor.All(context.TODO(), &swears); err != nil {
+		return swearJar.RecentSwearsWithUsers{}, err
+	}
+
+	var usersMap = make(map[string]authentication.UserResponse)
+	for _, s := range swears {
+		user, err := r.GetUserById(s.UserId)
+		if err != nil {
+			return swearJar.RecentSwearsWithUsers{}, err
+		}
+		usersMap[s.UserId] = user
+	}
+
+	return swearJar.RecentSwearsWithUsers{Swears: swears, Users: usersMap}, nil
 }
 
 func (r *MongoRepository) SignUp(u authentication.User) error {
@@ -244,6 +309,22 @@ func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) 
 	}
 
 	return user, nil
+}
+
+func (r *MongoRepository) GetUserById(userId string) (authentication.UserResponse, error) {
+	userIdHex, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return authentication.UserResponse{}, fmt.Errorf("invalid UserId: %v", err)
+	}
+
+	var result authentication.UserResponse
+	filter := bson.M{"_id": userIdHex}
+	err = r.users.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		return authentication.UserResponse{}, err
+	}
+
+	return result, nil
 }
 
 func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults int, currentUserId string) ([]authentication.UserResponse, error) {
