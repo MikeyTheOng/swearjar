@@ -10,18 +10,146 @@ import (
 func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Time, swearJarIdHex interface{}) mongo.Pipeline {
 	var dateFormat string
 	var dateAdd bson.D
-
+	var labelFormat bson.D
 
 	switch period {
 	case "days":
 		dateFormat = "%Y-%m-%d"
-		dateAdd = bson.D{{Key: "$multiply", Value: bson.A{"$$dayOffset", 24 * 60 * 60 * 1000}}}
+		dateAdd = bson.D{{Key: "$multiply", Value: bson.A{"$$dayOffset", 24 * time.Hour.Milliseconds()}}}
+		
+		labelFormat = bson.D{
+			{Key: "$switch", Value: bson.D{
+				{Key: "branches", Value: bson.A{
+					// Case for "Today"
+					bson.D{
+						{Key: "case", Value: bson.D{
+							// Check if the date is today
+							// $_id refers to the group key
+							{Key: "$eq", Value: bson.A{
+								"$_id",
+								bson.D{
+								{Key: "$dateToString", Value: bson.D{
+									{Key: "date", Value: "$$NOW"},
+									{Key: "format", Value: dateFormat},
+								}},
+							}}},
+						}},
+						{Key: "then", Value: "Today"},
+					},
+					// Case for "Yesterday"
+					bson.D{
+						{Key: "case", Value: bson.D{
+							{Key: "$eq", Value: bson.A{
+								"$_id", 
+								bson.D{
+									{Key: "$dateToString", Value: bson.D{
+										{Key: "date", Value: bson.D{
+											{Key: "$subtract", Value: bson.A{"$$NOW", 24 * time.Hour.Milliseconds()}},
+										}},
+									{Key: "format", Value: dateFormat},
+								}},
+							}}},
+						}},
+						{Key: "then", Value: "Yesterday"},
+					},
+				}},
+				{Key: "default", Value: bson.D{
+					{Key: "$dateToString", Value: bson.D{
+						{Key: "date", Value: bson.D{
+							{Key: "$dateFromString", Value: bson.D{
+								{Key: "dateString", Value: "$_id"},
+							}},
+						}},
+						{Key: "format", Value: "%d %B"},
+					}},
+				}},
+			}},
+		}
 	case "weeks":
 		dateFormat = "%Y-W%V"
 		dateAdd = bson.D{{Key: "$multiply", Value: bson.A{"$$weekOffset", 7 * 24 * 60 * 60 * 1000}}}
+		labelFormat = bson.D{
+			{Key: "$switch", Value: bson.D{
+				{Key: "branches", Value: bson.A{
+					// Case for "This Week"
+					bson.D{
+						{Key: "case", Value: bson.D{
+							{Key: "$eq", Value: bson.A{
+								"$_id",
+								bson.D{
+									{Key: "$dateToString", Value: bson.D{
+										{Key: "date", Value: "$$NOW"},
+										{Key: "format", Value: dateFormat},
+									}},
+								},
+							}},
+						}},
+						{Key: "then", Value: "This Week"},
+					},
+					// Case for "Last Week"
+					bson.D{
+						{Key: "case", Value: bson.D{
+							{Key: "$eq", Value: bson.A{
+								"$_id",
+								bson.D{
+									{Key: "$dateToString", Value: bson.D{
+										{Key: "date", Value: bson.D{
+											{Key: "$subtract", Value: bson.A{"$$NOW", 7 * 24 * 60 * 60 * 1000}},
+										}},
+										{Key: "format", Value: dateFormat},
+									}},
+								},
+							}},
+						}},
+						{Key: "then", Value: "Last Week"},
+					},
+				}},
+				{Key: "default", Value: bson.D{
+					{Key: "$concat", Value: bson.A{
+						bson.D{
+							{Key: "$toString", Value: bson.D{
+								{Key: "$subtract", Value: bson.A{
+									// Calculate the current week number
+									bson.D{
+										{Key: "$toInt", Value: bson.D{
+											{Key: "$dateToString", Value: bson.D{
+												{Key: "date", Value: "$$NOW"},
+												{Key: "format", Value: "%V"},
+											}},
+										}},
+									},
+									// Extract the week number from the group key
+									bson.D{
+										{Key: "$toInt", Value: bson.D{
+											{Key: "$arrayElemAt", Value: bson.A{
+												bson.D{
+													{Key: "$split", Value: bson.A{"$_id", "-W"}},
+												},
+												1,
+											}},
+										}},
+									},
+								}},
+							}},
+						},
+						" w ago",
+					}},
+				}},
+			}},
+		}
 	case "months":
 		dateFormat = "%Y-%m"
 		dateAdd = bson.D{{Key: "$multiply", Value: bson.A{"$$monthOffset", 30 * 24 * 60 * 60 * 1000}}}
+		labelFormat = bson.D{{Key: "$dateToString", Value: bson.D{
+			{Key: "date", Value: bson.D{
+				{Key: "$dateFromString", Value: bson.D{
+					{Key: "dateString", Value: bson.D{
+						{Key: "$concat", Value: bson.A{"$_id", "-01"}},
+					}},
+				}},
+			}},
+			{Key: "format", Value: "%B"},
+		}}}
 	}
 
 	return mongo.Pipeline{
@@ -139,7 +267,7 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 		}}},
 		// Step 11: Project the final structure
 		{{Key: "$project", Value: bson.D{
-			{Key: "Label", Value: "$_id"},
+			{Key: "Label", Value: labelFormat},
 			{Key: "Metrics", Value: "$metrics"},
 			{Key: "_id", Value: 0},
 		}}},
