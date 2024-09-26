@@ -3,7 +3,7 @@
 import { fetcher } from "@/lib/utils"
 import { getColor } from "@/lib/getColor";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from 'next/navigation'
+import {  useSearchParams } from 'next/navigation'
 import { useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react";
 import { SwearJarTrendApiResponse } from "@/app/swearjar/[id]/view/page";
@@ -26,20 +26,14 @@ import { TrendPeriodFilter } from "./TrendPeriodFilter";
 export default function SwearJarTrends({ swearJarId }: { swearJarId: string }) {
     const searchParams = useSearchParams();
     const session = useSession();
-    const router = useRouter();
 
     const initialPeriod = searchParams.get("period") || "days";
     const [period, setPeriod] = useState<SwearJarTrendPeriod>(initialPeriod as SwearJarTrendPeriod);
     const handleSetPeriod = (period: SwearJarTrendPeriod) => {
         setPeriod(period);
-        // const url = new URL(window.location.href);
-        // url.searchParams.set('period', period);
-        // window.history.replaceState({}, '', url.toString());
-
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('period', period);
-    
-        router.replace(`?${params.toString()}`);
+        const url = new URL(window.location.href);
+        url.searchParams.set('period', period);
+        window.history.replaceState({}, '', url.toString());
     }
 
     const [chartConfig, setChartConfig] = useState<ChartConfig>({
