@@ -4,7 +4,7 @@ import {
   QueryClient,
 } from '@tanstack/react-query'
 import { fetcher } from "@/lib/utils";
-import { ChartData, SwearJar, Swear, User } from '@/lib/types';
+import { SwearJar, Swear, User } from '@/lib/types';
 
 
 import DefaultContentLayout from "@/components/layout/content";
@@ -26,7 +26,10 @@ export interface RecentSwearsApiResponse {
 
 export interface SwearJarTrendApiResponse {
   msg: string;
-  chartData: ChartData[];
+  data: {
+    label: string;
+    [key: string]: number | string; // This allows for one or more users with their respective swear counts
+  }[];
 }
 
 export default async function SwearJarPage({ params }: { params: { id: string } }) {
@@ -44,7 +47,7 @@ export default async function SwearJarPage({ params }: { params: { id: string } 
         queryFn: () => fetcher<RecentSwearsApiResponse>(`/api/swear?id=${params.id}`),
       }),
       queryClient.prefetchQuery<SwearJarTrendApiResponse>({
-        queryKey: [`swear?id=${params.id}`],
+        queryKey: ["swearjar", "trend", params.id, "days"],
         queryFn: () => fetcher<SwearJarTrendApiResponse>(`/api/swearjar/trend?id=${params.id}&period=days`),
       })
     ]);
