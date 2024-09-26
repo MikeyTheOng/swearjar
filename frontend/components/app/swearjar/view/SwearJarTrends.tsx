@@ -1,12 +1,18 @@
 "use client"
 
+import { fetcher } from "@/lib/utils"
+import { getColor } from "@/lib/getColor";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useQuery } from "@tanstack/react-query"
+import { useSession } from "next-auth/react";
+import { SwearJarTrendApiResponse } from "@/app/swearjar/[id]/view/page";
+import { SwearJarTrendPeriod } from "@/lib/types";
+
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
     CardTitle,
 } from "@/components/ui/shadcn/card"
 import {
@@ -15,34 +21,69 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/shadcn/chart"
-import { Button } from "@/components/ui/shadcn/button"
+import { TrendPeriodFilter } from "./TrendPeriodFilter";
 
-const chartData = [
-    { month: "April", desktop: 10 },
-    { month: "May", desktop: 20 },
-    { month: "June", desktop: 50 },
-    { month: "July", desktop: 30 },
-    // { month: "August", desktop: 100 },
-    { month: "September", desktop: 70 },
-]
+export default function SwearJarTrends({ swearJarId }: { swearJarId: string }) {
+    const searchParams = useSearchParams();
+    const session = useSession();
+    const router = useRouter();
 
-const chartConfig = {
-    desktop: {
-        label: "Desktop",
-        color: "hsl(var(--chart-1))",
-    },
-    mobile: {
-        label: "Mobile",
-        color: "hsl(var(--chart-2))",
-    },
-} satisfies ChartConfig
+    const initialPeriod = searchParams.get("period") || "days";
+    const [period, setPeriod] = useState<SwearJarTrendPeriod>(initialPeriod as SwearJarTrendPeriod);
+    const handleSetPeriod = (period: SwearJarTrendPeriod) => {
+        setPeriod(period);
+        // const url = new URL(window.location.href);
+        // url.searchParams.set('period', period);
+        // window.history.replaceState({}, '', url.toString());
 
-export default function SwearJarTrends() {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('period', period);
+    
+        router.replace(`?${params.toString()}`);
+    }
+
+    const [chartConfig, setChartConfig] = useState<ChartConfig>({
+        michael: {
+            label: "Michael",
+            color: "hsl(var(--chart-1))",
+        },
+        timothy: {
+            label: "Timothy",
+            color: "hsl(var(--chart-2))",
+        },
+    })
+
+    const { data: { data: chartData } = {}, isLoading, isSuccess } = useQuery<SwearJarTrendApiResponse>({
+        queryKey: ["swearjar", "trend", swearJarId, period],
+        queryFn: () => fetcher<SwearJarTrendApiResponse>(`/api/swearjar/trend?id=${swearJarId}&period=${period}`),
+        refetchOnWindowFocus: "always",
+    });
+    useEffect(() => {
+        if (isSuccess) {
+            const tempChartConfig: ChartConfig = {}
+            
+            Object.entries(chartData?.[0] ?? {}).forEach(([key, value]) => {
+                if (key === "label") return;
+
+                const [userId, name] = key.split("|-|");
+
+                const isCurrentUser = userId === session?.data?.user.UserId;
+                const colorKey = isCurrentUser ? 1 : getColor();
+                tempChartConfig[key] = {
+                    label: name,
+                    color: `hsl(var(--chart-${colorKey}))`,
+                };
+            });
+
+            setChartConfig(tempChartConfig)
+        }
+    }, [isSuccess, chartData])
+
     return (
         <Card className="border-none shadow-none">
             <div className="p-0 flex flew-row justify-between items-center">
                 <CardTitle className="text-lg font-medium tracking-tighter">Trend</CardTitle>
-                <Button className="py-0 px-2 h-7 text-xs rounded-full" variant="plain">Past 7 Days</Button>
+                <TrendPeriodFilter period={period as SwearJarTrendPeriod} setPeriod={handleSetPeriod} />
             </div>
             <CardContent className="mt-2 p-0">
                 <ChartContainer config={chartConfig}>
@@ -60,33 +101,39 @@ export default function SwearJarTrends() {
                             className="stroke-neutral-300 stroke-1"
                             vertical={false}
                         />
-                        <Line
-                            dataKey="desktop"
-                            type="monotone"
-                            stroke="var(--color-desktop)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                        {/* <Line
-                            dataKey="mobile"
-                            type="monotone"
-                            stroke="var(--color-mobile)"
-                            strokeWidth={2}
-                            dot={false}
-                        /> */}
+                        {Object.entries(chartConfig).map(([key, value]) => (
+                            <Line
+                                key={key}
+                                dataKey={key}
+                                type="monotone"
+                                stroke={value.color}
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                        ))}
                         <YAxis
                             tickLine={false}
                             tickMargin={4}
-                            width={16} 
-                            // tick={{ fontSize: "10px" }}
+                            width={16}
+                            tickFormatter={(value) => Math.floor(value) === value ? value : ''} // Only display integers
+                        // tick={{ fontSize: "10px" }}
                         />
                         <XAxis
-                            dataKey="month"
+                            dataKey="label"
                             tickLine={false}
                             axisLine={false}
                             tickMargin={4}
-                            tickFormatter={(value) => value.slice(0, 3)}
                             tick={{ fontSize: "12px" }}
+                            tickFormatter={(value) => {
+                                switch (period) {
+                                    case SwearJarTrendPeriod.Weeks:
+                                        if (value === "This Week") return "This"
+                                        // else if (value === "1 Week(s) Ago") return "Last"
+                                        else return value.replace(" Week(s)", "w").replace("Ago", "")
+                                    default:
+                                        return value
+                                }
+                            }}
                         />
                         <ChartTooltip cursor={false} content={<ChartTooltipContent className="text-sm bg-white border border-neutral-200 rounded-md p-2" />} />
                     </LineChart>
@@ -95,3 +142,25 @@ export default function SwearJarTrends() {
         </Card>
     )
 }
+
+// * Expected format of data in the chart
+// const data = [
+//     { label: "Week 1", michael: 10, timothy: 8 },
+//     { label: "Week 2", michael: 20, timothy: 22 },
+//     { label: "Week 3", michael: 50, timothy: 35 },
+//     { label: "Week 4", michael: 30, timothy: 30 },
+//     { label: "Week 5", michael: 100, timothy: 80 },
+//     { label: "Week 6", michael: 70, timothy: 69 },
+// ];
+
+// * Expected format of chartConfig
+// const chartConfig = {
+//     michael: {
+//         label: "Michael",
+//         color: "hsl(var(--chart-1))",
+//     },
+//     timothy: {
+//         label: "Timothy",
+//         color: "hsl(var(--chart-2))",
+//     },
+// } satisfies ChartConfig

@@ -21,3 +21,9 @@ export type ChartData = {
         [key: string]: number;
     };
 }
+
+export enum SwearJarTrendPeriod {
+    Days = "days",
+    Weeks = "weeks",
+    Months = "months",
+}

@@ -23,7 +23,7 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
                 <BreadcrumbHeader title={data.swearJar.Name} subtitle={data.swearJar.Desc} />
             </div>
             <div className="col-span-1 md:col-span-3 order-3 md:order-2">
-                <SwearJarTrends />
+                <SwearJarTrends swearJarId={swearJarId} />
             </div>
             <div className="col-span-1 md:col-span-2 order-2 md:order-3 space-y-2">
                 <SwearJarInfo {...data.swearJar as SwearJarProp} />
