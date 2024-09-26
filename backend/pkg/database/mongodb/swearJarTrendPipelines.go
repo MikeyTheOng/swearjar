@@ -60,7 +60,7 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 								{Key: "dateString", Value: "$_id"},
 							}},
 						}},
-						{Key: "format", Value: "%d %B"},
+						{Key: "format", Value: "%d %b"},
 					}},
 				}},
 			}},
@@ -148,7 +148,7 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 					}},
 				}},
 			}},
-			{Key: "format", Value: "%B"},
+			{Key: "format", Value: "%b"},
 		}}}
 	}
 
