@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type SwearJar struct {
+type SwearJarBase struct {
 	SwearJarId string    `bson:"_id,omitempty"`
 	Name       string    `bson:"Name"`
 	Desc       string    `bson:"Desc"`
