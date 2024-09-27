@@ -1,6 +1,6 @@
 "use client";
 import { fetcher } from '@/lib/utils';
-import { FormData } from './CreateSwearJarForm';
+import { FormData } from './SwearJarForm';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useQuery } from '@tanstack/react-query';
