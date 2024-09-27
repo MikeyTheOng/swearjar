@@ -1,6 +1,6 @@
 "use client"
 import { fetcher } from "@/lib/utils";
-import { SwearJarApiResponse } from "./page";
+import { SwearJarApiResponse } from "@/lib/apiTypes";
 import { useQuery } from "@tanstack/react-query";
 
 import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader";

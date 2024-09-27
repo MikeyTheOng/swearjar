@@ -1,6 +1,6 @@
 "use client"
 import { fetcher } from '@/lib/utils';
-import { SwearJarApiResponse } from '@/lib/apiTypes';
+import { SwearJarListApiResponse } from '@/lib/apiTypes';
 import { SwearJarWithId } from '@/lib/types';
 import { useAddSwear } from '@/components/shared/hooks/useAddSwear';
 import { usePathname } from 'next/navigation';
@@ -42,9 +42,9 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
     return null;
   }
 
-  const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
+  const { data, error, isLoading } = useQuery<SwearJarListApiResponse>({
     queryKey: [`swearjar`],
-    queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
+    queryFn: () => fetcher<SwearJarListApiResponse>('/api/swearjar'),
     refetchOnWindowFocus: "always",
   });
   const isDesktop = useMediaQuery("(min-width: 768px)")

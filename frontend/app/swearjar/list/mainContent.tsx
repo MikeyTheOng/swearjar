@@ -2,7 +2,7 @@
 
 import { fetcher } from "@/lib/utils";
 import { SwearJarWithId } from "@/lib/types";
-import { SwearJarApiResponse } from "@/lib/apiTypes";
+import { SwearJarListApiResponse } from "@/lib/apiTypes";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
@@ -13,9 +13,9 @@ import Link from "next/link";
 import SwearJarCard from "@/components/app/swearjar/listing/SwearJarCard";
 
 export default function MainContent() {
-    const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
+    const { data, error, isLoading } = useQuery<SwearJarListApiResponse>({
         queryKey: ['swearjar'],
-        queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
+        queryFn: () => fetcher<SwearJarListApiResponse>('/api/swearjar'),
         refetchOnWindowFocus: "always",
     });
 
