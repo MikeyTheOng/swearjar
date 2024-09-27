@@ -1,28 +1,22 @@
 import { auth } from '@/auth';
-import { swearJarSchema, userSchema } from '@/lib/schema';
+import { swearJarBaseSchema, swearJarWithOwnersSchema, userSchema } from '@/lib/schema';
 import { apiRequest } from '@/lib/server/apiRequest';
 import { z, ZodError } from 'zod';
-
-const swearJarPropsSchema = z.object({
-    Name: z.string(),
-    Desc: z.string().optional(),
-    additionalOwners: z.array(userSchema).optional(),
-});
 
 // GET /api/swearjar - Retrieve swear jars by userId 
 // or GET /api/swearjar?id={swearJarId} - Retrieve a specific swear jar by SwearJar Id
 export const GET = auth(async function GET(req) {
     try {
         const session = req.auth;
-        if (!session) { 
+        if (!session) {
             return new Response(JSON.stringify({ status: 'error', message: 'User not authenticated' }), { status: 401 });
         }
-        
+
         const swearJarId = req.nextUrl.searchParams.get('id');
         const route = swearJarId ? `/swearjar?id=${swearJarId}` : `/swearjar`;
 
         const { data, status } = await apiRequest({
-            route:route,
+            route: route,
             method: 'GET',
         });
         return new Response(JSON.stringify(data), { status: status });
@@ -50,19 +44,19 @@ export const POST = auth(async function POST(req) {
         }
 
         // Validate the incoming request body
-        const params = swearJarPropsSchema.parse(body);
+        const params = swearJarWithOwnersSchema.parse(body);
 
         // Transform additionalOwners to an array of UserIds and add the UserId of the current user
-        const owners = [...(params.additionalOwners?.map(user => user.UserId) || []), userId];
+        const additionalOwners = params.Owners || []; // * Owners received from form excludes the user that submitted the form
+        const owners = [...(additionalOwners.map(user => user.UserId)), userId];
         const transformedBody: { Name: string; Owners: string[]; Desc?: string } = {
             Name: params.Name,
             Owners: owners
         };
-        if (params.Desc) {
-            transformedBody.Desc = params.Desc;
-        }
+        if (params.Desc) transformedBody.Desc = params.Desc;
+
         // Validate the transformed body with the swearJarSchema
-        const validatedBody = swearJarSchema.parse(transformedBody);
+        const validatedBody = swearJarBaseSchema.parse(transformedBody);
         const { data, status } = await apiRequest({
             route: '/swearjar',
             method: 'POST',

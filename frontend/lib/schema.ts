@@ -26,9 +26,14 @@ export const userSchema = object({
     Email: string().email('Invalid email format'),
     Name: string().min(1, 'Name is required'),
 });
- 
-export const swearJarSchema = object({
+
+export const swearJarBaseSchema = object({
     Name: string().min(1, 'Title is required'),
     Desc: string().optional(),
     Owners: array(string()).optional(), // Owners + additionalOwners
+});
+
+// Add this new schema
+export const swearJarWithOwnersSchema = swearJarBaseSchema.extend({
+    Owners: array(userSchema),
 });

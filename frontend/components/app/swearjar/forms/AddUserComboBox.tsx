@@ -1,10 +1,9 @@
 "use client";
 import { fetcher } from '@/lib/utils';
-import { FormData } from './SwearJarForm';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useQuery } from '@tanstack/react-query';
-import { User } from '@/lib/types';
+import { SwearJarWithOwners, User } from '@/lib/types';
 
 import { Label } from '@/components/ui/shadcn/label';
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, Field } from '@headlessui/react';
@@ -13,10 +12,10 @@ import { FaCheck } from "react-icons/fa6";
 
 
 export default function AddUserComboBox() {
-    const { control } = useFormContext<FormData>();
+    const { control } = useFormContext<SwearJarWithOwners>();
     const { fields, append, remove } = useFieldArray({
         control,
-        name: 'additionalOwners',
+        name: 'Owners',
     });
 
     const [query, setQuery] = useState('');

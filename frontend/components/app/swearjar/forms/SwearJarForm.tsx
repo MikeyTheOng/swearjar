@@ -1,7 +1,7 @@
 "use client"
 import Confetti from 'react-confetti-boom';
-import { User } from '@/lib/types';
-import { useRouter } from 'next/navigation'
+import { SwearJarWithOwners, User } from '@/lib/types';
+import { useRouter, usePathname } from 'next/navigation'
 
 import { Button } from "@/components/ui/shadcn/button";
 import { Input } from "@/components/ui/shadcn/input";
@@ -13,27 +13,29 @@ import ErrorMessage from '@/components/shared/ErrorMessage';
 import toast from 'react-hot-toast';
 import { Card, CardContent } from '@/components/ui/card';
 
-export type FormData = {
-    Name: string;
-    Desc: string;
-    additionalOwners: User[];
-}
-
-export default function CreateSwearJarForm() {
+export default function SwearJarForm({ initialSJData }: { initialSJData: SwearJarWithOwners }) {
     const router = useRouter()
-    const methods = useForm<FormData>({
+    const pathname = usePathname()
+    const isEditMode = pathname.endsWith('/edit')
+
+    const methods = useForm<SwearJarWithOwners>({
         defaultValues: {
-            Name: "",
-            Desc: "",
-            additionalOwners: []
+            Name: initialSJData?.Name || "",
+            Desc: initialSJData?.Desc || "",
+            Owners: initialSJData?.Owners || []
         }
     });
 
     const { register, handleSubmit, formState: { isSubmitSuccessful, errors } } = methods;
-    const onSubmit = async (data: any) => {
+    const onSubmit = async (data: SwearJarWithOwners) => {
+        console.log("Form data:", data)
         try {
-            const response = await fetch('/api/swearjar', {
-                method: 'POST',
+            // const url = isEditMode ? `/api/swearjar/${initialSJData?.id}` : '/api/swearjar'; // TODO
+            const url = '/api/swearjar';
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -41,17 +43,17 @@ export default function CreateSwearJarForm() {
             })
             if (!response.ok) {
                 const errorData = await response.json();
-                toast.error("Something went wrong!", { id: "create-swearjar-error", position: "top-center" });
-                throw new Error(`Create swear jar failed: ${errorData.error || response.statusText}`);
+                toast.error("Something went wrong!", { id: `${isEditMode ? 'edit' : 'create'}-swearjar-error`, position: "top-center" });
+                throw new Error(`${isEditMode ? 'Update' : 'Create'} swear jar failed: ${errorData.error || response.statusText}`);
             }
-            setTimeout(() => {
-                router.push('/swearjar')
-            }, 2000);
+            // setTimeout(() => {
+            //     router.push('/swearjar/list')
+            // }, 2000);
             const resData = await response.json();
-            console.log("response:", resData);
-            toast.success('Swear Jar created successfully!', { position: "top-center" });
+            // router.push(`/swearjar/${resData.swearjar.SwearJarId}/view`)
+            toast.success(`Swear Jar ${isEditMode ? 'updated' : 'created'} successfully!`, { position: "top-center" });
         } catch (error) {
-            console.error('Create swear jar failed:', error);
+            console.error(`${isEditMode ? 'Update' : 'Create'} swear jar failed:`, error);
         }
     };
 
@@ -98,13 +100,13 @@ export default function CreateSwearJarForm() {
                             <p className="mt-0.5 max-w-[80%}] text-sm text-foreground/50 tracking-tighter">
                                 Add other owners
                             </p>
-                            {errors.additionalOwners && (
-                                <ErrorMessage error={errors.additionalOwners as FieldError} />
+                            {errors.Owners && (
+                                <ErrorMessage error={errors.Owners as FieldError} />
                             )}
                         </div>
                         <div>
                             <Button type="submit" className="w-full sm:font-semibold bg-primary hover:opacity-80 hover:text-foreground" disabled={isSubmitSuccessful}>
-                                Create!
+                                {isEditMode ? 'Update' : 'Create!'}
                             </Button>
                         </div>
                     </form>

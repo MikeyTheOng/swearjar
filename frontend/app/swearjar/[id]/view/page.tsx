@@ -4,7 +4,7 @@ import {
   QueryClient,
 } from '@tanstack/react-query'
 import { fetcher } from "@/lib/utils";
-import { SwearJar, Swear, User } from '@/lib/types';
+import { SwearJarBase, Swear, User } from '@/lib/types';
 
 
 import DefaultContentLayout from "@/components/layout/content";
@@ -13,7 +13,7 @@ import ErrorAlert from '@/components/shared/ErrorAlert';
 
 export interface SwearJarApiResponse {
   msg: string;
-  swearJar: SwearJar;
+  swearJar: SwearJarBase;
 }
 
 export interface RecentSwearsApiResponse {
@@ -51,7 +51,7 @@ export default async function SwearJarPage({ params }: { params: { id: string } 
         queryFn: () => fetcher<SwearJarTrendApiResponse>(`/api/swearjar/trend?id=${params.id}&period=days`),
       })
     ]);
-    
+
   } catch (error) {
     console.error("Error during prefetch:", error);
     errorMessage = "Error fetching Swear Jar data";
