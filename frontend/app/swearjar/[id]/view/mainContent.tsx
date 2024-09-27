@@ -4,7 +4,7 @@ import { SwearJarApiResponse } from "./page";
 import { useQuery } from "@tanstack/react-query";
 
 import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader";
-import { SwearJarBase, SwearJarWithId } from "@/lib/types";
+import { SwearJarWithId } from "@/lib/types";
 import SwearJarInfo from "@/components/app/swearjar/view/SwearJarInfo";
 import SwearJarTrends from "@/components/app/swearjar/view/SwearJarTrends";
 import SwearJarRecent from "@/components/app/swearjar/view/SwearJarRecent";

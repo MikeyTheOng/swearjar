@@ -46,12 +46,12 @@ export default function SwearJarForm({ initialSJData }: { initialSJData: SwearJa
                 toast.error("Something went wrong!", { id: `${isEditMode ? 'edit' : 'create'}-swearjar-error`, position: "top-center" });
                 throw new Error(`${isEditMode ? 'Update' : 'Create'} swear jar failed: ${errorData.error || response.statusText}`);
             }
-            // setTimeout(() => {
-            //     router.push('/swearjar/list')
-            // }, 2000);
+            
             const resData = await response.json();
-            // router.push(`/swearjar/${resData.swearjar.SwearJarId}/view`)
             toast.success(`Swear Jar ${isEditMode ? 'updated' : 'created'} successfully!`, { position: "top-center" });
+            setTimeout(() => {
+                router.push(`/swearjar/${resData.swearjar.SwearJarId}/view`)
+            }, 2000);
         } catch (error) {
             console.error(`${isEditMode ? 'Update' : 'Create'} swear jar failed:`, error);
         }
