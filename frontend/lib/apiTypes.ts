@@ -1,4 +1,4 @@
-import { SwearJarWithId, SwearJarBase, Swear, User } from "./types";
+import { SwearJarWithId, SwearJarWithOwners, Swear, User } from "./types";
 
 export interface BaseResponse {
     msg: string;
@@ -9,7 +9,7 @@ export interface SwearJarListApiResponse extends BaseResponse {
 }
 
 export interface SwearJarApiResponse extends BaseResponse {
-    swearJar: SwearJarBase;
+    swearJar: SwearJarWithOwners;
 }
 
 export interface RecentSwearsApiResponse extends BaseResponse {
