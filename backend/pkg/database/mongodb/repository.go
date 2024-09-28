@@ -85,23 +85,55 @@ func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJ
 	return swearJars, nil
 }
 
-func (r *MongoRepository) GetSwearJarById(swearJarId string) (swearJar.SwearJarBase, error) {
+func (r *MongoRepository) GetSwearJarById(swearJarId string) (swearJar.SwearJarWithOwners, error) {
 	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
 	if err != nil {
-		return swearJar.SwearJarBase{}, fmt.Errorf("invalid SwearJarId: %v", err)
+		return swearJar.SwearJarWithOwners{}, fmt.Errorf("invalid SwearJarId: %v", err)
 	}
 
-	var sj swearJar.SwearJarBase
-	filter := bson.M{"_id": swearJarIdHex}
-	err = r.swearJars.FindOne(context.TODO(), filter).Decode(&sj)
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"_id": swearJarIdHex}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "users",
+			"localField":   "Owners",
+			"foreignField": "_id",
+			"as":           "OwnerDetails",
+		}}},
+		{{Key: "$project", Value: bson.M{
+			"SwearJarId": "$_id",
+			"Name":       1,
+			"Desc":       1,
+			"CreatedAt":  1,
+			"Owners": bson.M{
+				"$map": bson.M{
+					"input": "$OwnerDetails",
+					"as":    "owner",
+					"in": bson.M{
+						"UserId": "$$owner._id",
+						"Email":  "$$owner.Email",
+						"Name":   "$$owner.Name",
+					},
+				},
+			},
+		}}},
+	}
+
+	cursor, err := r.swearJars.Aggregate(context.TODO(), pipeline)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return swearJar.SwearJarBase{}, fmt.Errorf("swear jar not found: %v", err)
-		}
-		return swearJar.SwearJarBase{}, fmt.Errorf("error fetching swear jar: %v", err)
+		return swearJar.SwearJarWithOwners{}, fmt.Errorf("error executing aggregation: %v", err)
+	}
+	defer cursor.Close(context.TODO())
+
+	var results []swearJar.SwearJarWithOwners
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		return swearJar.SwearJarWithOwners{}, fmt.Errorf("error decoding aggregation results: %v", err)
 	}
 
-	return sj, nil
+	if len(results) == 0 {
+		return swearJar.SwearJarWithOwners{}, fmt.Errorf("swear jar not found")
+	}
+
+	return results[0], nil
 }
 
 func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJarBase) (swearJar.SwearJarBase, error) {
