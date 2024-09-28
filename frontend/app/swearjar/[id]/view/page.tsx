@@ -4,7 +4,7 @@ import {
   QueryClient,
 } from '@tanstack/react-query'
 import { fetcher } from "@/lib/utils";
-import { SwearJarListApiResponse, RecentSwearsApiResponse, SwearJarTrendApiResponse } from '@/lib/apiTypes';
+import { SwearJarApiResponse, RecentSwearsApiResponse, SwearJarTrendApiResponse } from '@/lib/apiTypes';
 
 
 import DefaultContentLayout from "@/components/layout/content";
@@ -17,9 +17,9 @@ export default async function SwearJarPage({ params }: { params: { id: string } 
   try {
     // Fetch all data in parallel
     await Promise.all([
-      queryClient.prefetchQuery<SwearJarListApiResponse>({
+      queryClient.prefetchQuery<SwearJarApiResponse>({
         queryKey: [`swearjar?id=${params.id}`],
-        queryFn: () => fetcher<SwearJarListApiResponse>(`/api/swearjar?id=${params.id}`),
+        queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar?id=${params.id}`),
       }),
       queryClient.prefetchQuery<RecentSwearsApiResponse>({
         queryKey: [`swear?id=${params.id}`],
