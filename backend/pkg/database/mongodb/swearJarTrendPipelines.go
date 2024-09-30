@@ -16,7 +16,7 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 	case "days":
 		dateFormat = "%Y-%m-%d"
 		dateAdd = bson.D{{Key: "$multiply", Value: bson.A{"$$dayOffset", 24 * time.Hour.Milliseconds()}}}
-		
+
 		labelFormat = bson.D{
 			{Key: "$switch", Value: bson.D{
 				{Key: "branches", Value: bson.A{
@@ -28,11 +28,11 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 							{Key: "$eq", Value: bson.A{
 								"$_id",
 								bson.D{
-								{Key: "$dateToString", Value: bson.D{
-									{Key: "date", Value: "$$NOW"},
-									{Key: "format", Value: dateFormat},
-								}},
-							}}},
+									{Key: "$dateToString", Value: bson.D{
+										{Key: "date", Value: "$$NOW"},
+										{Key: "format", Value: dateFormat},
+									}},
+								}}},
 						}},
 						{Key: "then", Value: "Today"},
 					},
@@ -40,15 +40,15 @@ func SwearJarTrendPipeline(period string, numOfDataPoints int, startDate time.Ti
 					bson.D{
 						{Key: "case", Value: bson.D{
 							{Key: "$eq", Value: bson.A{
-								"$_id", 
+								"$_id",
 								bson.D{
 									{Key: "$dateToString", Value: bson.D{
 										{Key: "date", Value: bson.D{
 											{Key: "$subtract", Value: bson.A{"$$NOW", 24 * time.Hour.Milliseconds()}},
 										}},
-									{Key: "format", Value: dateFormat},
-								}},
-							}}},
+										{Key: "format", Value: dateFormat},
+									}},
+								}}},
 						}},
 						{Key: "then", Value: "Yesterday"},
 					},

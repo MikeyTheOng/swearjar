@@ -3,7 +3,6 @@ package swearJar
 import (
 	"errors"
 	"log"
-	"time"
 
 	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 )
@@ -41,7 +40,6 @@ func (s *service) CreateSwearJar(Name string, Desc string, Owners []string) (Swe
 		Name:      Name,
 		Desc:      Desc,
 		Owners:    Owners,
-		CreatedAt: time.Now(),
 	}
 
 	return s.r.CreateSwearJar(sj)

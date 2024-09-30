@@ -164,7 +164,7 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJarBase) (swearJar.Swe
 			{Key: "Name", Value: sj.Name},
 			{Key: "Desc", Value: sj.Desc},
 			{Key: "Owners", Value: ownerIDs},
-			{Key: "CreatedAt", Value: sj.CreatedAt},
+			{Key: "CreatedAt", Value: time.Now()},
 		},
 	)
 	if err != nil {
