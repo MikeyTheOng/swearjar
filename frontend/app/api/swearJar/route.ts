@@ -76,3 +76,47 @@ export const POST = auth(async function POST(req) {
         return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
     }
 })
+
+// PUT /api/swearjar - Update a specific swear jar by SwearJar Id
+export const PUT = auth(async function PUT(req) {
+    try {
+        const body = await req.json();
+
+        const session = req.auth;
+        if (!session) {
+            return new Response(JSON.stringify({ status: 'error', message: 'User not authenticated' }), { status: 401 });
+        }
+        const userId = session.user.UserId as string;
+
+        const params = swearJarWithOwnersSchema.extend({
+            SwearJarId: z.string().min(1, 'SwearJarId is required'),
+        }).parse(body);
+
+        const additionalOwners = params.Owners || []; // * Owners received from form excludes the user that submitted the form
+        const owners = [...(additionalOwners.map(user => user.UserId)), userId];
+        const transformedBody: { SwearJarId: string; Name: string; Owners: string[]; Desc?: string } = {
+            SwearJarId: params.SwearJarId,
+            Name: params.Name,
+            Owners: owners
+        };
+        if (params.Desc) transformedBody.Desc = params.Desc;
+
+        const { data, status } = await apiRequest({
+            route: `/swearjar`,
+            method: 'PUT',
+            body: transformedBody
+        });
+        return new Response(JSON.stringify(data), { status: status });
+    } catch (error) {
+        let errorMessage = 'Unknown error';
+
+        if (error instanceof ZodError) {
+            errorMessage = error.errors.map((err) => `${err.path.join('.')} - ${err.message}`).join(', ');
+            console.error('Zod Validation Error:', error.errors);
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
+    }
+})
