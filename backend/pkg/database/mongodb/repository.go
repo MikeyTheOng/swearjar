@@ -172,6 +172,38 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJarBase) (swearJar.Swe
 	return createdSwearJar, nil
 }
 
+func (r *MongoRepository) UpdateSwearJar(sj swearJar.SwearJarBase) error {
+	swearJarIdHex, err := primitive.ObjectIDFromHex(sj.SwearJarId)
+	if err != nil {
+		return fmt.Errorf("invalid SwearJarId: %v", err)
+	}
+
+	ownerIDs, err := ConvertStringIDsToObjectIDs(sj.Owners)
+	if err != nil {
+		return fmt.Errorf("failed to convert owner IDs: %w", err)
+	}
+
+	if err := r.AreUserIDsValid(ownerIDs); err != nil {
+		return err
+	}
+
+	update := bson.M{"$set": bson.M{
+		"Name":   sj.Name,
+		"Desc":   sj.Desc,
+		"Owners": ownerIDs,
+	}}
+
+	result, err := r.swearJars.UpdateByID(context.TODO(), swearJarIdHex, update)
+	if err != nil {
+		return fmt.Errorf("Error updating Swear Jar: %v", err)
+	}
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("Swear Jar does not exist")
+	}
+
+	return nil
+}
+
 func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string, err error) {
 	type SwearJarOwners struct {
 		Owners []primitive.ObjectID `bson:"Owners"`

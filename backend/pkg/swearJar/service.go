@@ -3,6 +3,7 @@ package swearJar
 import (
 	"errors"
 	"log"
+	"slices"
 
 	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 )
@@ -10,6 +11,7 @@ import (
 type Service interface {
 	AddSwear(Swear) error
 	CreateSwearJar(Name string, Desc string, Owners []string) (SwearJarBase, error)
+	UpdateSwearJar(sj SwearJarBase, userId string) error
 	GetSwearJarById(swearJarId string, userId string) (SwearJarWithOwners, error)
 	GetSwearJarsByUserId(userId string) ([]SwearJarBase, error)
 	GetSwearsWithUsers(swearJarId string, userId string) (RecentSwearsWithUsers, error)
@@ -19,6 +21,7 @@ type Service interface {
 type Repository interface {
 	AddSwear(Swear) error
 	CreateSwearJar(SwearJarBase) (SwearJarBase, error)
+	UpdateSwearJar(SwearJarBase) error
 	GetSwearJarById(swearJarId string) (SwearJarWithOwners, error)
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	GetSwearJarsByUserId(swearJarId string) ([]SwearJarBase, error)
@@ -37,12 +40,26 @@ func NewService(r Repository) Service {
 
 func (s *service) CreateSwearJar(Name string, Desc string, Owners []string) (SwearJarBase, error) {
 	sj := SwearJarBase{
-		Name:      Name,
-		Desc:      Desc,
-		Owners:    Owners,
+		Name:   Name,
+		Desc:   Desc,
+		Owners: Owners,
 	}
 
 	return s.r.CreateSwearJar(sj)
+}
+func (s *service) UpdateSwearJar(sj SwearJarBase, userId string) error {
+	isOwner, err := s.IsOwner(sj.SwearJarId, userId)
+	if err != nil {
+		return err
+	}
+	if !isOwner {
+		return errors.New("user is not an owner of this SwearJar")
+	}
+
+	if slices.Contains(sj.Owners, userId) {
+		return s.r.UpdateSwearJar(sj)
+	}
+	return errors.New("User making the request cannot be removed as an owner")
 }
 
 func (s *service) AddSwear(swear Swear) error {
