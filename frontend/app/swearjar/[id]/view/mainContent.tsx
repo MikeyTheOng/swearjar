@@ -1,10 +1,10 @@
 "use client"
 import { fetcher } from "@/lib/utils";
 import { SwearJarApiResponse } from "@/lib/apiTypes";
+import { SwearJarBase } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 
 import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader";
-import { SwearJarWithId } from "@/lib/types";
 import SwearJarInfo from "@/components/app/swearjar/view/SwearJarInfo";
 import SwearJarTrends from "@/components/app/swearjar/view/SwearJarTrends";
 import SwearJarRecent from "@/components/app/swearjar/view/SwearJarRecent";
@@ -26,7 +26,7 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
                 <SwearJarTrends swearJarId={swearJarId} />
             </div>
             <div className="col-span-1 md:col-span-2 order-2 md:order-3 space-y-2">
-                <SwearJarInfo {...data.swearJar as SwearJarWithId} />
+                <SwearJarInfo {...data.swearJar as SwearJarBase} />
                 <span className="hidden md:block">
                     <SwearJarRecent swearJarId={swearJarId} />
                 </span>
