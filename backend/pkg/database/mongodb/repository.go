@@ -137,25 +137,14 @@ func (r *MongoRepository) GetSwearJarById(swearJarId string) (swearJar.SwearJarW
 }
 
 func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJarBase) (swearJar.SwearJarBase, error) {
-	// Convert []string to []primitive.ObjectID in one go
-	ownerIDs := make([]primitive.ObjectID, len(sj.Owners))
-	for i, ownerID := range sj.Owners {
-		oid, err := primitive.ObjectIDFromHex(ownerID)
-		if err != nil {
-			return swearJar.SwearJarBase{}, fmt.Errorf("invalid owner ID: %s", ownerID)
-		}
-		ownerIDs[i] = oid
+	ownerIDs, err := ConvertStringIDsToObjectIDs(sj.Owners)
+	if err != nil {
+		return swearJar.SwearJarBase{}, fmt.Errorf("failed to convert owner IDs: %w", err)
 	}
 
 	// Check if all userIds in Owners field are valid users
-	for _, ownerID := range ownerIDs {
-		count, err := r.users.CountDocuments(context.TODO(), bson.M{"_id": ownerID})
-		if err != nil {
-			return swearJar.SwearJarBase{}, err
-		}
-		if count == 0 {
-			return swearJar.SwearJarBase{}, fmt.Errorf("invalid owner ID: %s", ownerID)
-		}
+	if err := r.AreUserIDsValid(ownerIDs); err != nil {
+		return swearJar.SwearJarBase{}, err
 	}
 
 	result, err := r.swearJars.InsertOne(
