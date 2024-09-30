@@ -32,6 +32,7 @@ export const userSchema = object({
 
 // Swear Jar Schemas
 export const swearJarBaseSchema = object({
+    SwearJarId: string().optional(),
     Name: string().min(1, 'Title is required'),
     Desc: string().optional(),
     Owners: array(string()).optional(), // Owners + additionalOwners
