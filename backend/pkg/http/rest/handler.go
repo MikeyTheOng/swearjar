@@ -337,7 +337,7 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"msg":      "SwearJar created successfully",
-		"swearjar": sj,
+		"swearJar": sj,
 	}
 
 	w.WriteHeader(http.StatusCreated)
