@@ -371,7 +371,8 @@ func (h *Handler) UpdateSwearJar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"msg": "SwearJar updated successfully",
+		"msg":      "SwearJar updated successfully",
+		"swearJar": body,
 	}
 
 	w.WriteHeader(http.StatusOK)
