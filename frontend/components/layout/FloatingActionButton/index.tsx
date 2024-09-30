@@ -37,7 +37,7 @@ import ErrorAlert from '@/components/shared/ErrorAlert';
 export default function FloatingActionButton({ userId }: { userId: string }) {
   // Hide FAB if on `/swearjar/create` page
   const pathname = usePathname();
-  const shouldHideFAB = pathname === '/swearjar/create';
+  const shouldHideFAB = pathname === '/swearjar/create' || pathname.endsWith('/edit');
   if (shouldHideFAB) {
     return null;
   }
