@@ -14,11 +14,15 @@ export default function SwearJarInfo(swearJar: SwearJarWithId) {
                     <h1 className="text-[40px] leading-[2.25rem] font-bold tracking-tighter">$100</h1>
                     <p className="text-xs">in <b>{swearJar.Name}</b></p>
                 </div>
-                <div>
-                    <Button variant="plain" className="rounded-full md:border-none" size="icon">
-                        <HiOutlinePencil size={20} />
-                    </Button>
-                </div>
+                <Button 
+                    variant="plain" 
+                    size="icon" 
+                    className="rounded-full md:border-none"
+                    aria-label="Edit Swear Jar"
+                    onClick={() => window.location.href = `/swearjar/${swearJar.SwearJarId}/edit`}
+                >
+                    <HiOutlinePencil size={20} />
+                </Button>
             </div>
             <hr className="border-foreground/20" />
             <div className="flex gap-2">
