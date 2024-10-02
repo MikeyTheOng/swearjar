@@ -54,7 +54,7 @@ func ConnectToDB() *mongo.Client {
 	return client
 }
 
-func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJar, error) {
+func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJarBase, error) {
 	userIdHex, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid UserId: %v", err)
@@ -68,9 +68,9 @@ func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJ
 	}
 	defer cursor.Close(context.TODO())
 
-	var swearJars []swearJar.SwearJar
+	var swearJars []swearJar.SwearJarBase
 	for cursor.Next(context.TODO()) {
-		var sj swearJar.SwearJar
+		var sj swearJar.SwearJarBase
 		if err := cursor.Decode(&sj); err != nil {
 			log.Printf("Error decoding swear jar: %v", err)
 			return nil, err
@@ -85,45 +85,66 @@ func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJ
 	return swearJars, nil
 }
 
-func (r *MongoRepository) GetSwearJarById(swearJarId string) (swearJar.SwearJar, error) {
+func (r *MongoRepository) GetSwearJarById(swearJarId string) (swearJar.SwearJarWithOwners, error) {
 	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
 	if err != nil {
-		return swearJar.SwearJar{}, fmt.Errorf("invalid SwearJarId: %v", err)
+		return swearJar.SwearJarWithOwners{}, fmt.Errorf("invalid SwearJarId: %v", err)
 	}
 
-	var sj swearJar.SwearJar
-	filter := bson.M{"_id": swearJarIdHex}
-	err = r.swearJars.FindOne(context.TODO(), filter).Decode(&sj)
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"_id": swearJarIdHex}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "users",
+			"localField":   "Owners",
+			"foreignField": "_id",
+			"as":           "Owners",
+		}}},
+		{{Key: "$project", Value: bson.M{
+			"_id":       1,
+			"Name":      1,
+			"Desc":      1,
+			"CreatedAt": 1,
+			"Owners": bson.M{
+				"$map": bson.M{
+					"input": "$Owners",
+					"as":    "owner",
+					"in": bson.M{
+						"_id":   "$$owner._id",
+						"Email": "$$owner.Email",
+						"Name":  "$$owner.Name",
+					},
+				},
+			},
+		}}},
+	}
+
+	cursor, err := r.swearJars.Aggregate(context.TODO(), pipeline)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return swearJar.SwearJar{}, fmt.Errorf("swear jar not found: %v", err)
-		}
-		return swearJar.SwearJar{}, fmt.Errorf("error fetching swear jar: %v", err)
+		return swearJar.SwearJarWithOwners{}, fmt.Errorf("error executing aggregation: %v", err)
+	}
+	defer cursor.Close(context.TODO())
+
+	var results []swearJar.SwearJarWithOwners
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		return swearJar.SwearJarWithOwners{}, fmt.Errorf("error decoding aggregation results: %v", err)
 	}
 
-	return sj, nil
+	if len(results) == 0 {
+		return swearJar.SwearJarWithOwners{}, fmt.Errorf("swear jar not found")
+	}
+
+	return results[0], nil
 }
 
-func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) (swearJar.SwearJar, error) {
-	// Convert []string to []primitive.ObjectID in one go
-	ownerIDs := make([]primitive.ObjectID, len(sj.Owners))
-	for i, ownerID := range sj.Owners {
-		oid, err := primitive.ObjectIDFromHex(ownerID)
-		if err != nil {
-			return swearJar.SwearJar{}, fmt.Errorf("invalid owner ID: %s", ownerID)
-		}
-		ownerIDs[i] = oid
+func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJarBase) (swearJar.SwearJarBase, error) {
+	ownerIDs, err := ConvertStringIDsToObjectIDs(sj.Owners)
+	if err != nil {
+		return swearJar.SwearJarBase{}, fmt.Errorf("failed to convert owner IDs: %w", err)
 	}
 
 	// Check if all userIds in Owners field are valid users
-	for _, ownerID := range ownerIDs {
-		count, err := r.users.CountDocuments(context.TODO(), bson.M{"_id": ownerID})
-		if err != nil {
-			return swearJar.SwearJar{}, err
-		}
-		if count == 0 {
-			return swearJar.SwearJar{}, fmt.Errorf("invalid owner ID: %s", ownerID)
-		}
+	if err := r.AreUserIDsValid(ownerIDs); err != nil {
+		return swearJar.SwearJarBase{}, err
 	}
 
 	result, err := r.swearJars.InsertOne(
@@ -132,23 +153,55 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJar) (swearJar.SwearJa
 			{Key: "Name", Value: sj.Name},
 			{Key: "Desc", Value: sj.Desc},
 			{Key: "Owners", Value: ownerIDs},
-			{Key: "CreatedAt", Value: sj.CreatedAt},
+			{Key: "CreatedAt", Value: time.Now()},
 		},
 	)
 	if err != nil {
-		return swearJar.SwearJar{}, err
+		return swearJar.SwearJarBase{}, err
 	}
 
 	// Get the inserted document
 	insertedID := result.InsertedID.(primitive.ObjectID)
 	filter := bson.M{"_id": insertedID}
-	var createdSwearJar swearJar.SwearJar
+	var createdSwearJar swearJar.SwearJarBase
 	err = r.swearJars.FindOne(context.TODO(), filter).Decode(&createdSwearJar)
 	if err != nil {
-		return swearJar.SwearJar{}, err
+		return swearJar.SwearJarBase{}, err
 	}
 
 	return createdSwearJar, nil
+}
+
+func (r *MongoRepository) UpdateSwearJar(sj swearJar.SwearJarBase) error {
+	swearJarIdHex, err := primitive.ObjectIDFromHex(sj.SwearJarId)
+	if err != nil {
+		return fmt.Errorf("invalid SwearJarId: %v", err)
+	}
+
+	ownerIDs, err := ConvertStringIDsToObjectIDs(sj.Owners)
+	if err != nil {
+		return fmt.Errorf("failed to convert owner IDs: %w", err)
+	}
+
+	if err := r.AreUserIDsValid(ownerIDs); err != nil {
+		return err
+	}
+
+	update := bson.M{"$set": bson.M{
+		"Name":   sj.Name,
+		"Desc":   sj.Desc,
+		"Owners": ownerIDs,
+	}}
+
+	result, err := r.swearJars.UpdateByID(context.TODO(), swearJarIdHex, update)
+	if err != nil {
+		return fmt.Errorf("Error updating Swear Jar: %v", err)
+	}
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("Swear Jar does not exist")
+	}
+
+	return nil
 }
 
 func (r *MongoRepository) GetSwearJarOwners(swearJarId string) (owners []string, err error) {

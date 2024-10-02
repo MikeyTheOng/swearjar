@@ -1,7 +1,7 @@
 "use client"
 import { fetcher } from '@/lib/utils';
-import { SwearJarApiResponse } from '@/lib/apiTypes';
-import { SwearJarProp } from '@/lib/types';
+import { SwearJarListApiResponse } from '@/lib/apiTypes';
+import { SwearJarWithId } from '@/lib/types';
 import { useAddSwear } from '@/components/shared/hooks/useAddSwear';
 import { usePathname } from 'next/navigation';
 
@@ -37,24 +37,24 @@ import ErrorAlert from '@/components/shared/ErrorAlert';
 export default function FloatingActionButton({ userId }: { userId: string }) {
   // Hide FAB if on `/swearjar/create` page
   const pathname = usePathname();
-  const shouldHideFAB = pathname === '/swearjar/create';
+  const shouldHideFAB = pathname === '/swearjar/create' || pathname.endsWith('/edit');
   if (shouldHideFAB) {
     return null;
   }
 
-  const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
+  const { data, error, isLoading } = useQuery<SwearJarListApiResponse>({
     queryKey: [`swearjar`],
-    queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
+    queryFn: () => fetcher<SwearJarListApiResponse>('/api/swearjar'),
     refetchOnWindowFocus: "always",
   });
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const [open, setOpen] = useState(false)
 
-  const [selectedSwearJar, setSelectedSwearJar] = useState<SwearJarProp | null>(null);
+  const [selectedSwearJar, setSelectedSwearJar] = useState<SwearJarWithId | null>(null);
   useEffect(() => {
     // Ensure localStorage is only accessed on the client-side
     const lastSelectedSJString = localStorage.getItem('lastSelectedSwearJar');
-    const lastSelectedSJ: SwearJarProp | null = lastSelectedSJString ? JSON.parse(lastSelectedSJString) : null;
+    const lastSelectedSJ: SwearJarWithId | null = lastSelectedSJString ? JSON.parse(lastSelectedSJString) : null;
 
     if (lastSelectedSJ?.Owners) {
       const isOwner = lastSelectedSJ.Owners.includes(userId);

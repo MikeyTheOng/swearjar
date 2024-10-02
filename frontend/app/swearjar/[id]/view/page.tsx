@@ -4,32 +4,17 @@ import {
   QueryClient,
 } from '@tanstack/react-query'
 import { fetcher } from "@/lib/utils";
-import { SwearJar, Swear, User } from '@/lib/types';
+import type { Metadata } from 'next'
+import { SwearJarApiResponse, RecentSwearsApiResponse, SwearJarTrendApiResponse } from '@/lib/apiTypes';
 
 
 import DefaultContentLayout from "@/components/layout/content";
 import MainContent from "./mainContent";
 import ErrorAlert from '@/components/shared/ErrorAlert';
 
-export interface SwearJarApiResponse {
-  msg: string;
-  swearJar: SwearJar;
-}
-
-export interface RecentSwearsApiResponse {
-  msg: string;
-  data: {
-    swears: Swear[];
-    users: { [key: string]: User };
-  }
-}
-
-export interface SwearJarTrendApiResponse {
-  msg: string;
-  data: {
-    label: string;
-    [key: string]: number | string; // This allows for one or more users with their respective swear counts
-  }[];
+export const metadata: Metadata = {
+  title: 'View Swear Jar | SwearJar',
+  description: 'View your Swear Jar',
 }
 
 export default async function SwearJarPage({ params }: { params: { id: string } }) {
@@ -51,7 +36,7 @@ export default async function SwearJarPage({ params }: { params: { id: string } 
         queryFn: () => fetcher<SwearJarTrendApiResponse>(`/api/swearjar/trend?id=${params.id}&period=days`),
       })
     ]);
-    
+
   } catch (error) {
     console.error("Error during prefetch:", error);
     errorMessage = "Error fetching Swear Jar data";

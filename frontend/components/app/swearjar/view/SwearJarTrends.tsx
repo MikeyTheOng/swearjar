@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import {  useSearchParams } from 'next/navigation'
 import { useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react";
-import { SwearJarTrendApiResponse } from "@/app/swearjar/[id]/view/page";
+import { SwearJarTrendApiResponse } from "@/lib/apiTypes";
 import { SwearJarTrendPeriod } from "@/lib/types";
 
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"

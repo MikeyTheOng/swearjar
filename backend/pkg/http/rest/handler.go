@@ -64,6 +64,8 @@ func (h *Handler) RegisterRoutes() http.Handler {
 			}
 		case http.MethodPost:
 			h.CreateSwearJar(w, r)
+		case http.MethodPut:
+			h.UpdateSwearJar(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -335,10 +337,45 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"msg":      "SwearJar created successfully",
-		"swearjar": sj,
+		"swearJar": sj,
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) UpdateSwearJar(w http.ResponseWriter, r *http.Request) {
+	var body swearJar.SwearJarBase
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		log.Printf("Error decoding JSON request: %v", err)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	err = h.sjService.UpdateSwearJar(body, userId)
+	if err != nil {
+		log.Printf("Error updating SwearJar: %v", err)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":      "SwearJar updated successfully",
+		"swearJar": body,
+	}
+
+	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

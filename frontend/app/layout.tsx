@@ -36,7 +36,7 @@ export default async function RootLayout({
         <Providers>
           <SessionProvider session={session}>
             {/* <nav className="bg-red-500 w-full h-12"></nav> */}
-            <main className="h-screen">
+            <main>
               {children}
             </main>
             <Toaster

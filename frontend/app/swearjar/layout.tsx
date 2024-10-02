@@ -6,7 +6,7 @@ import FloatingActionButton from "@/components/layout/FloatingActionButton";
 import Footer from "@/components/layout/footer";
 import Navbar from "@/components/layout/navbar";
 import { fetcher } from "@/lib/utils";
-import { SwearJarApiResponse } from "@/lib/apiTypes";
+import { SwearJarListApiResponse } from "@/lib/apiTypes";
 
 export default async function SwearJarLayout({
     children,
@@ -20,9 +20,9 @@ export default async function SwearJarLayout({
 
     const queryClient = new QueryClient()
     try {
-        await queryClient.prefetchQuery<SwearJarApiResponse>({
+        await queryClient.prefetchQuery<SwearJarListApiResponse>({
             queryKey: ['swearjar'],
-            queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
+            queryFn: () => fetcher<SwearJarListApiResponse>('/api/swearjar'),
         })
     } catch (error) {
         console.error("Error during prefetch:", error);

@@ -1,8 +1,8 @@
 "use client"
 
 import { fetcher } from "@/lib/utils";
-import { SwearJarProp } from "@/lib/types";
-import { SwearJarApiResponse } from "@/lib/apiTypes";
+import { SwearJarWithId } from "@/lib/types";
+import { SwearJarListApiResponse } from "@/lib/apiTypes";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
@@ -13,14 +13,14 @@ import Link from "next/link";
 import SwearJarCard from "@/components/app/swearjar/listing/SwearJarCard";
 
 export default function MainContent() {
-    const { data, error, isLoading } = useQuery<SwearJarApiResponse>({
+    const { data, error, isLoading } = useQuery<SwearJarListApiResponse>({
         queryKey: ['swearjar'],
-        queryFn: () => fetcher<SwearJarApiResponse>('/api/swearjar'),
+        queryFn: () => fetcher<SwearJarListApiResponse>('/api/swearjar'),
         refetchOnWindowFocus: "always",
     });
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [filteredSwearJars, setFilteredSwearJars] = useState<SwearJarProp[]>([]);
+    const [filteredSwearJars, setFilteredSwearJars] = useState<SwearJarWithId[]>([]);
 
     useEffect(() => {
         if (data?.swearJars) {
@@ -61,7 +61,7 @@ export default function MainContent() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-1 md:gap-x-5 md:gap-y-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
-                    {filteredSwearJars.map((swearJar: SwearJarProp) => (
+                    {filteredSwearJars.map((swearJar: SwearJarWithId) => (
                         <Link key={swearJar.SwearJarId} href={`/swearjar/${swearJar.SwearJarId}/view`} className="col-span-1 transition ease-in-out duration-300 rounded-xl ring-transparent focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus:outline-none">
                             <SwearJarCard swearJar={swearJar} />
                         </Link>
