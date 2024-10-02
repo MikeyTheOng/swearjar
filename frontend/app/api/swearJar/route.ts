@@ -90,10 +90,16 @@ export const PUT = auth(async function PUT(req) {
 
         const params = swearJarWithOwnersSchema.extend({
             SwearJarId: z.string().min(1, 'SwearJarId is required'),
+            Owners: z.array(userSchema)
+                .min(1, 'At least one owner is required')
+                .refine(owners => owners.some(owner => owner.UserId === userId), {
+                    message: "User making the request cannot be removed as an owner"
+                }),
         }).parse(body);
 
-        const additionalOwners = params.Owners || []; // * Owners received from form excludes the user that submitted the form
-        const owners = [...(additionalOwners.map(user => user.UserId)), userId];
+        const additionalOwners = params.Owners || [];
+        const owners = additionalOwners.map(user => user.UserId);
+
         const transformedBody: { SwearJarId: string; Name: string; Owners: string[]; Desc?: string } = {
             SwearJarId: params.SwearJarId,
             Name: params.Name,
