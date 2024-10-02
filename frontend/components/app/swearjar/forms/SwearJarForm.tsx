@@ -1,62 +1,113 @@
 "use client"
 import Confetti from 'react-confetti-boom';
+import { usePathname, useRouter } from 'next/navigation';
+import { FieldError, FormProvider, useForm } from "react-hook-form";
+import toast from 'react-hot-toast';
+import { SwearJarApiResponse } from '@/lib/apiTypes';
 import { SwearJarWithOwners, User } from '@/lib/types';
-import { useRouter, usePathname } from 'next/navigation'
+import { fetcher } from '@/lib/utils';
+import { useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Button } from "@/components/ui/shadcn/button";
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from "@/components/ui/shadcn/input";
 import { Label } from "@/components/ui/shadcn/label";
 import { Textarea } from "@/components/ui/shadcn/textarea";
-import { useForm, FormProvider, FieldError } from "react-hook-form";
 import AddUserComboBox from "./AddUserComboBox";
 import ErrorMessage from '@/components/shared/ErrorMessage';
-import toast from 'react-hot-toast';
-import { Card, CardContent } from '@/components/ui/card';
 
-export default function SwearJarForm({ initialSJData }: { initialSJData: SwearJarWithOwners }) {
+export default function SwearJarForm({ swearJarId }: { swearJarId?: string }) {
     const router = useRouter()
     const pathname = usePathname()
     const isEditMode = pathname.endsWith('/edit')
+    const queryClient = useQueryClient()
 
+    // if isEditMode, fetch SJ data
+    const { data: { swearJar: initialSJData } = {}, isLoading } = useQuery<SwearJarApiResponse>({
+        queryKey: [`swearjar?id=${swearJarId}`],
+        queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar?id=${swearJarId}`),
+        refetchOnWindowFocus: "always",
+        enabled: isEditMode,
+    });
     const methods = useForm<SwearJarWithOwners>({
         defaultValues: {
-            Name: initialSJData?.Name || "",
-            Desc: initialSJData?.Desc || "",
-            Owners: initialSJData?.Owners || []
+            Name: "",
+            Desc: "",
+            Owners: []
         }
     });
 
-    const { register, handleSubmit, formState: { isSubmitSuccessful, errors } } = methods;
-    const onSubmit = async (data: SwearJarWithOwners) => {
-        console.log("Form data:", data)
-        try {
-            // const url = isEditMode ? `/api/swearjar/${initialSJData?.id}` : '/api/swearjar'; // TODO
-            const url = '/api/swearjar';
-            const method = isEditMode ? 'PUT' : 'POST';
+    useEffect(() => {
+        if (isEditMode && initialSJData) {
+            methods.reset({
+                Name: initialSJData.Name,
+                Desc: initialSJData.Desc,
+                Owners: initialSJData.Owners
+            });
+        }
+    }, [initialSJData]);
 
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-            if (!response.ok) {
-                const errorData = await response.json();
-                toast.error("Something went wrong!", { id: `${isEditMode ? 'edit' : 'create'}-swearjar-error`, position: "top-center" });
-                throw new Error(`${isEditMode ? 'Update' : 'Create'} swear jar failed: ${errorData.error || response.statusText}`);
-            }
-            
-            const resData = await response.json();
-            toast.success(`Swear Jar ${isEditMode ? 'updated' : 'created'} successfully!`, { position: "top-center" });
+    const { register, handleSubmit, formState: { isSubmitSuccessful, errors, isDirty } } = methods;
+    const editMutation = useMutation({
+        mutationFn: (data: SwearJarWithOwners) => 
+            fetch('/api/swearjar', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...data, SwearJarId: initialSJData?.SwearJarId }),
+            }).then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(`Update swear jar failed: ${errorData.error || response.statusText}`);
+                    });
+                }
+                return response.json();
+            }),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: [`swearjar?id=${swearJarId}`] });
+            toast.success(`${data.swearJar.Name} updated successfully!`, { position: "top-center" });
             setTimeout(() => {
-                router.push(`/swearjar/${resData.swearjar.SwearJarId}/view`)
+                router.push(`/swearjar/${data.swearJar.SwearJarId}/view`)
             }, 2000);
+        },
+        onError: (error) => {
+            console.error('Update swear jar failed:', error);
+            toast.error("Something went wrong!", { id: 'edit-swearjar-error', position: "top-center" });
+        }
+    });
+
+    const createSwearJar = async (data: SwearJarWithOwners) => {
+        const response = await fetch('/api/swearjar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Create swear jar failed: ${errorData.error || response.statusText}`);
+        }
+        const resData = await response.json();
+        toast.success('Swear Jar created successfully!', { position: "top-center" });
+        return resData;
+    };
+
+    const onSubmit = async (data: SwearJarWithOwners) => {
+        try {
+            if (isEditMode) {
+                editMutation.mutate(data);
+            } else {
+                const resData = await createSwearJar(data);
+                setTimeout(() => {
+                    router.push(`/swearjar/${resData.swearJar.SwearJarId}/view`)
+                }, 2000);
+            }
         } catch (error) {
             console.error(`${isEditMode ? 'Update' : 'Create'} swear jar failed:`, error);
+            toast.error("Something went wrong!", { id: `${isEditMode ? 'edit' : 'create'}-swearjar-error`, position: "top-center" });
         }
     };
 
+    if (isLoading) return <div>Loading...</div>
     return (
         <Card className="border-transparent shadow-none md:border-neutral-200 md:p-4 md:rounded-2xl md:bg-white w-full">
             <CardContent className="p-0">
@@ -105,13 +156,17 @@ export default function SwearJarForm({ initialSJData }: { initialSJData: SwearJa
                             )}
                         </div>
                         <div>
-                            <Button type="submit" className="w-full sm:font-semibold bg-primary hover:opacity-80 hover:text-foreground" disabled={isSubmitSuccessful}>
+                            <Button 
+                                type="submit" 
+                                className="w-full sm:font-semibold bg-primary hover:opacity-80 hover:text-foreground" 
+                                disabled={isSubmitSuccessful}
+                            >
                                 {isEditMode ? 'Update' : 'Create!'}
                             </Button>
                         </div>
                     </form>
                 </FormProvider>
-                {isSubmitSuccessful &&
+                {isSubmitSuccessful && !isEditMode &&
                     <Confetti
                         mode="boom"
                         particleCount={100}
