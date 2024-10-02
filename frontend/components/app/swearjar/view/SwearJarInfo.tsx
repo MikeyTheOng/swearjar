@@ -1,10 +1,10 @@
-import { SwearJarWithId } from "@/lib/types";
+import { SwearJarWithOwners } from "@/lib/types";
 import { useAddSwear } from "@/components/shared/hooks/useAddSwear";
 
 import { Button } from "@/components/ui/shadcn/button";
 import { HiOutlinePencil } from "react-icons/hi";
 
-export default function SwearJarInfo(swearJar: SwearJarWithId) {
+export default function SwearJarInfo(swearJar: SwearJarWithOwners) {
     const { handleAddSwear } = useAddSwear(swearJar.SwearJarId);
 
     return (
