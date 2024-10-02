@@ -4,7 +4,7 @@ import {
   QueryClient,
 } from '@tanstack/react-query'
 import { fetcher } from "@/lib/utils";
-import { SwearJarBase } from '@/lib/types';
+import type { Metadata } from 'next'
 import { SwearJarApiResponse } from '@/lib/apiTypes';
 
 import BreadcrumbHeader from '@/components/layout/header/breadcrumbHeader';
@@ -12,10 +12,14 @@ import DefaultContentLayout from "@/components/layout/content";
 import ErrorAlert from '@/components/shared/ErrorAlert';
 import MainContent from "./mainContent";
 
+export const metadata: Metadata = {
+  title: 'Edit Swear Jar | SwearJar',
+  description: 'Edit your Swear Jar',
+}
+
 export default async function EditSwearJarPage({ params }: { params: { id: string } }) {
   const queryClient = new QueryClient()
   let errorMessage: string | null = null;
-  let swearJarData: SwearJarBase | null = null;
 
   try {
     await queryClient.prefetchQuery<SwearJarApiResponse>({
@@ -36,7 +40,7 @@ export default async function EditSwearJarPage({ params }: { params: { id: strin
     <HydrationBoundary state={dehydrate(queryClient)}>
       <section className="w-full md:w-[768px] lg:w-[864px]">
         <div className='mb-4 w-full'>
-          <BreadcrumbHeader title="Edit SJ" subtitle="Modify your Swear Jar" />
+          <BreadcrumbHeader title="Edit" subtitle="Modify your Swear Jar" />
         </div>
         <DefaultContentLayout>
           <MainContent swearJarId={params.id} />

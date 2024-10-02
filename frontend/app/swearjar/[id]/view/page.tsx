@@ -4,12 +4,18 @@ import {
   QueryClient,
 } from '@tanstack/react-query'
 import { fetcher } from "@/lib/utils";
+import type { Metadata } from 'next'
 import { SwearJarApiResponse, RecentSwearsApiResponse, SwearJarTrendApiResponse } from '@/lib/apiTypes';
 
 
 import DefaultContentLayout from "@/components/layout/content";
 import MainContent from "./mainContent";
 import ErrorAlert from '@/components/shared/ErrorAlert';
+
+export const metadata: Metadata = {
+  title: 'View Swear Jar | SwearJar',
+  description: 'View your Swear Jar',
+}
 
 export default async function SwearJarPage({ params }: { params: { id: string } }) {
   const queryClient = new QueryClient()
