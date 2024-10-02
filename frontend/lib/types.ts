@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { userSchema, swearJarBaseSchema, swearJarWithOwnersSchema } from "./schema";
+import { userSchema, swearJarBaseSchema, swearJarWithOwnersSchema, swearJarWithIdSchema } from "./schema";
 
 // User Types
 export type User = z.infer<typeof userSchema>;
@@ -9,9 +9,7 @@ export type SwearJarBase = z.infer<typeof swearJarBaseSchema>;
 
 export type SwearJarWithOwners = z.infer<typeof swearJarWithOwnersSchema>;
 
-export type SwearJarWithId = SwearJarBase & {
-    SwearJarId: string;
-};
+export type SwearJarWithId = z.infer<typeof swearJarWithIdSchema>;
 
 // Swear Types
 export type Swear = {

@@ -38,6 +38,10 @@ export const swearJarBaseSchema = object({
     Owners: array(string()).optional(), // Owners + additionalOwners
 });
 
-export const swearJarWithOwnersSchema = swearJarBaseSchema.extend({
+export const swearJarWithIdSchema = swearJarBaseSchema.extend({
+    SwearJarId: string().min(1, 'SwearJarId is required'),
+});
+
+export const swearJarWithOwnersSchema = swearJarWithIdSchema.extend({
     Owners: array(userSchema),
 });
