@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import toast, { ErrorIcon } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -18,9 +18,13 @@ interface SignUpFormData {
 }
 
 export default function LoginForm() {
-    const [error, setError] = useState<boolean>(false);
     const router = useRouter()
+    const { data: session, status } = useSession();
+    if (status === 'authenticated') {
+        router.push('/swearjar/list');
+    }
 
+    const [error, setError] = useState<boolean>(false);
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
             // Email: "",
