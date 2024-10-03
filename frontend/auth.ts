@@ -195,5 +195,3 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     updateAge: 60 * parseInt(process.env.JWT_EXPIRATION_TIME as string), // if updateAge == maxAge, the session will not be updated
   },
 })
-
-// validateJWT
