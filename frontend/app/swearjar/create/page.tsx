@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
 
 import MainContent from "./mainContent";
 import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader"
@@ -10,6 +12,10 @@ export const metadata: Metadata = {
 }
 
 export default async function CreateSwearJarPage() {
+  const session = await auth()
+  if (!session) {
+    return redirect('/auth/login')
+  }
   return (
     <section className="w-full md:w-[768px] lg:w-[864px]">
       <div className='mb-4 w-full'>
