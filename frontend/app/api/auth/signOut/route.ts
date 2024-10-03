@@ -1,10 +1,8 @@
-import { signOut } from '@/auth';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {  // Accept request as a parameter
     try {
         // Perform sign out first
-        await signOut({ redirect: false });
         const response = NextResponse.json({ message: 'Signed out successfully' });
 
         deleteCookies(response, 'jwt', true);
