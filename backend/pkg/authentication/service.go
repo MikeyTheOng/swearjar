@@ -1,8 +1,6 @@
 package authentication
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"log"
 	"regexp"
@@ -129,7 +127,7 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 		return UserResponse{}, "", "", err
 	}
 
-	csrfToken, err = generateCSRFToken()
+	csrfToken, err = GenerateCSRFToken()
 	if err != nil {
 		return UserResponse{}, "", "", err
 	}
@@ -139,12 +137,4 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 		Email:  storedUser.Email,
 		Name:   storedUser.Name,
 	}, tokenString, csrfToken, nil
-}
-
-func generateCSRFToken() (string, error) {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(bytes), nil
 }

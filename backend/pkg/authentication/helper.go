@@ -1,6 +1,8 @@
 package authentication
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"log"
 	"os"
@@ -45,4 +47,12 @@ func DecodeJWT(tokenString string) (jwt.MapClaims, error) {
 		log.Printf("Unable to extract claims from token")
 		return nil, errors.New("Unable to extract claims from token")
 	}
+}
+
+func GenerateCSRFToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
