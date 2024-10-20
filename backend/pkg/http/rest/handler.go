@@ -52,6 +52,25 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})
 
+	mux.HandleFunc("/password/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			passwordAction := strings.TrimPrefix(r.URL.Path, "/password/")
+			switch passwordAction {
+			case "forgot":
+				log.Printf("Handling forgot password") // ! Debug
+				h.ForgotPassword(w, r)
+			case "reset":
+				log.Printf("Handling reset password") // ! Debug
+				// h.ResetPassword(w, r)
+			default:
+				http.NotFound(w, r)
+			}
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Wrap the /swearjar route with the ProtectedRouteMiddleware middleware
 	mux.Handle("/swearjar", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -175,6 +194,50 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+}
+
+func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	if req.Email == "" {
+		RespondWithError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	done := make(chan error, 1)
+
+	go func() {
+		err := h.authService.ForgotPassword(req.Email)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		// log.Printf("Received from done channel, error: %v", err) // ! Debug
+		if err != nil {
+			log.Printf("Forgot password error: %v", err)
+			RespondWithError(w, http.StatusInternalServerError, "An error occurred while processing your request")
+			return
+		}
+		response := map[string]string{"msg": "Password reset instructions sent"}
+		w.WriteHeader(http.StatusOK)
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	case <-time.After(20 * time.Second):
+		RespondWithError(w, http.StatusRequestTimeout, "Request timed out")
+	}
+}
+
+func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {

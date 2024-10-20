@@ -2,11 +2,14 @@ package authentication
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mikeytheong/swearjar/backend/pkg/email"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,14 +31,18 @@ type Repository interface {
 type Service interface {
 	SignUp(User) error
 	Login(User) (u UserResponse, jwt string, csrfToken string, err error)
+	ForgotPassword(email string) error
+	ResetPassword(email string, password string) error
+	VerifyUserByEmail(email string) (UserResponse, error)
 }
 
 type service struct {
 	r Repository
+	e email.Service
 }
 
-func NewService(r Repository) Service {
-	return &service{r}
+func NewService(r Repository, e email.Service) Service {
+	return &service{r, e}
 }
 
 func (s *service) SignUp(u User) error {
@@ -137,4 +144,22 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 		Email:  storedUser.Email,
 		Name:   storedUser.Name,
 	}, tokenString, csrfToken, nil
+}
+
+func (s *service) ForgotPassword(email string) error {
+	currentDateTime := time.Now().Format("Jan 2, 2006 at 3:04 PM")
+	if err := s.e.SendEmail(email, "Forgot Password", fmt.Sprintf("Hello, World! Current date and time: %s", currentDateTime)); err != nil {
+		log.Printf("AuthService: Error sending password-reset email")
+		return err
+	}
+	log.Printf("AuthService: Password-reset email sent to %s", email)
+	return nil
+}
+
+func (s *service) ResetPassword(email string, password string) error {
+	return nil
+}
+
+func (s *service) VerifyUserByEmail(email string) (UserResponse, error) {
+	return UserResponse{}, nil
 }

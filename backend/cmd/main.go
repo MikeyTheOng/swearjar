@@ -7,6 +7,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 	"github.com/mikeytheong/swearjar/backend/pkg/database/mongodb"
+	"github.com/mikeytheong/swearjar/backend/pkg/email"
+	"github.com/mikeytheong/swearjar/backend/pkg/email/providers/amazonses"
 	"github.com/mikeytheong/swearjar/backend/pkg/http/rest"
 	"github.com/mikeytheong/swearjar/backend/pkg/search"
 	"github.com/mikeytheong/swearjar/backend/pkg/swearJar"
@@ -18,9 +20,11 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	p := amazonses.NewClient() // Email Service Provider Client
+	e := email.NewService(p)
 	r := mongodb.NewMongoRepository()
 
-	authService := authentication.NewService(r)
+	authService := authentication.NewService(r, e)
 	swearService := swearJar.NewService(r)
 	searchService := search.NewService(r)
 
