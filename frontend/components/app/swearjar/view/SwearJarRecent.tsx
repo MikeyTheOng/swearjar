@@ -5,66 +5,77 @@ import { useState } from "react";
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
     CardTitle,
 } from "@/components/ui/shadcn/card"
 import { Button } from "@/components/ui/shadcn/button"
 import { FaChevronDown, } from "react-icons/fa";
+import { RecentSwearsApiResponse } from "@/app/swearjar/[id]/view/page";
+import { fetcher } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
-export default function SwearJarRecent() {
+export default function SwearJarRecent({ swearJarId }: { swearJarId: string }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const toggleExpand = () => {
         setIsExpanded(!isExpanded);
     };
 
-    const transactions = [
-        { name: "Michael Ong", date: "Today", message: "Yikes, another one bites the dust!" },
-        { name: "Michael Ong", date: "Today", message: "Yikes, another one bites the dust!" },
-        { name: "Jane Doe", date: "Yesterday", message: "Oops, I did it again!" },
-        { name: "John Smith", date: "Yesterday", message: "Just another day!" },
-        { name: "Michael Ong", date: "Yesterday", message: "Yikes, another one bites the dust!" },
-    ];
-
+    const { data: { data: data } = {}, isLoading } = useQuery<RecentSwearsApiResponse>({
+        queryKey: [`swear?id=${swearJarId}`],
+        queryFn: () => fetcher<RecentSwearsApiResponse>(`/api/swear?id=${swearJarId}`),
+        refetchOnWindowFocus: "always",
+    });
+    if (isLoading) return <span className="daisy-loading daisy-loading-dots daisy-loading-lg text-primary"></span>;
+    if (!data) return <p>No data</p>;
+    if (data.swears && data.swears.length === 0) return <p>No swears recorded yet!</p>;
     return (
         <Card className="border-none shadow-none flex flex-col gap-[9px]">
             <div className="p-0 flex flew-row justify-between items-center">
                 <CardTitle className="text-lg font-medium tracking-tighter">Recent</CardTitle>
-                <Button
-                    variant="plain"
-                    className="py-0 px-2 h-7 text-xs rounded-full"
-                    onClick={toggleExpand}
-                >
-                    {isExpanded ? "Collapse" : "Expand"}
-                    <FaChevronDown className={`w-3 h-3 ml-1 transition-transform duration-300 ${isExpanded ? "-rotate-180" : ""}`} />
-                </Button>
+                {
+                    data.swears && data.swears.length > 0 ? (
+                        <Button
+                            variant="plain"
+                            className="py-0 px-2 h-7 text-xs rounded-full"
+                            onClick={toggleExpand}
+                        >
+                            {isExpanded ? "Collapse" : "Expand"}
+                            <FaChevronDown className={`w-3 h-3 ml-1 transition-transform duration-300 ${isExpanded ? "-rotate-180" : ""}`} />
+                        </Button>
+                    ) : null
+                }
             </div>
-            <div className={`grid grid-cols-1 ${isExpanded ? "gap-1.5" : "grid-rows-1 h-[90px]"}`}>
-                {transactions.map((transaction, index) => (
-                    <RecentTransaction
-                        key={index}
-                        name={transaction.name}
-                        date={transaction.date}
-                        message={transaction.message}
-                        className={`
-                            ${isExpanded ? '' : "col-start-1 row-start-1"} 
-                            ${!isExpanded ?
-                                (
-                                    index === 0 ? 'translate-y-0 scale-100 z-[3]' :
-                                        index === 1 ? 'translate-y-[20%] scale-95 blur-[0.5px] z-[2]' :
-                                            index === 2 ? 'translate-y-[40%] scale-90 blur-[0.7px] z-[1]' :
-                                                index > 2 ? 'translate-y-[40%] scale-90 blur-[0.9px] z-[0] shadow-none' :
-                                                    'scale-0'
-                                ) :
-                                ''
-                            }
-                            w-full
-                            transition-transform duration-300
-                        `}
-                    />
-                ))}
-            </div>
+            {
+                data.swears && data.swears.length > 0 ? (
+                    <div className={`grid grid-cols-1 ${isExpanded ? "gap-1.5" : "grid-rows-1 h-[90px]"}`}>
+                        {
+                            data.swears.map((swear, index) => (
+                            <RecentTransaction
+                                key={index}
+                                name={data.users[swear.UserId].Name}
+                                // name={swear.UserId}
+                                date={new Date(swear.CreatedAt).toLocaleDateString()} 
+                                message={swear.SwearDescription}
+                                className={`
+                                    ${isExpanded ? '' : "col-start-1 row-start-1"} 
+                                    ${!isExpanded ?
+                                        (
+                                            index === 0 ? 'translate-y-0 scale-100 z-[3]' :
+                                                index === 1 ? 'translate-y-[20%] scale-95 blur-[0.5px] z-[2]' :
+                                                    index === 2 ? 'translate-y-[40%] scale-90 blur-[0.7px] z-[1]' :
+                                                        index > 2 ? 'translate-y-[40%] scale-90 blur-[0.9px] z-[0] shadow-none' :
+                                                            'scale-0'
+                                        ) :
+                                        ''
+                                    }
+                                    w-full
+                                    transition-transform duration-300
+                                `}
+                            />
+                        ))
+                    }
+                    </div>
+                ) : <p className="text-sm text-foreground/50">Nothing recorded yet!</p>
+            }
         </Card>
     )
 }

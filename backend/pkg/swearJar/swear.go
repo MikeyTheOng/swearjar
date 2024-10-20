@@ -5,9 +5,9 @@ import (
 )
 
 type Swear struct {
-	UserId      string
-	CreatedAt   time.Time
-	Active      bool
-	SwearJarId  string
+	UserId           string
+	CreatedAt        time.Time
+	Active           bool
+	SwearJarId       string
 	SwearDescription string
 }
