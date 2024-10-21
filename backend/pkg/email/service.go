@@ -1,7 +1,7 @@
 package email
 
 import (
-	// "fmt"
+	ht "html/template"
 	"log"
 	"os"
 
@@ -9,7 +9,7 @@ import (
 )
 
 type Service interface {
-	SendEmail(to string, subject string, body string) error
+	SendEmail(to string, subject string, body *ht.Template, data interface{}) error
 }
 
 type service struct {
@@ -23,8 +23,7 @@ func NewService(providerClient *mail.Client) Service {
 	return &service{providerClient, sender}
 }
 
-func (s *service) SendEmail(to string, subject string, body string) error {
-	// TODO: Implement this
+func (s *service) SendEmail(to string, subject string, body *ht.Template, data interface{}) error {
 	m := mail.NewMsg()
 	if err := m.From(s.sender); err != nil {
 		log.Printf("Error with From: %v", err)
@@ -33,7 +32,7 @@ func (s *service) SendEmail(to string, subject string, body string) error {
 		log.Printf("Error with To: %v", err)
 	}
 	m.Subject(subject)
-	m.SetBodyString(mail.TypeTextPlain, body)
+	m.SetBodyHTMLTemplate(body, data)
 
 	log.Printf("EmailService: About to send email to %s", to) // ! Debug
 	return s.client.DialAndSend(m)
