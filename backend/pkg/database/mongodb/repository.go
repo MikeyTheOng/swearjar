@@ -18,11 +18,12 @@ import (
 )
 
 type MongoRepository struct {
-	client    *mongo.Client
-	db        *mongo.Database
-	swearJars *mongo.Collection
-	swears    *mongo.Collection
-	users     *mongo.Collection
+	client     *mongo.Client
+	db         *mongo.Database
+	swearJars  *mongo.Collection
+	swears     *mongo.Collection
+	users      *mongo.Collection
+	authTokens *mongo.Collection
 }
 
 func NewMongoRepository() *MongoRepository {
@@ -31,7 +32,8 @@ func NewMongoRepository() *MongoRepository {
 	swearJars := db.Collection(os.Getenv("DB_COLLECTION_SWEARJARS"))
 	swears := db.Collection(os.Getenv("DB_COLLECTION_SWEARJAR"))
 	users := db.Collection(os.Getenv("DB_COLLECTION_USERS"))
-	return &MongoRepository{client, db, swearJars, swears, users}
+	authTokens := db.Collection(os.Getenv("DB_COLLECTION_AUTH_TOKENS"))
+	return &MongoRepository{client, db, swearJars, swears, users, authTokens}
 }
 
 func ConnectToDB() *mongo.Client {
@@ -332,6 +334,11 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 			{Key: "Password", Value: u.Password},
 		},
 	)
+	return err
+}
+
+func (r *MongoRepository) CreateAuthToken(authToken authentication.AuthToken) error {
+	_, err := r.authTokens.InsertOne(context.TODO(), authToken)
 	return err
 }
 

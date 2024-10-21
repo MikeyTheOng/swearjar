@@ -2,15 +2,21 @@ package authentication
 
 import (
 	"errors"
-	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 	"time"
 
+	"html/template"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mikeytheong/swearjar/backend/pkg/email"
 	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	AuthTokenDuration = 1 * time.Hour
 )
 
 var ErrUnauthorized = errors.New("unauthorized")
@@ -26,6 +32,7 @@ type Claims struct {
 type Repository interface {
 	SignUp(User) error
 	GetUserByEmail(string) (User, error)
+	CreateAuthToken(AuthToken) error
 }
 
 type Service interface {
@@ -147,8 +154,61 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 }
 
 func (s *service) ForgotPassword(email string) error {
-	currentDateTime := time.Now().Format("Jan 2, 2006 at 3:04 PM")
-	if err := s.e.SendEmail(email, "Forgot Password", fmt.Sprintf("Hello, World! Current date and time: %s", currentDateTime)); err != nil {
+	// * 1. Verify email exists
+	user, err := s.r.GetUserByEmail(email)
+	if err != nil {
+		log.Printf("AuthService: Error initiating Forget Password for email {%v}: %v", email, err)
+		return err
+	}
+
+	// * 2.  Create auth token and store in db
+	// TODO: Send email with password reset link
+	authToken, err := NewAuthToken(email, PurposePasswordReset, AuthTokenDuration)
+	if err != nil {
+		log.Printf("AuthService: Error creating auth token: %v", err)
+		return err
+	}
+	err = s.r.CreateAuthToken(*authToken)
+	if err != nil {
+		log.Printf("AuthService: Error storing auth token in db: %v", err)
+		return err
+	}
+
+	// * 3. Send email with password reset link
+	htmlTemplate := `
+		<!DOCTYPE html>
+		<html>
+			<body>
+				<p>Hello {{.Name}},</p>
+				
+				<p>
+					We received a request to reset your password. If you made this request, please click the link below to set a new password:
+					<br>
+					<a href="{{.ResetLink}}">{{.ResetLink}}</a>
+				</p>
+				
+				<p>
+					If you did not request a password reset, please ignore this email or contact us if you have any concerns.
+				</p>
+			</body>
+		</html>
+	`
+
+	data := struct {
+		Name      string
+		ResetLink string
+	}{
+		Name:      user.Name,
+		ResetLink: os.Getenv("FRONTEND_URL") + "/reset-password?token=" + authToken.Token + "&email=" + email,
+	}
+
+	tmpl, err := template.New("resetPassword").Parse(htmlTemplate)
+	if err != nil {
+		log.Printf("AuthService: Error parsing template: %v", err)
+		return err
+	}
+
+	if err := s.e.SendEmail(email, "Forgot Password Request - SwearJar", tmpl, data); err != nil {
 		log.Printf("AuthService: Error sending password-reset email")
 		return err
 	}
