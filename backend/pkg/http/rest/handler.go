@@ -58,7 +58,6 @@ func (h *Handler) RegisterRoutes() http.Handler {
 			passwordAction := strings.TrimPrefix(r.URL.Path, "/password/")
 			switch passwordAction {
 			case "forgot":
-				log.Printf("Handling forgot password") // ! Debug
 				h.ForgotPassword(w, r)
 			case "reset":
 				log.Printf("Handling reset password") // ! Debug
