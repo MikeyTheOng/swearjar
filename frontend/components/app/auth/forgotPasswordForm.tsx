@@ -89,7 +89,7 @@ export default function ForgotPasswordForm() {
                     <Input id="email" placeholder="john.doe@example.com" {...register("Email", { required: "Email is required" })} />
                     {errors.Email && <span className="text-error">{errors.Email.message}</span>}
                 </div>
-                <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary hover:text-foreground hover:scale-105">Reset Password</Button>
+                <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary hover:text-foreground hover:scale-105">Forgot Password</Button>
             </div>
         </form>
     );
