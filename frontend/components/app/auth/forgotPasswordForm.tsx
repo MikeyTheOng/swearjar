@@ -76,7 +76,7 @@ export default function ForgotPasswordForm() {
             <div className="grid w-full items-center gap-4">
                 {showSuccessMessage && (
                     <Alert variant="default" className='border-none'>
-                        <div className='flex justify-center items-center'>
+                        <div className='flex justify-between items-center'>
                             <AlertDescription className='text-xs md:text-sm text-input/80'>
                             Password reset confirmation email was sent to your email.
                         </AlertDescription>
