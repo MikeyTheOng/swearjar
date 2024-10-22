@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm, SubmitHandler, FieldError } from "react-hook-form";
 import { signIn, useSession } from 'next-auth/react';
 import toast, { ErrorIcon } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/shadcn/button"
 import ErrorAlert from "@/components/shared/ErrorAlert";
+import ErrorMessage from "@/components/shared/ErrorMessage";
 import { Input } from "@/components/ui/shadcn/input"
 import { Label } from "@/components/ui/shadcn/label"
 import PasswordInput from "./passwordInput";
@@ -72,7 +73,7 @@ export default function LoginForm() {
                 <div className="flex flex-col space-y-1.5">
                     <Label>Email</Label>
                     <Input id="email" placeholder="john.doe@example.com" {...register("Email", { required: "Email is required" })} />
-                    {errors.Email && <span className="text-error">{errors.Email.message}</span>}
+                    {errors.Email && <ErrorMessage error={errors.Email as FieldError} />}
                 </div>
                 <div className="flex flex-col space-y-1.5">
                     <Label>Password</Label>

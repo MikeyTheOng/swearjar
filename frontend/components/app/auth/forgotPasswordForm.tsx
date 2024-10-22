@@ -1,20 +1,17 @@
 "use client"
-import toast from 'react-hot-toast';
+import { useForm, SubmitHandler, FieldError } from "react-hook-form";
 import { useRouter } from 'next/navigation';
-import { useForm, SubmitHandler } from "react-hook-form";
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
-import {
-    Alert,
-    AlertDescription,
-} from "@/components/ui/shadcn/alert"
+import { Alert, AlertDescription } from "@/components/ui/shadcn/alert"
 import { Button } from "@/components/ui/shadcn/button"
 import ErrorIcon from '@/components/shared/icons/animated/errorIcon';
+import ErrorMessage from '@/components/shared/ErrorMessage';
 import { Input } from "@/components/ui/shadcn/input"
 import { Label } from "@/components/ui/shadcn/label"
 import { X } from "lucide-react"
-
 
 interface ForgotPasswordFormData {
     Email: string;
@@ -78,16 +75,16 @@ export default function ForgotPasswordForm() {
                     <Alert variant="default" className='border-none'>
                         <div className='flex justify-between items-center'>
                             <AlertDescription className='text-xs md:text-sm text-input/80'>
-                            Password reset confirmation email was sent to your email.
-                        </AlertDescription>
-                        <X className="h-5 w-5 cursor-pointer" onClick={() => setShowSuccessMessage(false)} />
+                                Password reset confirmation email was sent to your email.
+                            </AlertDescription>
+                            <X className="h-5 w-5 cursor-pointer" onClick={() => setShowSuccessMessage(false)} />
                         </div>
                     </Alert>
                 )}
                 <div className="flex flex-col space-y-1.5">
                     <Label>Email</Label>
                     <Input id="email" placeholder="john.doe@example.com" {...register("Email", { required: "Email is required" })} />
-                    {errors.Email && <span className="text-error">{errors.Email.message}</span>}
+                    {errors.Email && <ErrorMessage error={errors.Email as FieldError} />}
                 </div>
                 <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary hover:text-foreground hover:scale-105">Forgot Password</Button>
             </div>

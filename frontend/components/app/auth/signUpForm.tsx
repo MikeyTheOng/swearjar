@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useSession } from 'next-auth/react';
+import ErrorMessage from '@/components/shared/ErrorMessage';
 
 import { Button } from "@/components/ui/shadcn/button"
 import { Input } from "@/components/ui/shadcn/input"
@@ -22,7 +23,7 @@ export default function SignUp() {
     if (status === 'authenticated') {
         router.push('/swearjar/list');
     }
-    
+
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
             Name: "",
@@ -77,12 +78,12 @@ export default function SignUp() {
                 <div className="flex flex-col space-y-1.5">
                     <Label>Name</Label>
                     <Input id="name" placeholder="John Doe" {...register("Name", { required: "Name is required" })} />
-                    {errors.Name && <span className="text-error">{errors.Name.message}</span>}
+                    <ErrorMessage error={errors.Name} />
                 </div>
                 <div className="flex flex-col space-y-1.5">
                     <Label>Email</Label>
                     <Input id="email" placeholder="john.doe@example.com" {...register("Email", { required: "Email is required" })} />
-                    {errors.Email && <span className="text-error">{errors.Email.message}</span>}
+                    <ErrorMessage error={errors.Email} />
                 </div>
                 <div className="flex flex-col space-y-1.5">
                     <Label>Password</Label>
