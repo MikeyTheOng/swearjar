@@ -76,13 +76,13 @@ export default function LoginForm() {
                     {errors.Email && <ErrorMessage error={errors.Email as FieldError} />}
                 </div>
                 <div className="flex flex-col space-y-1.5">
-                    <Label>Password</Label>
+                    <div className="flex justify-between items-center">
+
+                        <Label>Password</Label>
+                        <Link href="/auth/password/forgot" className="text-sm text-input/70 hover:text-input hover:underline transition duration-300 ease-in-out">Forgot password?</Link>
+                    </div>
                     <PasswordInput register={register} errors={errors} />
                 </div>
-                {/* // TODO: Forget PW functionality not implemented */}
-                {/* <div className="flex justify-end">
-                <a>Forgot password?</a>
-              </div> */}
                 <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary md:shadow-none hover:text-foreground hover:scale-105">Login</Button>
                 <p className="text-center text-sm">
                     Don't have an account? <Link href="/auth/signup" className="font-bold hover:underline hover:text-primary transition duration-300 ease-in-out">Sign up</Link>
