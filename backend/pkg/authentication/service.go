@@ -212,6 +212,11 @@ func (s *service) ResetPassword(token string, newPassword string) error {
 		return ErrInvalidToken
 	}
 
+	if authToken.Purpose != PurposeType(PurposePasswordReset) {
+		log.Printf("AuthService: Token purpose mismatch: expected %s, got %s", PurposePasswordReset, authToken.Purpose)
+		return ErrInvalidToken
+	}
+
 	// Validate password
 	if err := validatePassword(newPassword); err != nil {
 		return err
