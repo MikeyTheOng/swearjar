@@ -3,6 +3,7 @@ package authentication
 import (
 	"errors"
 	"log"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -33,6 +34,7 @@ type Repository interface {
 	SignUp(User) error
 	GetUserByEmail(string) (User, error)
 	CreateAuthToken(AuthToken) error
+	GetAuthToken(string) (AuthToken, error)
 }
 
 type Service interface {
@@ -41,6 +43,7 @@ type Service interface {
 	ForgotPassword(email string) error
 	ResetPassword(email string, password string) error
 	VerifyUserByEmail(email string) (UserResponse, error)
+	VerifyAuthToken(token string, purpose string) error
 }
 
 type service struct {
@@ -228,5 +231,30 @@ func (s *service) ResetPassword(email string, password string) error {
 }
 
 func (s *service) VerifyUserByEmail(email string) (UserResponse, error) {
+	// TODO
 	return UserResponse{}, nil
+}
+
+func (s *service) VerifyAuthToken(token string, purpose string) error {
+	hashedToken := encryptToken(token)
+	authToken, err := s.r.GetAuthToken(hashedToken)
+	if err != nil {
+		if errors.Is(err, ErrNoDocuments) {
+			log.Printf("AuthService: Token not found: %v", err)
+			return errors.New("invalid token")
+		}
+		return err
+	}
+
+	if time.Now().After(authToken.ExpiresAt) {
+		log.Printf("AuthService: Token has expired: %v", err)
+		return errors.New("token has expired")
+	}
+
+	if tokenPurpose := PurposeType(purpose); !tokenPurpose.IsValid() || authToken.Purpose != tokenPurpose {
+		log.Printf("AuthService: Invalid token purpose: %v", purpose)
+		return errors.New("invalid token purpose")
+	}
+
+	return nil
 }

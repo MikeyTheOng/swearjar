@@ -454,3 +454,15 @@ func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults in
 
 	return decodedUsers, nil
 }
+
+func (r *MongoRepository) GetAuthToken(hashedToken string) (authentication.AuthToken, error) {
+	var authToken authentication.AuthToken
+	err := r.authTokens.FindOne(context.TODO(), bson.M{"Token": hashedToken}).Decode(&authToken)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return authToken, authentication.ErrNoDocuments
+		}
+		return authToken, err
+	}
+	return authToken, nil
+}

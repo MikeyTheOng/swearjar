@@ -70,6 +70,15 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})
 
+	mux.HandleFunc("/auth/token/verify", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			h.VerifyToken(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Wrap the /swearjar route with the ProtectedRouteMiddleware middleware
 	mux.Handle("/swearjar", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -236,7 +245,44 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Password string `json:"Password"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	log.Printf("Reset password request received: %v", req.Password) // ! Debug
+}
 
+func (h *Handler) VerifyToken(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Purpose string `json:"purpose"`
+		Token   string `json:"token"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.Purpose == "" || req.Token == "" {
+		RespondWithError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	err = h.authService.VerifyAuthToken(req.Token, req.Purpose)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Invalid or expired token")
+		return
+	}
+
+	response := map[string]string{
+		"msg": "Token is valid",
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
