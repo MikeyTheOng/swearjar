@@ -338,7 +338,14 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 }
 
 func (r *MongoRepository) CreateAuthToken(authToken authentication.AuthToken) error {
-	_, err := r.authTokens.InsertOne(context.TODO(), authToken)
+	_, err := r.authTokens.InsertOne(context.TODO(), bson.D{
+		{Key: "Email", Value: authToken.Email},
+		{Key: "Token", Value: authToken.Token},
+		{Key: "CreatedAt", Value: authToken.CreatedAt},
+		{Key: "ExpiresAt", Value: authToken.ExpiresAt},
+		{Key: "Purpose", Value: authToken.Purpose},
+		{Key: "Used", Value: authToken.Used},
+	})
 	return err
 }
 
