@@ -22,6 +22,7 @@ const (
 
 var ErrUnauthorized = errors.New("unauthorized")
 var ErrNoDocuments = errors.New("no documents found")
+var ErrInvalidToken = errors.New("invalid token")
 
 type Claims struct {
 	Email  string
@@ -241,24 +242,15 @@ func (s *service) VerifyAuthToken(token string, purpose string) error {
 	if err != nil {
 		if errors.Is(err, ErrNoDocuments) {
 			log.Printf("AuthService: Token not found: %v", err)
-			return errors.New("invalid token")
+			return ErrInvalidToken
 		}
-		return err
+		log.Printf("AuthService: Error getting auth token: %v", err)
+		return ErrInvalidToken
 	}
 
-	if authToken.Used {
-		log.Printf("AuthService: Token has already been used: %v", err)
-		return errors.New("invalid token")
-	}
-
-	if time.Now().After(authToken.ExpiresAt) {
-		log.Printf("AuthService: Token has expired: %v", err)
-		return errors.New("invalid token")
-	}
-
-	if tokenPurpose := PurposeType(purpose); !tokenPurpose.IsValid() || authToken.Purpose != tokenPurpose {
-		log.Printf("AuthService: Invalid token purpose: %v", purpose)
-		return errors.New("invalid token")
+	if err := authToken.Validate(); err != nil {
+		log.Printf("AuthService: Invalid token: %v", err)
+		return ErrInvalidToken
 	}
 
 	return nil

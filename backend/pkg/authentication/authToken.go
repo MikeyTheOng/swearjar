@@ -32,6 +32,9 @@ func (a *AuthToken) Validate() error {
 	if !a.Purpose.IsValid() {
 		return errors.New("invalid purpose")
 	}
+	if a.Used {
+		return errors.New("token has already been used")
+	}
 	return nil
 }
 
