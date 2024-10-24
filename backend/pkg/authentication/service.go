@@ -76,32 +76,9 @@ func (s *service) SignUp(u User) error {
 		return errors.New("User already exists")
 	}
 
-	// Check if password is empty
-	if u.Password == "" {
-		log.Printf("Password is required")
-		return errors.New("password is required")
-	}
-
-	// Validate password length
-	if len(u.Password) < 8 {
-		log.Printf("Password must be at least 8 characters")
-		return errors.New("password must be at least 8 characters")
-	}
-	if len(u.Password) >= 30 {
-		log.Printf("Password must be less than 30 characters")
-		return errors.New("password must be less than 30 characters")
-	}
-
-	// Validate password contains at least one uppercase letter
-	if !regexp.MustCompile(`[A-Z]`).MatchString(u.Password) {
-		log.Printf("Password must contain at least one uppercase letter")
-		return errors.New("password must contain at least one uppercase letter")
-	}
-
-	// Validate password contains at least one special character
-	if !regexp.MustCompile(`[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]`).MatchString(u.Password) {
-		log.Printf("Password must contain at least one special character")
-		return errors.New("password must contain at least one special character")
+	// Validate password
+	if err := validatePassword(u.Password); err != nil {
+		return err
 	}
 
 	// Hash the password

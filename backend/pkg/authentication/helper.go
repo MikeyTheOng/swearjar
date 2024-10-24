@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -55,4 +56,28 @@ func GenerateCSRFToken() (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(bytes), nil
+}
+
+func validatePassword(password string) error {
+	if password == "" {
+		return errors.New("password is required")
+	}
+
+	if len(password) < 8 {
+		return errors.New("password must be at least 8 characters")
+	}
+
+	if len(password) >= 30 {
+		return errors.New("password must be less than 30 characters")
+	}
+
+	if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+		return errors.New("password must contain at least one uppercase letter")
+	}
+
+	if !regexp.MustCompile(`[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]`).MatchString(password) {
+		return errors.New("password must contain at least one special character")
+	}
+
+	return nil
 }
