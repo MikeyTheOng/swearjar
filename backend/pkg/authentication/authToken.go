@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -15,7 +14,7 @@ type AuthToken struct {
 	Email     string
 	Token     string
 	CreatedAt time.Time
-	ExpiredAt time.Time
+	ExpiresAt time.Time
 	Purpose   PurposeType
 	Used      bool
 }
@@ -27,7 +26,7 @@ func (a *AuthToken) Validate() error {
 	if a.Token == "" {
 		return errors.New("token is required")
 	}
-	if time.Now().After(a.ExpiredAt) {
+	if time.Now().After(a.ExpiresAt) {
 		return errors.New("token has already expired")
 	}
 	if !a.Purpose.IsValid() {
@@ -36,18 +35,14 @@ func (a *AuthToken) Validate() error {
 	return nil
 }
 
-func NewAuthToken(email string, purpose PurposeType, duration time.Duration) (*AuthToken, error) {
-	token, err := generateToken()
-	if err != nil {
-		log.Printf("AuthToken: Failed to create auth token: %v", err)
-		return nil, err
-	}
+func NewAuthToken(email string, rawToken string, purpose PurposeType, duration time.Duration) (*AuthToken, error) {
+	encryptedToken := encryptToken(rawToken)
 
 	authToken := &AuthToken{
 		Email:     email,
-		Token:     token,
+		Token:     encryptedToken,
 		CreatedAt: time.Now(),
-		ExpiredAt: time.Now().Add(duration),
+		ExpiresAt: time.Now().Add(duration),
 		Purpose:   purpose,
 		Used:      false,
 	}
@@ -59,6 +54,11 @@ func NewAuthToken(email string, purpose PurposeType, duration time.Duration) (*A
 	return authToken, nil
 }
 
+func encryptToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
 func generateToken() (string, error) {
 	tokenBytes := make([]byte, 32)
 	_, err := rand.Read(tokenBytes)
@@ -66,7 +66,5 @@ func generateToken() (string, error) {
 		return "", fmt.Errorf("failed to generate random token: %w", err)
 	}
 
-	token := base64.URLEncoding.EncodeToString(tokenBytes) // Encode for url safety
-	hash := sha256.Sum256([]byte(token))                   // Hashed token
-	return hex.EncodeToString(hash[:]), nil
+	return base64.URLEncoding.EncodeToString(tokenBytes), nil
 }

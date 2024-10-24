@@ -161,9 +161,15 @@ func (s *service) ForgotPassword(email string) error {
 		return err
 	}
 
-	// * 2.  Create auth token and store in db
-	// TODO: Send email with password reset link
-	authToken, err := NewAuthToken(email, PurposePasswordReset, AuthTokenDuration)
+	// * 2. Generate raw token
+	rawToken, err := generateToken()
+	if err != nil {
+		log.Printf("AuthService: Error generating token: %v", err)
+		return err
+	}
+
+	// * 3. Create auth token and store in db
+	authToken, err := NewAuthToken(email, rawToken, PurposePasswordReset, AuthTokenDuration)
 	if err != nil {
 		log.Printf("AuthService: Error creating auth token: %v", err)
 		return err
@@ -174,7 +180,7 @@ func (s *service) ForgotPassword(email string) error {
 		return err
 	}
 
-	// * 3. Send email with password reset link
+	// * 4. Send email with password reset link
 	htmlTemplate := `
 		<!DOCTYPE html>
 		<html>
@@ -199,7 +205,7 @@ func (s *service) ForgotPassword(email string) error {
 		ResetLink string
 	}{
 		Name:      user.Name,
-		ResetLink: os.Getenv("FRONTEND_URL") + "/auth/password/reset?token=" + authToken.Token,
+		ResetLink: os.Getenv("FRONTEND_URL") + "/auth/password/reset?token=" + rawToken,
 	}
 
 	tmpl, err := template.New("resetPassword").Parse(htmlTemplate)
