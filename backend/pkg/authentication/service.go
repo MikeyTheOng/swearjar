@@ -205,7 +205,7 @@ func (s *service) ForgotPassword(email string) error {
 		ResetLink string
 	}{
 		Name:      user.Name,
-		ResetLink: os.Getenv("FRONTEND_URL") + "/auth/password/reset?token=" + rawToken,
+		ResetLink: os.Getenv("FRONTEND_URL") + "/auth/password/reset?token=" + url.QueryEscape(rawToken),
 	}
 
 	tmpl, err := template.New("resetPassword").Parse(htmlTemplate)
