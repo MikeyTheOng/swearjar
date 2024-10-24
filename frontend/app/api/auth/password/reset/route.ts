@@ -2,6 +2,7 @@ import { apiRequest } from "@/lib/server/apiRequest";
 import { z, ZodError } from "zod";
 
 const object = z.object({
+    Token: z.string({ required_error: "Token is required" }),
     Password: z.string({ required_error: "Password is required" })
         .min(1, "Password is required")
         .min(8, "Password must be more than 8 characters")
@@ -12,12 +13,12 @@ const object = z.object({
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { Password } = object.parse(body);
+        const { Token, Password } = object.parse(body);
         
         const { data, status } = await apiRequest({
             route: '/password/reset',
             method: 'POST',
-            body: { Password },
+            body: { Token, Password },
         });
         return new Response(JSON.stringify(data), { status: status });
 
