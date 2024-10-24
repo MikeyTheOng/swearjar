@@ -246,14 +246,19 @@ func (s *service) VerifyAuthToken(token string, purpose string) error {
 		return err
 	}
 
+	if authToken.Used {
+		log.Printf("AuthService: Token has already been used: %v", err)
+		return errors.New("invalid token")
+	}
+
 	if time.Now().After(authToken.ExpiresAt) {
 		log.Printf("AuthService: Token has expired: %v", err)
-		return errors.New("token has expired")
+		return errors.New("invalid token")
 	}
 
 	if tokenPurpose := PurposeType(purpose); !tokenPurpose.IsValid() || authToken.Purpose != tokenPurpose {
 		log.Printf("AuthService: Invalid token purpose: %v", purpose)
-		return errors.New("invalid token purpose")
+		return errors.New("invalid token")
 	}
 
 	return nil
