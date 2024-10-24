@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
@@ -31,6 +31,8 @@ export default function ResetPasswordForm() {
     const token = searchParams.get('token');
     const [isTokenVerified, setIsTokenVerified] = useState(false);
 
+    const encodedTokenRef = useRef<string | null>(null);
+
     const { mutate: verifyToken, isIdle, isPending } = useMutation<Response, Error, string>({
         mutationFn: async (encodedToken: string) => {
             const response = await fetch('/api/auth/token/verify', {
@@ -53,12 +55,14 @@ export default function ResetPasswordForm() {
         },
         onError: (error) => {
             console.error('Error verifying token:', error);
+            setShowSuccessMessage(false);
         }
     });
 
     useEffect(() => {
         if (token) {
             const encodedToken = encodeURIComponent(token);
+            encodedTokenRef.current = encodedToken;
             verifyToken(encodedToken);
         }
     }, [token]);
@@ -73,12 +77,16 @@ export default function ResetPasswordForm() {
     });
     const onSubmit: SubmitHandler<ResetPasswordFormData> = async (data) => {
         try {
+            const payload = {
+                Token: encodedTokenRef.current,
+                Password: data.Password,
+            }
             const response = await fetch('/api/auth/password/reset', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify(payload),
             })
 
             if (!response.ok) {
@@ -97,9 +105,13 @@ export default function ResetPasswordForm() {
                         icon: <ErrorIcon />
                     }
                 );
+                setShowSuccessMessage(false);
                 throw new Error(`Forgot password failed: ${errorData.error || response.statusText}`);
             }
             setShowSuccessMessage(true);
+            setTimeout(() => {
+                router.push('/auth/login');
+            }, 1500);
         } catch (error) {
             console.error('Forgot password failed:', error);
         }
