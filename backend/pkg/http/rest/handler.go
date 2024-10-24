@@ -60,8 +60,7 @@ func (h *Handler) RegisterRoutes() http.Handler {
 			case "forgot":
 				h.ForgotPassword(w, r)
 			case "reset":
-				log.Printf("Handling reset password") // ! Debug
-				// h.ResetPassword(w, r)
+				h.ResetPassword(w, r)
 			default:
 				http.NotFound(w, r)
 			}
@@ -247,13 +246,27 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Password string `json:"Password"`
+		Token    string `json:"Token"`
 	}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	log.Printf("Reset password request received: %v", req.Password) // ! Debug
+
+	err = h.authService.ResetPassword(req.Token, req.Password)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]string{"msg": "Password reset successful"}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *Handler) VerifyToken(w http.ResponseWriter, r *http.Request) {

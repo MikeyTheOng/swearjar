@@ -36,13 +36,14 @@ type Repository interface {
 	GetUserByEmail(string) (User, error)
 	CreateAuthToken(AuthToken) error
 	GetAuthToken(string) (AuthToken, error)
+	UpdatePasswordAndMarkToken(email string, newPassword string, hashedToken string) error
 }
 
 type Service interface {
 	SignUp(User) error
 	Login(User) (u UserResponse, jwt string, csrfToken string, err error)
 	ForgotPassword(email string) error
-	ResetPassword(email string, password string) error
+	ResetPassword(token string, newPassword string) error
 	VerifyUserByEmail(email string) (UserResponse, error)
 	VerifyAuthToken(token string, purpose string) error
 }
@@ -204,7 +205,31 @@ func (s *service) ForgotPassword(email string) error {
 	return nil
 }
 
-func (s *service) ResetPassword(email string, password string) error {
+func (s *service) ResetPassword(token string, newPassword string) error {
+	authToken, err := s.verifyAndGetAuthToken(token, string(PurposePasswordReset))
+	if err != nil {
+		log.Printf("AuthService: Error verifying auth token: %v", err)
+		return ErrInvalidToken
+	}
+
+	// Validate password
+	if err := validatePassword(newPassword); err != nil {
+		return err
+	}
+
+	// Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// Update password and mark token as used in a single transaction
+	err = s.r.UpdatePasswordAndMarkToken(authToken.Email, string(hashedPassword), encryptToken(token))
+	if err != nil {
+		log.Printf("AuthService: Error updating password and marking token: %v", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -213,22 +238,32 @@ func (s *service) VerifyUserByEmail(email string) (UserResponse, error) {
 	return UserResponse{}, nil
 }
 
-func (s *service) VerifyAuthToken(token string, purpose string) error {
+func (s *service) verifyAndGetAuthToken(token, purpose string) (*AuthToken, error) {
 	hashedToken := encryptToken(token)
 	authToken, err := s.r.GetAuthToken(hashedToken)
 	if err != nil {
 		if errors.Is(err, ErrNoDocuments) {
 			log.Printf("AuthService: Token not found: %v", err)
-			return ErrInvalidToken
+			return nil, ErrInvalidToken
 		}
 		log.Printf("AuthService: Error getting auth token: %v", err)
-		return ErrInvalidToken
+		return nil, ErrInvalidToken
 	}
 
 	if err := authToken.Validate(); err != nil {
 		log.Printf("AuthService: Invalid token: %v", err)
-		return ErrInvalidToken
+		return nil, ErrInvalidToken
 	}
 
-	return nil
+	if authToken.Purpose != PurposeType(purpose) {
+		log.Printf("AuthService: Token purpose mismatch: expected %s, got %s", purpose, authToken.Purpose)
+		return nil, ErrInvalidToken
+	}
+
+	return &authToken, nil
+}
+
+func (s *service) VerifyAuthToken(token string, purpose string) error {
+	_, err := s.verifyAndGetAuthToken(token, purpose)
+	return err
 }
