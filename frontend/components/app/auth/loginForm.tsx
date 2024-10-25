@@ -59,7 +59,7 @@ export default function LoginForm() {
                     icon: <ErrorIcon />,
                 });
             } else {
-                router.push('/');
+                router.push('/swearjar/list');
             }
         } catch (error) {
             console.error('Login failed:', error);
