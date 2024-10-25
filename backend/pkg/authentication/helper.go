@@ -19,9 +19,10 @@ func CreateToken(u User) (string, error) {
 	jwtExpirationTime, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_TIME"))
 	expirationTime := time.Now().Add(time.Duration(jwtExpirationTime) * time.Minute)
 	claims := &Claims{
-		Email:  u.Email,
-		Name:   u.Name,
-		UserId: u.UserId,
+		Email:    u.Email,
+		Name:     u.Name,
+		UserId:   u.UserId,
+		Verified: u.Verified,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

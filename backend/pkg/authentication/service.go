@@ -25,9 +25,10 @@ var ErrNoDocuments = errors.New("no documents found")
 var ErrInvalidToken = errors.New("invalid token")
 
 type Claims struct {
-	Email  string
-	Name   string
-	UserId string
+	Email    string
+	Name     string
+	UserId   string
+	Verified bool
 	jwt.RegisteredClaims
 }
 
@@ -40,7 +41,7 @@ type Repository interface {
 }
 
 type Service interface {
-	SignUp(User) error
+	SignUp(email, name, password string) error
 	Login(User) (u UserResponse, jwt string, csrfToken string, err error)
 	ForgotPassword(email string) error
 	ResetPassword(token string, newPassword string) error
@@ -57,50 +58,108 @@ func NewService(r Repository, e email.Service) Service {
 	return &service{r, e}
 }
 
-func (s *service) SignUp(u User) error {
+func (s *service) SignUp(email, name, password string) error {
 	// Check if email is valid
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
-	if !re.MatchString(u.Email) {
-		log.Printf("Invalid email format: %s", u.Email)
+	if !re.MatchString(email) {
+		log.Printf("Invalid email format: %s", email)
 		return errors.New("invalid email format")
 	}
 
 	// Check if email is used
-	result, err := s.r.GetUserByEmail(u.Email)
+	result, err := s.r.GetUserByEmail(email)
 	if err != nil && !errors.Is(err, ErrNoDocuments) {
 		log.Printf("Error fetching user by email: %v", err)
 		return err
 	}
-	if result.Email == u.Email {
-		log.Printf("User with email{%s} already exists", u.Email)
+	if result.Email == email {
+		log.Printf("User with email{%s} already exists", email)
 		return errors.New("User already exists")
 	}
 
 	// Validate password
-	if err := validatePassword(u.Password); err != nil {
+	if err := validatePassword(password); err != nil {
 		return err
 	}
 
 	// Hash the password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Error hashing password: %v", err)
 		return err
 	}
-	u.Password = string(hashedPassword)
 
-	// Convert email to lowercase
-	u.Email = strings.ToLower(u.Email)
+	// * 1. Create a user and store in db
+	// Create a new user with the validated data
+	newUser := NewUser(strings.ToLower(email), name, string(hashedPassword))
 
 	// Insert the user into the database
-	err = s.r.SignUp(u)
+	err = s.r.SignUp(newUser)
 	if err != nil {
 		log.Printf("Error inserting user into database: %v", err)
 		return err
 	}
 
-	log.Printf("User signed up successfully: %s", u.Email)
+	// * 2. Generate raw token
+	rawToken, err := generateToken()
+	if err != nil {
+		log.Printf("AuthService: Error generating token: %v", err)
+		return err
+	}
+	encodedToken := url.QueryEscape(rawToken)
+
+	// * 3. Create auth token and store in db
+	authToken, err := NewAuthToken(email, encodedToken, PurposePasswordReset, AuthTokenDuration)
+	if err != nil {
+		log.Printf("AuthService: Error creating auth token: %v", err)
+		return err
+	}
+	err = s.r.CreateAuthToken(*authToken)
+	if err != nil {
+		log.Printf("AuthService: Error storing auth token in db: %v", err)
+		return err
+	}
+
+	// * 4. Send email with verification link
+	htmlTemplate := `
+		<!DOCTYPE html>
+		<html>
+			<body>
+				<p>Hello {{.Name}},</p>
+
+				<p>
+					Welcome to SwearJar! Please click the link below to verify your email:
+					<br>
+					<a href="{{.VerificationLink}}">{{.VerificationLink}}</a>
+				</p>
+
+				<p>
+					If you did not request a password reset, please ignore this email or contact us if you have any concerns.
+				</p>
+			</body>
+		</html>
+	`
+
+	data := struct {
+		Name             string
+		VerificationLink string
+	}{
+		Name:             newUser.Name,
+		VerificationLink: os.Getenv("FRONTEND_URL") + "/auth/email/verify?token=" + encodedToken,
+	}
+	tmpl, err := template.New("verifyEmail").Parse(htmlTemplate)
+	if err != nil {
+		log.Printf("AuthService: Error parsing template: %v", err)
+		return err
+	}
+
+	if err := s.e.SendEmail(email, "Verify Your Email - SwearJar", tmpl, data); err != nil {
+		log.Printf("AuthService: Error sending verification email")
+		return err
+	}
+
+	log.Printf("User signed up successfully: %s", newUser.Email)
 	return nil
 }
 
@@ -131,7 +190,8 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 	return UserResponse{
 		UserId: storedUser.UserId,
 		Email:  storedUser.Email,
-		Name:   storedUser.Name,
+		Name:     storedUser.Name,
+		Verified: storedUser.Verified,
 	}, tokenString, csrfToken, nil
 }
 

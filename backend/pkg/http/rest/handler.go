@@ -187,7 +187,7 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.authService.SignUp(req)
+	err = h.authService.SignUp(req.Email, req.Name, req.Password)
 	if err != nil {
 		log.Printf("Error during SignUp: %v", err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

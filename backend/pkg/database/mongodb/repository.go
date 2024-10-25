@@ -332,6 +332,7 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 			{Key: "Email", Value: u.Email},
 			{Key: "Name", Value: u.Name},
 			{Key: "Password", Value: u.Password},
+			{Key: "Verified", Value: u.Verified},
 		},
 	)
 	return err
@@ -351,31 +352,17 @@ func (r *MongoRepository) CreateAuthToken(authToken authentication.AuthToken) er
 
 func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) {
 	filter := bson.D{{Key: "Email", Value: e}}
-	var result struct {
-		UserId   primitive.ObjectID `bson:"_id"`
-		Email    string             `bson:"Email"`
-		Name     string             `bson:"Name"`
-		Password string             `bson:"Password"`
-	}
-	var user authentication.User
+	var result authentication.User
 
 	err := r.users.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		log.Printf("Error fetching user by email {%v}: %v", e, err)
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return user, authentication.ErrNoDocuments
+			return authentication.User{}, authentication.ErrNoDocuments
 		}
-		return user, err
+		return authentication.User{}, err
 	}
 
-	user = authentication.User{
-		UserId:   result.UserId.Hex(), // Convert ObjectId to string
-		Email:    result.Email,
-		Name:     result.Name,
-		Password: result.Password,
-	}
-
-	return user, nil
+	return result, nil
 }
 
 func (r *MongoRepository) GetUserById(userId string) (authentication.UserResponse, error) {
@@ -430,18 +417,23 @@ func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults in
 	var decodedUsers []authentication.UserResponse
 
 	for cursor.Next(ctx) {
-		var mongoUR UserResponse
+		var mongoUR struct {
+			UserId   primitive.ObjectID `bson:"_id"`
+			Email    string             `bson:"Email"`
+			Name     string             `bson:"Name"`
+			Verified bool               `bson:"Verified"`
+		}
 		err := cursor.Decode(&mongoUR)
 		if err != nil {
 			log.Printf("Error decoding user response: %v", err)
 			return nil, err
 		}
 
-		// Convert MongoDB UserResponse to authentication.UserResponse
 		authUR := authentication.UserResponse{
-			UserId: mongoUR.UserId,
-			Email:  mongoUR.Email,
-			Name:   mongoUR.Name,
+			UserId:   mongoUR.UserId.Hex(),
+			Email:    mongoUR.Email,
+			Name:     mongoUR.Name,
+			Verified: mongoUR.Verified,
 		}
 
 		decodedUsers = append(decodedUsers, authUR)
