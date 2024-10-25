@@ -1,9 +1,7 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 
 import Footer from "@/components/layout/footer";
 
-export default async function AuthLayout({
+export default async function OnboardingLayout({
     children,
 }: {
     children: React.ReactNode
