@@ -14,5 +14,6 @@ declare module "@auth/core/jwt" {
         Email: User["Email"];
         Name: User["Name"];
         UserId: User["UserId"];
+        Verified: User["Verified"];
     }
 }

@@ -174,6 +174,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.Email = customUser.Email;
         token.Name = customUser.Name;
         token.UserId = customUser.UserId;
+        token.Verified = customUser.Verified;
       }
       return token
     },
@@ -182,6 +183,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.Email = token.Email as string;
         session.user.Name = token.Name as string;
         session.user.UserId = token.UserId as string;
+        session.user.Verified = token.Verified as boolean;
       } else {
         console.log("Token is missing or invalid");
       }
