@@ -1,7 +1,14 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+
 import AuthCard from "@/components/app/auth/authCard";
 import ForgotPasswordForm from "@/components/app/auth/forgotPasswordForm";
 
-export default function ForgotPassword() {
+export default async function ForgotPassword() {
+    const session = await auth();
+    if (session?.user) {
+        redirect("/swearjar/list");
+    }
     const greetingMessage = "Forgot Password"
     return (
         <main className='flex justify-center mt-[25vh] md:mt-0 md:items-center md:h-full'>

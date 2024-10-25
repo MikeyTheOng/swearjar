@@ -1,7 +1,14 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+
 import AuthCard from "@/components/app/auth/authCard";
 import LoginForm from "@/components/app/auth/loginForm";
 
-export default function Login() {
+export default async function Login() {
+  const session = await auth();
+  if (session?.user) {
+      redirect("/swearjar/list");
+  }
   const greetingMessage = "Welcome Back to"
   return (
     <main className="flex justify-center mt-[20vh] md:mt-0 md:items-center md:h-full">
