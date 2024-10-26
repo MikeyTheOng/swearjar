@@ -3,7 +3,7 @@ import { z, ZodError } from "zod";
 
 const object = z.object({
     Token: z.string({ required_error: "Token is required" }),
-    Purpose: z.enum(["PasswordReset", "EmailVerify"]),
+    Purpose: z.enum(["PasswordReset", "EmailVerification"]),
 });
 
 export async function POST(request: Request) {
