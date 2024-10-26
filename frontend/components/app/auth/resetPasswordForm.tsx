@@ -4,15 +4,16 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useVerifyToken } from '@/hooks/useVerifyToken';
 import toast from 'react-hot-toast';
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/shadcn/alert";
 import { Button } from "@/components/ui/shadcn/button";
-import { Label } from "@/components/ui/shadcn/label";
 import ErrorIcon from '@/components/shared/icons/animated/errorIcon';
-import { X } from "lucide-react";
+import { Label } from "@/components/ui/shadcn/label";
 import PasswordInput from './passwordInput';
-import { useVerifyToken } from '@/hooks/useVerifyToken';
+import { X } from "lucide-react";
+
 
 interface ResetPasswordFormData {
     Password: string;
@@ -21,7 +22,7 @@ interface ResetPasswordFormData {
 export default function ResetPasswordForm() {
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const router = useRouter();
-    const { data: session, status } = useSession();
+    const { status } = useSession();
     if (status === 'authenticated') {
         router.push('/swearjar/list');
     }
