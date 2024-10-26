@@ -64,8 +64,8 @@ export default function SignUp() {
                 );
                 throw new Error(`Sign-up failed: ${errorData.error || response.statusText}`);
             }
-
-            router.push('/auth/login');
+            const callbackUrl = `/onboarding`;
+            router.push(`/auth/login?callbackUrl=${callbackUrl}`);
         } catch (error) {
             console.error('Sign-up failed:', error);
         }
