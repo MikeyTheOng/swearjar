@@ -4,7 +4,6 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/shadcn/alert";
@@ -13,7 +12,7 @@ import { Label } from "@/components/ui/shadcn/label";
 import ErrorIcon from '@/components/shared/icons/animated/errorIcon';
 import { X } from "lucide-react";
 import PasswordInput from './passwordInput';
-
+import { useVerifyToken } from '@/hooks/useVerifyToken';
 
 interface ResetPasswordFormData {
     Password: string;
@@ -29,94 +28,50 @@ export default function ResetPasswordForm() {
 
     const searchParams = useSearchParams();
     const token = searchParams.get('token');
-    const [isTokenVerified, setIsTokenVerified] = useState(false);
+    const { isTokenVerified, isVerifying } = useVerifyToken(token, 'PasswordReset');
 
     const encodedTokenRef = useRef<string | null>(null);
 
-    const { mutate: verifyToken, isIdle, isPending } = useMutation<Response, Error, string>({
-        mutationFn: async (encodedToken: string) => {
-            const response = await fetch('/api/auth/token/verify', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    Token: encodedToken,
-                    Purpose: 'PasswordReset',
-                }),
-            });
-            if (!response.ok) {
-                throw new Error('Token verification failed');
-            }
-            return response;
-        },
-        onSuccess: () => {
-            setIsTokenVerified(true);
-        },
-        onError: (error) => {
-            console.error('Error verifying token:', error);
-            setShowSuccessMessage(false);
-        }
-    });
-
     useEffect(() => {
         if (token) {
-            const encodedToken = encodeURIComponent(token);
-            encodedTokenRef.current = encodedToken;
-            verifyToken(encodedToken);
+            encodedTokenRef.current = encodeURIComponent(token);
         }
     }, [token]);
 
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
-            // Password: "",
-
-            // ! Testing
             Password: "12345678A!",
         }
     });
+
     const onSubmit: SubmitHandler<ResetPasswordFormData> = async (data) => {
         try {
-            const payload = {
-                Token: encodedTokenRef.current,
-                Password: data.Password,
-            }
-            const response = await fetch('/api/auth/password/reset', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                toast(
-                    <span className='bg-background-100'>
-                        Please try again.
-                    </span>,
-                    {
-                        id: "forgot-password-error",
-                        duration: 1500,
-                        position: 'top-center',
-                        style: {
-                            background: 'var(--background)',
-                        },
-                        icon: <ErrorIcon />
-                    }
-                );
-                setShowSuccessMessage(false);
-                throw new Error(`Forgot password failed: ${errorData.error || response.statusText}`);
-            }
+            await ResetPassword(encodedTokenRef.current, data.Password);
             setShowSuccessMessage(true);
             setTimeout(() => {
                 router.push('/auth/login');
             }, 1500);
         } catch (error) {
-            console.error('Forgot password failed:', error);
+            console.error('Password reset failed:', error);
+            toast(
+                <span className='bg-background-100'>
+                    Please try again.
+                </span>,
+                {
+                    id: "forgot-password-error",
+                    duration: 1500,
+                    position: 'top-center',
+                    style: {
+                        background: 'var(--background)',
+                    },
+                    icon: <ErrorIcon />
+                }
+            );
+            setShowSuccessMessage(false);
         }
     };
-    if (isIdle || isPending) {
+
+    if (isVerifying) {
         return (
             <div className='flex items-center justify-center text-secondary'>
                 Verifying token &nbsp;
@@ -154,5 +109,20 @@ export default function ResetPasswordForm() {
                 </div>
             </form>
         );
+    }
+}
+
+async function ResetPassword(token: string | null, password: string): Promise<void> {
+    const response = await fetch('/api/auth/password/reset', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ Token: token, Password: password }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Password reset failed: ${errorData.error || response.statusText}`);
     }
 }
