@@ -3,14 +3,13 @@ package authentication
 type PurposeType string
 
 const (
-	PurposePasswordReset   PurposeType = "PasswordReset"
-	PurposeEmailVerify     PurposeType = "EmailVerify"
-	PurposeAccountCreation PurposeType = "AccountCreation"
+	PurposePasswordReset     PurposeType = "PasswordReset"
+	PurposeEmailVerification PurposeType = "EmailVerification"
 )
 
 func (p PurposeType) IsValid() bool {
 	switch p {
-	case PurposePasswordReset, PurposeEmailVerify, PurposeAccountCreation:
+	case PurposePasswordReset, PurposeEmailVerification:
 		return true
 	default:
 		return false

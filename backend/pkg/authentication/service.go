@@ -110,7 +110,7 @@ func (s *service) SignUp(email, name, password string) error {
 	encodedToken := url.QueryEscape(rawToken)
 
 	// * 3. Create auth token and store in db
-	authToken, err := NewAuthToken(email, encodedToken, PurposePasswordReset, AuthTokenDuration)
+	authToken, err := NewAuthToken(email, encodedToken, PurposeEmailVerification, AuthTokenDuration)
 	if err != nil {
 		log.Printf("AuthService: Error creating auth token: %v", err)
 		return err
