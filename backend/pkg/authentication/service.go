@@ -47,7 +47,7 @@ type Service interface {
 	Login(User) (u UserResponse, jwt string, csrfToken string, err error)
 	ForgotPassword(email string) error
 	ResetPassword(token string, newPassword string) error
-	VerifyEmail(token string) error
+	VerifyEmail(userId string, token string) (jwt string, err error)
 	VerifyAuthToken(token string, purpose string) error
 	GetUser(userId string) (ur UserResponse, jwt string, err error)
 }
@@ -325,26 +325,31 @@ func (s *service) ResetPassword(token string, newPassword string) error {
 	return nil
 }
 
-func (s *service) VerifyEmail(token string) error {
+func (s *service) VerifyEmail(userId string, token string) (jwt string, err error) {
 	log.Printf("AuthService: Verifying email with token: %s", token)
 	authToken, err := s.verifyAndGetAuthToken(token, string(PurposeEmailVerification))
 	if err != nil {
 		log.Printf("AuthService: Error verifying auth token: %v", err)
-		return ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
 	if authToken.Purpose != PurposeType(PurposeEmailVerification) {
 		log.Printf("AuthService: Token purpose mismatch: expected %s, got %s", PurposeEmailVerification, authToken.Purpose)
-		return ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
 	err = s.r.VerifyEmailAndMarkToken(authToken.Email, encryptToken(token))
 	if err != nil {
 		log.Printf("AuthService: Error verifying email and marking token: %v", err)
-		return ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
-	return nil
+	_, jwt, err = s.GetUser(userId)
+	if err != nil {
+		return "", err
+	}
+
+	return jwt, nil
 }
 
 func (s *service) verifyAndGetAuthToken(token, purpose string) (*AuthToken, error) {

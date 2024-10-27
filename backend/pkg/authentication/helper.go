@@ -43,7 +43,7 @@ func DecodeJWT(tokenString string) (jwt.MapClaims, error) {
 
 	// Extract claims and print them in a human-readable format
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		log.Printf("Decoded JWT Token: UserId: %s, Email: %s, Name: %s, Issued At: %v, Expires At: %v", claims["UserId"], claims["Email"], claims["Name"], claims["iat"], claims["exp"])
+		// log.Printf("Decoded JWT Token: UserId: %s, Email: %s, Name: %s, Verified: %v, Issued At: %v, Expires At: %v", claims["UserId"], claims["Email"], claims["Name"], claims["Verified"], claims["iat"], claims["exp"])
 		return claims, nil
 	} else {
 		log.Printf("Unable to extract claims from token")

@@ -251,6 +251,7 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Verifying email")
 	var req struct {
 		Token string
 	}
@@ -260,11 +261,25 @@ func (h *Handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.authService.VerifyEmail(req.Token)
+	jwtCookie, err := r.Cookie("jwt")
 	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	claims, err := decodeJWT(jwtCookie.Value)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	jwt, err := h.authService.VerifyEmail(claims["UserId"].(string), req.Token)
+	if err != nil {
+		log.Printf("Error verifying email: %v", err)
 		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
+
+	SetCookie(w, "jwt", jwt, true)
 
 	response := map[string]string{"msg": "Email verified successfully"}
 	w.WriteHeader(http.StatusOK)
@@ -466,7 +481,7 @@ func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decode the UserId claim from the cookie
-	claims, err := authentication.DecodeJWT(cookie.Value)
+	claims, err := decodeJWT(cookie.Value)
 	if err != nil {
 		log.Printf("Error decoding JWT: %v", err)
 		RespondWithError(w, http.StatusUnauthorized, "Error decoding JWT")
