@@ -206,11 +206,13 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authService.GetUser(userId)
+	user, jwt, err := h.authService.GetUser(userId)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	SetCookie(w, "jwt", jwt, true)
 
 	response := map[string]interface{}{
 		"msg":  "User fetched successfully",

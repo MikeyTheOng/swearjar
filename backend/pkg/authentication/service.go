@@ -49,7 +49,7 @@ type Service interface {
 	ResetPassword(token string, newPassword string) error
 	VerifyEmail(token string) error
 	VerifyAuthToken(token string, purpose string) error
-	GetUser(userId string) (UserResponse, error)
+	GetUser(userId string) (ur UserResponse, jwt string, err error)
 }
 
 type service struct {
@@ -198,10 +198,19 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 	}, tokenString, csrfToken, nil
 }
 
-func (s *service) GetUser(userId string) (UserResponse, error) {
+func (s *service) GetUser(userId string) (ur UserResponse, jwt string, err error) {
 	user, err := s.r.GetUserById(userId)
 	if err != nil {
-		return UserResponse{}, err
+		return UserResponse{}, "", err
+	}
+
+	tokenString, err := CreateToken(User{
+		UserId: user.UserId,
+		Email:  user.Email,
+		Name:   user.Name,
+	})
+	if err != nil {
+		return UserResponse{}, "", err
 	}
 
 	return UserResponse{
@@ -209,7 +218,7 @@ func (s *service) GetUser(userId string) (UserResponse, error) {
 		Email:    user.Email,
 		Name:     user.Name,
 		Verified: user.Verified,
-	}, nil
+	}, tokenString, nil
 }
 
 func (s *service) ForgotPassword(email string) error {
