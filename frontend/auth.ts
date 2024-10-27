@@ -6,22 +6,24 @@ import { User as CustomUser } from "@/lib/types";
 import { loginSchema } from "@/lib/schema"
 import { ZodError } from "zod";
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
+import { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
+import { apiRequest } from "@/lib/server/apiRequest";
 
 const AUTH_URL = process.env.AUTH_URL;
 const AUTH_SECRET = process.env.AUTH_SECRET;
 
 interface CustomJwtPayload extends JwtPayload {
-    UserId: string;
-    Email: string;
-    Name: string;
-    iat: number;
-    exp: number;
+  UserId: string;
+  Email: string;
+  Name: string;
+  iat: number;
+  exp: number;
 }
 
 function getGolangJWT(): CustomJwtPayload {
   const cookies = nextCookies();
   const jwtCookie = cookies.get('jwt');
-  
+
   if (!jwtCookie || !jwtCookie.value) {
     throw new Error('JWT cookie not found');
   }
@@ -29,7 +31,7 @@ function getGolangJWT(): CustomJwtPayload {
   try {
     // Verify the JWT with the secret
     const decodedToken = jwt.verify(jwtCookie.value, AUTH_SECRET as Secret) as CustomJwtPayload;
-    
+
     // Check if the token has expired
     const currentTime = Math.floor(Date.now() / 1000);
     if (decodedToken.exp < currentTime) {
@@ -48,6 +50,33 @@ function getGolangJWT(): CustomJwtPayload {
     console.error('Error validating JWT:', error);
     throw new Error('Invalid token');
   }
+}
+
+function setCookiesFromBackend(backendCookies: string | null) {
+  if (!backendCookies) return;
+
+  const cookiesArray = backendCookies.split(/,(?=\s*\w+=)/);
+  const cookiesHandler = nextCookies();
+  const jwtExpirationTime = parseInt(process.env.JWT_EXPIRATION_TIME!, 10);
+
+  cookiesArray.forEach((cookie) => {
+    const [nameValue, ...attributes] = cookie.trim().split('; ');
+    const [name, value] = nameValue.split('=');
+    const isHttpOnly = name === 'jwt' || name === 'csrf_token_http_only';
+
+    const expiresString = attributes.find(attr => attr.startsWith('Expires'))?.split('=')[1];
+    const expires = expiresString ? new Date(expiresString) : new Date(Date.now() + jwtExpirationTime * 60 * 1000);
+
+    const cookieOptions: Partial<ResponseCookie> = {
+      path: '/',
+      httpOnly: isHttpOnly,
+      secure: true,
+      sameSite: 'none',
+      expires: expires,
+    };
+
+    cookiesHandler.set(name, value, cookieOptions);
+  });
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -91,46 +120,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error(errorResult.error)
           }
 
-          // Load environment variables
-          const jwtExpirationTime = parseInt(process.env.JWT_EXPIRATION_TIME!, 10); // 1440 minutes
-
           const backendCookies = response.headers.get('set-cookie');
-          // console.log('backendCookies:', backendCookies);
-          if (backendCookies) {
-            const cookiesArray = backendCookies.split(/,(?=\s*\w+=)/);
-            const cookiesHandler = nextCookies(); // Use a different variable name to avoid conflicts
-
-            cookiesArray.forEach((cookie) => {
-              const [nameValue, ...attributes] = cookie.trim().split('; ');
-              const [name, value] = nameValue.split('=');
-              // console.log(`${name}: {${value}}`)
-              // Determine HttpOnly based on cookie name
-              const isHttpOnly = name === 'jwt' || name === 'csrf_token_http_only';
-
-              // Convert the expires attribute to a Date object or use the JWT expiration time
-              const expiresString = attributes.find(attr => attr.startsWith('Expires'))?.split('=')[1];
-              const expires = expiresString ? new Date(expiresString) : new Date(Date.now() + jwtExpirationTime * 60 * 1000);
-
-              // ! Debugging
-              // console.log(`Setting ${name} cookie with attributes:`, {
-              //   name,
-              //   value,
-              //   path: '/',
-              //   httpOnly: isHttpOnly,
-              //   secure: isProdEnv,
-              //   sameSite: 'none',
-              //   expires: expires,
-              // });
-
-              cookiesHandler.set(name, value, {
-                path: '/',
-                httpOnly: isHttpOnly,
-                secure: true,
-                sameSite: 'none', // Using 'None' for all cookies
-                expires: expires,
-              });
-            });
-          }
+          setCookiesFromBackend(backendCookies);
 
           const result = await response.json();
           user = result.user;
@@ -156,7 +147,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    jwt: async ({ token, trigger, user, session }) => {
+      if (trigger === "update") {
+        try {
+          const { data, status } = await apiRequest({
+            route: '/users',
+            method: 'GET',
+          });
+
+          const updatedUser = data.user;
+
+          token.Email = updatedUser.Email;
+          token.Name = updatedUser.Name;
+          token.UserId = updatedUser.UserId;
+          token.Verified = updatedUser.Verified;
+
+          return token
+        } catch (error) {
+          console.error("Error:", error instanceof Error ? error.message : "Unexpected error");
+          // throw new Error(error instanceof Error ? error.message : 'An unknown error occurred');
+        }
+      }
       // next-auth session refreshes whereas the jwt issued by golang does not, hence determine if the golang jwt has expired
       const golangJWT = getGolangJWT();
       if (golangJWT.exp < new Date().getTime() / 1000) {
@@ -167,7 +178,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // ! Debugging
       // console.log("Current Time:", new Date().toLocaleString()); 
       // console.log("Golang JWT exp:", new Date(golangJWT.exp * 1000).toLocaleString()); 
-      
+
       const customUser = user as CustomUser;
 
       if (customUser) { // User is available during sign-in
