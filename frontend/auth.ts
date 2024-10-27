@@ -150,10 +150,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     jwt: async ({ token, trigger, user, session }) => {
       if (trigger === "update") {
         try {
-          const { data, status } = await apiRequest({
+          const { response, data } = await apiRequest({
             route: '/users',
             method: 'GET',
           });
+
+          // Update cookies
+          const backendCookies = response.headers.get('Set-Cookie');
+          if (backendCookies) {
+            setCookiesFromBackend(backendCookies);
+          } else {
+            console.warn('jwt cookie not updated');
+          }
 
           const updatedUser = data.user;
 
