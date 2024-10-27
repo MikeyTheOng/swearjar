@@ -15,7 +15,9 @@ export default async function SwearJarLayout({
 }) {
     const session = await auth()
     if (!session) {
-        redirect('/auth/login')
+        redirect('/auth/login');
+    } else if (!session.user.Verified) {
+        redirect('/onboarding');
     }
 
     const queryClient = new QueryClient()
