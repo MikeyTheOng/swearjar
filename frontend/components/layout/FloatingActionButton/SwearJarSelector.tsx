@@ -7,15 +7,14 @@ import { ChevronsUpDown, Check, } from "lucide-react"
 import { SwearJarWithId } from "@/lib/types"
 
 interface SwearJarSelectorProps {
-    selectedSwearJar: SwearJarWithId | null; // Changed to SwearJarProp
-    setSelectedSwearJar: (value: SwearJarWithId | null) => void; // Changed to SwearJarProp
-    data?: SwearJarWithId[]; // Changed to SwearJarProp
+    selectedSwearJar: SwearJarWithId | null;
+    setSelectedSwearJar: (value: SwearJarWithId | null) => void;
+    data?: SwearJarWithId[];
     isLoading: boolean;
 }
 
 export default function SwearJarSelector({ selectedSwearJar, setSelectedSwearJar, data, isLoading }: SwearJarSelectorProps) {
     const [open, setOpen] = useState(false)
-
     return (
         <>
             <Button
@@ -38,7 +37,7 @@ export default function SwearJarSelector({ selectedSwearJar, setSelectedSwearJar
                 <CommandInput placeholder="Search for Swear Jar by name..." className="w-full h-12 bg-white rounded-md border border-input/10" />
                 <CommandList className="bg-white max-h-[204px] sm:max-h-[248px] overflow-y-auto">
                     <CommandEmpty>No results found.</CommandEmpty>
-                    <CommandGroup heading="Swear Jars">
+                    <CommandGroup heading="Swear Jars" className={`${!data || data?.length === 0? 'hidden' : ''}`}>
                         {data?.map((swearJarOption) => (
                             <CommandItem
                                 key={swearJarOption.Name}
