@@ -205,9 +205,10 @@ func (s *service) GetUser(userId string) (ur UserResponse, jwt string, err error
 	}
 
 	tokenString, err := CreateToken(User{
-		UserId: user.UserId,
-		Email:  user.Email,
-		Name:   user.Name,
+		UserId:   user.UserId,
+		Email:    user.Email,
+		Name:     user.Name,
+		Verified: user.Verified,
 	})
 	if err != nil {
 		return UserResponse{}, "", err
