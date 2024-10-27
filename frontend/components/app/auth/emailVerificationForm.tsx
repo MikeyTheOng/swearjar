@@ -21,7 +21,6 @@ export default function EmailVerification() {
     const token = searchParams.get('token');
     const router = useRouter();
     const { isTokenVerified, isVerifying: isVerifyingToken } = useVerifyToken(token, 'EmailVerification');
-    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const encodedTokenRef = useRef<string | null>(null);
     const [verificationState, setVerificationState] = useState<VerifyUserResult>({
         isVerifyingUser: false,
@@ -58,7 +57,6 @@ export default function EmailVerification() {
                     setVerificationState({ isVerifyingUser: true, isVerifiedUser: false, error: null });
                     await verifyUserMutation.mutateAsync(encodedTokenRef.current!);
                     setVerificationState({ isVerifyingUser: false, isVerifiedUser: true, error: null });
-                    setShowSuccessMessage(true);
                     update(null);
                 } catch (error) {
                     console.error('Email verification failed:', error);
@@ -81,7 +79,6 @@ export default function EmailVerification() {
             </div>
         )
     } else if (!isTokenVerified) {
-        console.log("Session:", session);
         if (session?.user.Verified) {
             router.push('/swearjar/list');
         }

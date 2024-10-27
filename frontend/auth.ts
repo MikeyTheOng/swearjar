@@ -6,9 +6,8 @@ import { User as CustomUser } from "@/lib/types";
 import { loginSchema } from "@/lib/schema"
 import { ZodError } from "zod";
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
-import { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { apiRequest } from "@/lib/server/apiRequest";
-
+import { setCookiesFromBackend } from "@/lib/auth/utils";
 const AUTH_URL = process.env.AUTH_URL;
 const AUTH_SECRET = process.env.AUTH_SECRET;
 
@@ -50,33 +49,6 @@ function getGolangJWT(): CustomJwtPayload {
     console.error('Error validating JWT:', error);
     throw new Error('Invalid token');
   }
-}
-
-function setCookiesFromBackend(backendCookies: string | null) {
-  if (!backendCookies) return;
-
-  const cookiesArray = backendCookies.split(/,(?=\s*\w+=)/);
-  const cookiesHandler = nextCookies();
-  const jwtExpirationTime = parseInt(process.env.JWT_EXPIRATION_TIME!, 10);
-
-  cookiesArray.forEach((cookie) => {
-    const [nameValue, ...attributes] = cookie.trim().split('; ');
-    const [name, value] = nameValue.split('=');
-    const isHttpOnly = name === 'jwt' || name === 'csrf_token_http_only';
-
-    const expiresString = attributes.find(attr => attr.startsWith('Expires'))?.split('=')[1];
-    const expires = expiresString ? new Date(expiresString) : new Date(Date.now() + jwtExpirationTime * 60 * 1000);
-
-    const cookieOptions: Partial<ResponseCookie> = {
-      path: '/',
-      httpOnly: isHttpOnly,
-      secure: true,
-      sameSite: 'none',
-      expires: expires,
-    };
-
-    cookiesHandler.set(name, value, cookieOptions);
-  });
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({

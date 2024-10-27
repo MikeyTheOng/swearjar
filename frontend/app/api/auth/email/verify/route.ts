@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/server/apiRequest";
+import { setCookiesFromBackend } from "@/lib/auth/utils";
 import { z, ZodError } from "zod";
 
 const object = z.object({
@@ -9,16 +10,24 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { Token } = object.parse(body);
-        
-        const { data, status } = await apiRequest({
+
+        const { response, data, status } = await apiRequest({
             route: '/auth/email/verify',
             method: 'POST',
             body: { Token },
         });
-        
+
+        const backendCookies = response.headers.get('Set-Cookie');
+        if (backendCookies) {
+            setCookiesFromBackend(backendCookies);
+        } else {
+            console.warn('jwt cookie not updated');
+        }
+
         return new Response(JSON.stringify(data), { status: status });
     } catch (error) {
         console.log("Error:", error)
+        
         let errorMessage = 'Unknown error';
 
         if (error instanceof ZodError) {
