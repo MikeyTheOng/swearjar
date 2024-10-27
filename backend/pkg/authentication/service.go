@@ -35,6 +35,7 @@ type Claims struct {
 type Repository interface {
 	SignUp(User) error
 	GetUserByEmail(string) (User, error)
+	GetUserById(string) (UserResponse, error)
 	CreateAuthToken(AuthToken) error
 	GetAuthToken(string) (AuthToken, error)
 	UpdatePasswordAndMarkToken(email string, newPassword string, hashedToken string) error
@@ -48,6 +49,7 @@ type Service interface {
 	ResetPassword(token string, newPassword string) error
 	VerifyEmail(token string) error
 	VerifyAuthToken(token string, purpose string) error
+	GetUser(userId string) (UserResponse, error)
 }
 
 type service struct {
@@ -194,6 +196,20 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 		Name:     storedUser.Name,
 		Verified: storedUser.Verified,
 	}, tokenString, csrfToken, nil
+}
+
+func (s *service) GetUser(userId string) (UserResponse, error) {
+	user, err := s.r.GetUserById(userId)
+	if err != nil {
+		return UserResponse{}, err
+	}
+
+	return UserResponse{
+		UserId:   user.UserId,
+		Email:    user.Email,
+		Name:     user.Name,
+		Verified: user.Verified,
+	}, nil
 }
 
 func (s *service) ForgotPassword(email string) error {

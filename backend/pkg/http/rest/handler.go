@@ -36,21 +36,32 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", h.Listening)
 
-	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			action := r.URL.Query().Get("action")
-			if action == "login" {
-				h.Login(w, r)
-			} else if action == "signup" {
-				h.SignUp(w, r)
-			} else {
-				http.Error(w, "Invalid action", http.StatusBadRequest)
-			}
+			h.Login(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	mux.HandleFunc("/auth/signup", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			h.SignUp(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.Handle("/users", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			h.GetUser(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})))
 
 	mux.HandleFunc("/password/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -180,6 +191,31 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		"user": ur,
 	}
 
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	user, err := h.authService.GetUser(userId)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":  "User fetched successfully",
+		"user": user,
+	}
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
