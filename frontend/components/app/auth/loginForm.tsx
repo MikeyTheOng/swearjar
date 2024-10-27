@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/shadcn/input"
 import { Label } from "@/components/ui/shadcn/label"
 import PasswordInput from "./passwordInput";
 
-interface SignUpFormData {
+interface LoginFormData {
     Email: string;
     Password: string;
 }
@@ -37,11 +37,12 @@ export default function LoginForm() {
         }
     });
 
-    const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
+    const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
         try {
+            const callbackUrl = new URLSearchParams(window.location.search).get('callbackUrl') || "/swearjar/list";
             const response = await signIn('credentials', {
-                callbackUrl: '/',
-                redirect: false,
+                callbackUrl: callbackUrl,
+                redirect: true,
                 Email: data.Email,
                 Password: data.Password,
             });
