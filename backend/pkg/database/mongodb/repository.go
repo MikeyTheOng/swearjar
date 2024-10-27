@@ -511,18 +511,57 @@ func (r *MongoRepository) UpdatePasswordAndMarkToken(email string, newPassword s
 		}
 
 		// * 2. Mark auth token as used
-		tokenFilter := bson.M{"Token": hashedToken}
-		tokenUpdate := bson.M{"$set": bson.M{"Used": true}}
-		tokenResult, err := r.authTokens.UpdateOne(sessCtx, tokenFilter, tokenUpdate)
-		if err != nil {
+		if err := r.useAuthToken(hashedToken); err != nil {
 			return nil, err
-		}
-		if tokenResult.MatchedCount == 0 {
-			return nil, errors.New("auth token not found")
 		}
 
 		return nil, nil
 	})
 
 	return err
+}
+
+func (r *MongoRepository) VerifyEmailAndMarkToken(email string, hashedToken string) error {
+	session, err := r.client.StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(context.Background())
+
+	_, err = session.WithTransaction(context.Background(), func(sessCtx mongo.SessionContext) (interface{}, error) {
+		// * 1. Mark user as verified
+		userFilter := bson.M{"Email": email}
+		userUpdate := bson.M{"$set": bson.M{"Verified": true}}
+		userResult, err := r.users.UpdateOne(sessCtx, userFilter, userUpdate)
+		if err != nil {
+			return nil, err
+		}
+		if userResult.MatchedCount == 0 {
+			return nil, errors.New("user not found")
+		}
+
+		// * 2. Mark auth token as used
+		if err := r.useAuthToken(hashedToken); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	})
+
+	return err
+}
+
+func (r *MongoRepository) useAuthToken(hashedToken string) error {
+	filter := bson.M{"Token": hashedToken}
+	update := bson.M{"$set": bson.M{"Used": true}}
+
+	tokenResult, err := r.authTokens.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return err
+	}
+	if tokenResult.MatchedCount == 0 {
+		return errors.New("auth token not found")
+	}
+
+	return nil
 }

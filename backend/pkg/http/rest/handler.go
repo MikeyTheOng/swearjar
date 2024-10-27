@@ -78,6 +78,15 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})
 
+	mux.HandleFunc("/auth/email/verify", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			h.VerifyEmail(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Wrap the /swearjar route with the ProtectedRouteMiddleware middleware
 	mux.Handle("/swearjar", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -198,6 +207,31 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(map[string]string{"msg": "User signed up successfully"})
 	if err != nil {
 		log.Printf("Error encoding JSON response: %v", err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Token string
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = h.authService.VerifyEmail(req.Token)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	response := map[string]string{"msg": "Email verified successfully"}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

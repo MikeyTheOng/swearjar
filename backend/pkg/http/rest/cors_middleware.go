@@ -3,7 +3,7 @@ package rest
 import (
 	"errors"
 	"fmt"
-	"log"
+	// "log"
 	"net/http"
 	"os"
 	"strings"
@@ -36,11 +36,11 @@ func CORSMiddleware(next http.Handler) http.Handler {
 }
 
 func validateCORS(origin string) error {
-	log.Printf("Incoming request is from origin: %s", origin)
+	// log.Printf("Incoming request is from origin: %s", origin)
 	var allowedOrigins = strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
 	for _, allowedOrigin := range allowedOrigins {
 		if origin == allowedOrigin {
-			log.Printf("Origin %s is allowed", origin)
+			// log.Printf("Origin %s is allowed", origin)
 			return nil
 		}
 	}

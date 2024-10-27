@@ -38,6 +38,7 @@ type Repository interface {
 	CreateAuthToken(AuthToken) error
 	GetAuthToken(string) (AuthToken, error)
 	UpdatePasswordAndMarkToken(email string, newPassword string, hashedToken string) error
+	VerifyEmailAndMarkToken(email string, hashedToken string) error
 }
 
 type Service interface {
@@ -45,7 +46,7 @@ type Service interface {
 	Login(User) (u UserResponse, jwt string, csrfToken string, err error)
 	ForgotPassword(email string) error
 	ResetPassword(token string, newPassword string) error
-	VerifyUserByEmail(email string) (UserResponse, error)
+	VerifyEmail(token string) error
 	VerifyAuthToken(token string, purpose string) error
 }
 
@@ -188,8 +189,8 @@ func (s *service) Login(u User) (ur UserResponse, jwt string, csrfToken string, 
 	}
 
 	return UserResponse{
-		UserId: storedUser.UserId,
-		Email:  storedUser.Email,
+		UserId:   storedUser.UserId,
+		Email:    storedUser.Email,
 		Name:     storedUser.Name,
 		Verified: storedUser.Verified,
 	}, tokenString, csrfToken, nil
@@ -298,9 +299,26 @@ func (s *service) ResetPassword(token string, newPassword string) error {
 	return nil
 }
 
-func (s *service) VerifyUserByEmail(email string) (UserResponse, error) {
-	// TODO
-	return UserResponse{}, nil
+func (s *service) VerifyEmail(token string) error {
+	log.Printf("AuthService: Verifying email with token: %s", token)
+	authToken, err := s.verifyAndGetAuthToken(token, string(PurposeEmailVerification))
+	if err != nil {
+		log.Printf("AuthService: Error verifying auth token: %v", err)
+		return ErrInvalidToken
+	}
+
+	if authToken.Purpose != PurposeType(PurposeEmailVerification) {
+		log.Printf("AuthService: Token purpose mismatch: expected %s, got %s", PurposeEmailVerification, authToken.Purpose)
+		return ErrInvalidToken
+	}
+
+	err = s.r.VerifyEmailAndMarkToken(authToken.Email, encryptToken(token))
+	if err != nil {
+		log.Printf("AuthService: Error verifying email and marking token: %v", err)
+		return ErrInvalidToken
+	}
+
+	return nil
 }
 
 func (s *service) verifyAndGetAuthToken(token, purpose string) (*AuthToken, error) {
