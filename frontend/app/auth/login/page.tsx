@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import AuthCard from "@/components/app/auth/authCard";
 import LoginForm from "@/components/app/auth/loginForm";
 
-export default async function Login() {
+export default async function Login({ searchParams }: { searchParams: { callbackUrl: string } }) {
   const session = await auth();
   if (session?.user) {
-      redirect("/swearjar/list");
+      redirect(searchParams.callbackUrl || "/swearjar/list");
   }
   const greetingMessage = "Welcome Back to"
   return (

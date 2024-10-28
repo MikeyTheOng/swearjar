@@ -1,10 +1,9 @@
 "use client"
 import Link from "next/link";
-import { useForm, SubmitHandler, FieldError } from "react-hook-form";
+import { useForm, FieldError } from "react-hook-form";
 import { signIn, useSession } from 'next-auth/react';
-import toast, { ErrorIcon } from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/shadcn/button"
 import ErrorAlert from "@/components/shared/ErrorAlert";
@@ -20,11 +19,8 @@ interface LoginFormData {
 
 export default function LoginForm() {
     const router = useRouter()
-    const { data: session, status } = useSession();
-    if (status === 'authenticated') {
-        router.push('/swearjar/list');
-    }
-
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get('callbackUrl') || '/swearjar/list';
     const [error, setError] = useState<boolean>(false);
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
@@ -33,38 +29,27 @@ export default function LoginForm() {
         }
     });
 
-    const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
+    const handleLogin = async (data: LoginFormData) => {
         try {
-            const callbackUrl = new URLSearchParams(window.location.search).get('callbackUrl') || "/swearjar/list";
             const response = await signIn('credentials', {
-                callbackUrl: callbackUrl,
-                redirect: false, // ! Allows handling of error in this page
                 Email: data.Email,
                 Password: data.Password,
+                redirect: false
             });
-
-            // console.log("Response (login):", response);
             if (response?.error) {
                 setError(true);
                 const errorMessage = response?.error || response?.status || 'Unknown error';
                 console.error("Error message:", errorMessage);
-                // throw new Error(`Login failed: ${errorMessage}`);
-                toast.error("Check your email or password", {
-                    id: "login-error",
-                    duration: 1500,
-                    position: 'top-center',
-                    icon: <ErrorIcon />,
-                });
-            } else {
-                router.push('/swearjar/list');
+                throw new Error(`Login failed: ${errorMessage}`);
             }
+            router.push(callbackUrl);
         } catch (error) {
             console.error('Login failed:', error);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(handleLogin)}>
             <div className="grid w-full items-center gap-4">
                 {error && <ErrorAlert message="Check your email or password" />}
                 <div className="flex flex-col space-y-1.5">
