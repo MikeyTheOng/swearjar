@@ -28,12 +28,8 @@ export default function LoginForm() {
     const [error, setError] = useState<boolean>(false);
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
-            // Email: "",
-            // Password: "",
-
-            // ! Testing
-            Email: "test1@gmail.com",
-            Password: "12345678A!"
+            Email: "",
+            Password: "",
         }
     });
 
@@ -42,7 +38,7 @@ export default function LoginForm() {
             const callbackUrl = new URLSearchParams(window.location.search).get('callbackUrl') || "/swearjar/list";
             const response = await signIn('credentials', {
                 callbackUrl: callbackUrl,
-                redirect: true,
+                redirect: false, // ! Allows handling of error in this page
                 Email: data.Email,
                 Password: data.Password,
             });
