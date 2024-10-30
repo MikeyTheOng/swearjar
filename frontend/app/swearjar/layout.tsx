@@ -34,7 +34,7 @@ export default async function SwearJarLayout({
         <HydrationBoundary state={dehydrate(queryClient)}>
             <section className="h-dvh flex flex-col">
                 <Navbar session={session} />
-                <main className="flex-grow flex justify-center px-4 mt-7 mb-7">
+                <main className="flex-grow flex justify-center px-4 my-4 md:my-7">
                     {children}
                 </main>
                 <FloatingActionButton userId={session.user.UserId} />
