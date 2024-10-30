@@ -9,7 +9,7 @@ export async function POST(request: Request) {
         const parsedBody = loginSchema.parse(body);
 
         const { response, data, status } = await apiRequest({
-            route: '/users?action=login',
+            route: '/auth/login',
             method: 'POST',
             body: {
                 email: parsedBody.Email,

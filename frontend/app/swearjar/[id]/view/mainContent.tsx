@@ -20,7 +20,7 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-y-3 gap-x-4">
             <div className="col-span-1 md:col-span-5 order-1">
-                <BreadcrumbHeader title={data.swearJar.Name} subtitle={data.swearJar.Desc} />
+                <BreadcrumbHeader title={data.swearJar.Name} subtitle={data.swearJar.Desc || "A penny a day, breaks the bad habit"} />
             </div>
             <div className="col-span-1 md:col-span-3 order-3 md:order-2">
                 <SwearJarTrends swearJarId={swearJarId} />

@@ -21,12 +21,30 @@ func ProtectedRouteMiddleware(next http.Handler) http.Handler {
 		// for _, cookie := range r.Cookies() {
 		//     log.Printf("%s: {%s}\n", cookie.Name, cookie.Value)
 		// }
+		jwtCookie, err := r.Cookie("jwt")
+		if err != nil {
+			RespondWithError(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
 
 		// Validate JWT
-		err := validateJWT(r)
+		err = validateJWT(r, jwtCookie.Value)
 		if err != nil {
 			log.Println("JWT validation error:", err)
 			RespondWithError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+
+		claims, err := decodeJWT(jwtCookie.Value)
+		if err != nil {
+			log.Println("JWT decoding error:", err)
+			RespondWithError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+
+		if claims["Verified"] != true {
+			log.Println("User is not verified")
+			RespondWithError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 
@@ -46,17 +64,8 @@ func Logging(r *http.Request) {
 	log.Printf("Method: %s, Route: %s\n", r.Method, r.URL.Path)
 }
 
-func validateJWT(r *http.Request) error {
+func validateJWT(r *http.Request, tokenString string) error {
 	var jwtKey = []byte(os.Getenv("JWT_SECRET"))
-	cookie, err := r.Cookie("jwt")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			return errors.New("jwt cookie missing")
-		}
-		return err
-	}
-
-	tokenString := cookie.Value
 
 	token, err := jwt.Parse(tokenString,
 		func(token *jwt.Token) (interface{}, error) {

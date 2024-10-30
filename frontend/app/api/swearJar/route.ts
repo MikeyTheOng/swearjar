@@ -44,7 +44,9 @@ export const POST = auth(async function POST(req) {
         }
 
         // Validate the incoming request body
-        const params = swearJarWithOwnersSchema.parse(body);
+        const params = swearJarWithOwnersSchema.extend({
+            SwearJarId: z.string().optional(),
+        }).parse(body);
 
         // Transform additionalOwners to an array of UserIds and add the UserId of the current user
         const additionalOwners = params.Owners || []; // * Owners received from form excludes the user that submitted the form
@@ -57,6 +59,7 @@ export const POST = auth(async function POST(req) {
 
         // Validate the transformed body with the swearJarSchema
         const validatedBody = swearJarBaseSchema.parse(transformedBody);
+        console.log("Validated Body:", validatedBody);
         const { data, status } = await apiRequest({
             route: '/swearjar',
             method: 'POST',

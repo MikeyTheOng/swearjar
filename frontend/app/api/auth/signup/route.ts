@@ -4,13 +4,12 @@ import { ZodError } from 'zod';
 
 // /api/auth/signup
 export async function POST(request: Request) {
-    console.log("Sign up route")
     try {
         const body = await request.json();
         const parsedBody = signUpSchema.parse(body);
 
         const { data, status } = await apiRequest({
-            route: '/users?action=signup',
+            route: '/auth/signup',
             method: 'POST',
             body: {
                 Name: parsedBody.Name,

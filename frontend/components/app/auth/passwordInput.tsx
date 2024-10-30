@@ -1,10 +1,11 @@
 'use client'
 
+import ErrorMessage from "@/components/shared/ErrorMessage";
 import { Input } from "@/components/ui/shadcn/input"
-import { useState } from 'react';
-import { IoEye, IoEyeOff } from "react-icons/io5";
 import { IconContext } from "react-icons";
-import { FieldErrors, UseFormRegister } from "react-hook-form";
+import { IoEye, IoEyeOff } from "react-icons/io5";
+import { FieldError, FieldErrors, UseFormRegister } from "react-hook-form";
+import { useState } from 'react';
 
 interface PasswordInputProps {
     register: UseFormRegister<any>;
@@ -48,7 +49,7 @@ export default function PasswordInput({ register, errors }: PasswordInputProps) 
                     </IconContext.Provider>
                 </button>
             </div>
-            {errors.Password && <span className="text-error">{String(errors.Password.message)}</span>}
+            {errors.Password && <ErrorMessage error={errors.Password as FieldError} />}
         </div>
     );
 };

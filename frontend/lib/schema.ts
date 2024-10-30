@@ -1,4 +1,4 @@
-import { array, object, string } from 'zod';
+import { array, boolean, object, string } from 'zod';
 
 // Sign Up Schema
 export const signUpSchema = object({
@@ -28,6 +28,7 @@ export const userSchema = object({
     UserId: string().min(1, 'UserId is required'),
     Email: string().email('Invalid email format'),
     Name: string().min(1, 'Name is required'),
+    Verified: boolean(),
 });
 
 // Swear Jar Schemas

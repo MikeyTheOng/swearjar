@@ -1,6 +1,6 @@
 import Footer from "@/components/layout/footer"
 
-export default function AuthLayout({
+export default async function AuthLayout({
     children,
 }: {
     children: React.ReactNode

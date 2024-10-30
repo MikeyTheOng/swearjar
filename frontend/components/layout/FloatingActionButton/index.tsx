@@ -2,7 +2,7 @@
 import { fetcher } from '@/lib/utils';
 import { SwearJarListApiResponse } from '@/lib/apiTypes';
 import { SwearJarWithId } from '@/lib/types';
-import { useAddSwear } from '@/components/shared/hooks/useAddSwear';
+import { useAddSwear } from '@/hooks/useAddSwear';
 import { usePathname } from 'next/navigation';
 
 import { useMediaQuery } from 'usehooks-ts'

@@ -36,17 +36,63 @@ func (h *Handler) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", h.Listening)
 
-	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			action := r.URL.Query().Get("action")
-			if action == "login" {
-				h.Login(w, r)
-			} else if action == "signup" {
-				h.SignUp(w, r)
-			} else {
-				http.Error(w, "Invalid action", http.StatusBadRequest)
+			h.Login(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/auth/signup", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			h.SignUp(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.Handle("/users", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			h.GetUser(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})))
+
+	mux.HandleFunc("/password/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			passwordAction := strings.TrimPrefix(r.URL.Path, "/password/")
+			switch passwordAction {
+			case "forgot":
+				h.ForgotPassword(w, r)
+			case "reset":
+				h.ResetPassword(w, r)
+			default:
+				http.NotFound(w, r)
 			}
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/auth/token/verify", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			h.VerifyToken(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/auth/email/verify", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			h.VerifyEmail(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -153,6 +199,33 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	user, jwt, err := h.authService.GetUser(userId)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	SetCookie(w, "jwt", jwt, true)
+
+	response := map[string]interface{}{
+		"msg":  "User fetched successfully",
+		"user": user,
+	}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
 func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	var req authentication.User
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -161,7 +234,7 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.authService.SignUp(req)
+	err = h.authService.SignUp(req.Email, req.Name, req.Password)
 	if err != nil {
 		log.Printf("Error during SignUp: %v", err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -175,6 +248,141 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+}
+
+func (h *Handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Verifying email")
+	var req struct {
+		Token string
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	jwtCookie, err := r.Cookie("jwt")
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	claims, err := decodeJWT(jwtCookie.Value)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	jwt, err := h.authService.VerifyEmail(claims["UserId"].(string), req.Token)
+	if err != nil {
+		log.Printf("Error verifying email: %v", err)
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	SetCookie(w, "jwt", jwt, true)
+
+	response := map[string]string{"msg": "Email verified successfully"}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	if req.Email == "" {
+		RespondWithError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	done := make(chan error, 1)
+
+	go func() {
+		err := h.authService.ForgotPassword(req.Email)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		// log.Printf("Received from done channel, error: %v", err) // ! Debug
+		if err != nil {
+			log.Printf("Forgot password error: %v", err)
+			RespondWithError(w, http.StatusInternalServerError, "An error occurred while processing your request")
+			return
+		}
+		response := map[string]string{"msg": "Password reset instructions sent"}
+		w.WriteHeader(http.StatusOK)
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	case <-time.After(20 * time.Second):
+		RespondWithError(w, http.StatusRequestTimeout, "Request timed out")
+	}
+}
+
+func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Password string `json:"Password"`
+		Token    string `json:"Token"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = h.authService.ResetPassword(req.Token, req.Password)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]string{"msg": "Password reset successful"}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) VerifyToken(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Purpose string `json:"purpose"`
+		Token   string `json:"token"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.Purpose == "" || req.Token == "" {
+		RespondWithError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	err = h.authService.VerifyAuthToken(req.Token, req.Purpose)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Invalid or expired token")
+		return
+	}
+
+	response := map[string]string{
+		"msg": "Token is valid",
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
@@ -273,7 +481,7 @@ func (h *Handler) GetTopClosestEmails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decode the UserId claim from the cookie
-	claims, err := authentication.DecodeJWT(cookie.Value)
+	claims, err := decodeJWT(cookie.Value)
 	if err != nil {
 		log.Printf("Error decoding JWT: %v", err)
 		RespondWithError(w, http.StatusUnauthorized, "Error decoding JWT")

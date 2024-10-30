@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 
 	"net/http"
@@ -9,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // SetCookie sets a cookie with the provided name and value.
@@ -43,7 +44,7 @@ func GetUserIdFromCookie(w http.ResponseWriter, r *http.Request) (string, error)
 	if err != nil {
 		return "", err
 	}
-	claims, err := authentication.DecodeJWT(cookie.Value)
+	claims, err := decodeJWT(cookie.Value)
 	if err != nil {
 		log.Printf("Error decoding JWT: %v", err)
 		return "", err
@@ -55,4 +56,22 @@ func GetUserIdFromCookie(w http.ResponseWriter, r *http.Request) (string, error)
 	}
 
 	return userId, nil
+}
+
+// DecodeJWT decodes a JWT token string and returns the token object or an error if the token is invalid.
+func decodeJWT(tokenString string) (jwt.MapClaims, error) {
+	// Parse the token without validating the signature, as previously validated in the middleware
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract claims and print them in a human-readable format
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		log.Printf("Decoded JWT Token: UserId: %s, Email: %s, Name: %s, Verified: %v, Issued At: %v, Expires At: %v", claims["UserId"], claims["Email"], claims["Name"], claims["Verified"], claims["iat"], claims["exp"])
+		return claims, nil
+	} else {
+		log.Printf("unable to extract claims from token")
+		return nil, errors.New("unable to extract claims from token")
+	}
 }

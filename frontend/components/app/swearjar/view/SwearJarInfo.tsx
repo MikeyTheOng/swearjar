@@ -1,5 +1,5 @@
 import { SwearJarWithOwners } from "@/lib/types";
-import { useAddSwear } from "@/components/shared/hooks/useAddSwear";
+import { useAddSwear } from "@/hooks/useAddSwear";
 
 import { Button } from "@/components/ui/shadcn/button";
 import { HiOutlinePencil } from "react-icons/hi";
@@ -14,9 +14,9 @@ export default function SwearJarInfo(swearJar: SwearJarWithOwners) {
                     <h1 className="text-[40px] leading-[2.25rem] font-bold tracking-tighter">$100</h1>
                     <p className="text-xs">in <b>{swearJar.Name}</b></p>
                 </div>
-                <Button 
-                    variant="plain" 
-                    size="icon" 
+                <Button
+                    variant="plain"
+                    size="icon"
                     className="rounded-full md:border-none"
                     aria-label="Edit Swear Jar"
                     onClick={() => window.location.href = `/swearjar/${swearJar.SwearJarId}/edit`}

@@ -18,11 +18,12 @@ import (
 )
 
 type MongoRepository struct {
-	client    *mongo.Client
-	db        *mongo.Database
-	swearJars *mongo.Collection
-	swears    *mongo.Collection
-	users     *mongo.Collection
+	client     *mongo.Client
+	db         *mongo.Database
+	swearJars  *mongo.Collection
+	swears     *mongo.Collection
+	users      *mongo.Collection
+	authTokens *mongo.Collection
 }
 
 func NewMongoRepository() *MongoRepository {
@@ -31,7 +32,8 @@ func NewMongoRepository() *MongoRepository {
 	swearJars := db.Collection(os.Getenv("DB_COLLECTION_SWEARJARS"))
 	swears := db.Collection(os.Getenv("DB_COLLECTION_SWEARJAR"))
 	users := db.Collection(os.Getenv("DB_COLLECTION_USERS"))
-	return &MongoRepository{client, db, swearJars, swears, users}
+	authTokens := db.Collection(os.Getenv("DB_COLLECTION_AUTH_TOKENS"))
+	return &MongoRepository{client, db, swearJars, swears, users, authTokens}
 }
 
 func ConnectToDB() *mongo.Client {
@@ -330,38 +332,37 @@ func (r *MongoRepository) SignUp(u authentication.User) error {
 			{Key: "Email", Value: u.Email},
 			{Key: "Name", Value: u.Name},
 			{Key: "Password", Value: u.Password},
+			{Key: "Verified", Value: u.Verified},
 		},
 	)
 	return err
 }
 
+func (r *MongoRepository) CreateAuthToken(authToken authentication.AuthToken) error {
+	_, err := r.authTokens.InsertOne(context.TODO(), bson.D{
+		{Key: "Email", Value: authToken.Email},
+		{Key: "Token", Value: authToken.Token},
+		{Key: "CreatedAt", Value: authToken.CreatedAt},
+		{Key: "ExpiresAt", Value: authToken.ExpiresAt},
+		{Key: "Purpose", Value: authToken.Purpose},
+		{Key: "Used", Value: authToken.Used},
+	})
+	return err
+}
+
 func (r *MongoRepository) GetUserByEmail(e string) (authentication.User, error) {
 	filter := bson.D{{Key: "Email", Value: e}}
-	var result struct {
-		UserId   primitive.ObjectID `bson:"_id"`
-		Email    string             `bson:"Email"`
-		Name     string             `bson:"Name"`
-		Password string             `bson:"Password"`
-	}
-	var user authentication.User
+	var result authentication.User
 
 	err := r.users.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		log.Printf("Error fetching user by email {%v}: %v", e, err)
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return user, authentication.ErrNoDocuments
+			return authentication.User{}, authentication.ErrNoDocuments
 		}
-		return user, err
+		return authentication.User{}, err
 	}
 
-	user = authentication.User{
-		UserId:   result.UserId.Hex(), // Convert ObjectId to string
-		Email:    result.Email,
-		Name:     result.Name,
-		Password: result.Password,
-	}
-
-	return user, nil
+	return result, nil
 }
 
 func (r *MongoRepository) GetUserById(userId string) (authentication.UserResponse, error) {
@@ -416,18 +417,23 @@ func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults in
 	var decodedUsers []authentication.UserResponse
 
 	for cursor.Next(ctx) {
-		var mongoUR UserResponse
+		var mongoUR struct {
+			UserId   primitive.ObjectID `bson:"_id"`
+			Email    string             `bson:"Email"`
+			Name     string             `bson:"Name"`
+			Verified bool               `bson:"Verified"`
+		}
 		err := cursor.Decode(&mongoUR)
 		if err != nil {
 			log.Printf("Error decoding user response: %v", err)
 			return nil, err
 		}
 
-		// Convert MongoDB UserResponse to authentication.UserResponse
 		authUR := authentication.UserResponse{
-			UserId: mongoUR.UserId,
-			Email:  mongoUR.Email,
-			Name:   mongoUR.Name,
+			UserId:   mongoUR.UserId.Hex(),
+			Email:    mongoUR.Email,
+			Name:     mongoUR.Name,
+			Verified: mongoUR.Verified,
 		}
 
 		decodedUsers = append(decodedUsers, authUR)
@@ -439,4 +445,123 @@ func (r *MongoRepository) FindUsersByEmailPattern(query string, maxNumResults in
 	}
 
 	return decodedUsers, nil
+}
+
+func (r *MongoRepository) GetAuthToken(hashedToken string) (authentication.AuthToken, error) {
+	var authToken authentication.AuthToken
+	err := r.authTokens.FindOne(context.TODO(), bson.M{"Token": hashedToken}).Decode(&authToken)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return authToken, authentication.ErrNoDocuments
+		}
+		return authToken, err
+	}
+	return authToken, nil
+}
+
+func (r *MongoRepository) UpdateUserPassword(email string, newPassword string) error {
+	filter := bson.M{"Email": email}
+	update := bson.M{"$set": bson.M{"Password": newPassword}}
+
+	result, err := r.users.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("user not found")
+	}
+
+	return nil
+}
+
+func (r *MongoRepository) MarkAuthTokenAsUsed(hashedToken string) error {
+	filter := bson.M{"Token": hashedToken}
+	update := bson.M{"$set": bson.M{"Used": true}}
+
+	result, err := r.authTokens.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("auth token not found")
+	}
+
+	return nil
+}
+
+func (r *MongoRepository) UpdatePasswordAndMarkToken(email string, newPassword string, hashedToken string) error {
+	session, err := r.client.StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(context.Background())
+
+	_, err = session.WithTransaction(context.Background(), func(sessCtx mongo.SessionContext) (interface{}, error) {
+		// * 1. Update user's password
+		userFilter := bson.M{"Email": email}
+		userUpdate := bson.M{"$set": bson.M{"Password": newPassword}}
+		userResult, err := r.users.UpdateOne(sessCtx, userFilter, userUpdate)
+		if err != nil {
+			return nil, err
+		}
+		if userResult.MatchedCount == 0 {
+			return nil, errors.New("user not found")
+		}
+
+		// * 2. Mark auth token as used
+		if err := r.useAuthToken(hashedToken); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	})
+
+	return err
+}
+
+func (r *MongoRepository) VerifyEmailAndMarkToken(email string, hashedToken string) error {
+	session, err := r.client.StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(context.Background())
+
+	_, err = session.WithTransaction(context.Background(), func(sessCtx mongo.SessionContext) (interface{}, error) {
+		// * 1. Mark user as verified
+		userFilter := bson.M{"Email": email}
+		userUpdate := bson.M{"$set": bson.M{"Verified": true}}
+		userResult, err := r.users.UpdateOne(sessCtx, userFilter, userUpdate)
+		if err != nil {
+			return nil, err
+		}
+		if userResult.MatchedCount == 0 {
+			return nil, errors.New("user not found")
+		}
+
+		// * 2. Mark auth token as used
+		if err := r.useAuthToken(hashedToken); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	})
+
+	return err
+}
+
+func (r *MongoRepository) useAuthToken(hashedToken string) error {
+	filter := bson.M{"Token": hashedToken}
+	update := bson.M{"$set": bson.M{"Used": true}}
+
+	tokenResult, err := r.authTokens.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return err
+	}
+	if tokenResult.MatchedCount == 0 {
+		return errors.New("auth token not found")
+	}
+
+	return nil
 }
