@@ -1,6 +1,8 @@
 "use client"
+import Link from "next/link";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { signIn } from 'next-auth/react';
+import toast, { ErrorIcon } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -9,7 +11,6 @@ import ErrorAlert from "@/components/shared/ErrorAlert";
 import { Input } from "@/components/ui/shadcn/input"
 import { Label } from "@/components/ui/shadcn/label"
 import PasswordInput from "./passwordInput";
-import toast, { ErrorIcon } from "react-hot-toast";
 
 interface SignUpFormData {
     Email: string;
@@ -77,9 +78,10 @@ export default function LoginForm() {
                 {/* <div className="flex justify-end">
                 <a>Forgot password?</a>
               </div> */}
-                <div>
-                    <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary md:shadow-none hover:text-foreground hover:scale-105">Login</Button>
-                </div>
+                <Button className="w-full sm:font-semibold shadow-lg bg-gradient-to-r from-primary to-secondary md:shadow-none hover:text-foreground hover:scale-105">Login</Button>
+                <p className="text-center text-sm">
+                    Don't have an account? <Link href="/auth/signup" className="font-bold hover:underline hover:text-primary transition duration-300 ease-in-out">Sign up</Link>
+                </p>
             </div>
         </form>
     )

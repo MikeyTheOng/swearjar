@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/shadcn/card"
 import { Button } from "@/components/ui/shadcn/button"
 import { FaChevronDown, } from "react-icons/fa";
-import { RecentSwearsApiResponse } from "@/app/swearjar/[id]/view/page";
+import { RecentSwearsApiResponse } from "@/lib/apiTypes";
 import { fetcher } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
