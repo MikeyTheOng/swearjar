@@ -37,13 +37,9 @@ export default function SwearJarTrends({ swearJarId }: { swearJarId: string }) {
     }
 
     const [chartConfig, setChartConfig] = useState<ChartConfig>({
-        michael: {
-            label: "Michael",
+        user: {
+            label: "User",
             color: "hsl(var(--chart-1))",
-        },
-        timothy: {
-            label: "Timothy",
-            color: "hsl(var(--chart-2))",
         },
     })
 
@@ -139,22 +135,22 @@ export default function SwearJarTrends({ swearJarId }: { swearJarId: string }) {
 
 // * Expected format of data in the chart
 // const data = [
-//     { label: "Week 1", michael: 10, timothy: 8 },
-//     { label: "Week 2", michael: 20, timothy: 22 },
-//     { label: "Week 3", michael: 50, timothy: 35 },
-//     { label: "Week 4", michael: 30, timothy: 30 },
-//     { label: "Week 5", michael: 100, timothy: 80 },
-//     { label: "Week 6", michael: 70, timothy: 69 },
+//     { label: "Week 1", user_one: 10, user_two: 8 },
+//     { label: "Week 2", user_one: 20, user_two: 22 },
+//     { label: "Week 3", user_one: 50, user_two: 35 },
+//     { label: "Week 4", user_one: 30, user_two: 30 },
+//     { label: "Week 5", user_one: 100, user_two: 80 },
+//     { label: "Week 6", user_one: 70, user_two: 69 },
 // ];
 
 // * Expected format of chartConfig
 // const chartConfig = {
-//     michael: {
-//         label: "Michael",
+//     user_one: {
+//         label: "User One",
 //         color: "hsl(var(--chart-1))",
 //     },
-//     timothy: {
-//         label: "Timothy",
+//     user_two: {
+//         label: "User Two",
 //         color: "hsl(var(--chart-2))",
 //     },
 // } satisfies ChartConfig

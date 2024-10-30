@@ -65,9 +65,9 @@ const NavigationLinks = ({ name }: { name?: string }) => {
                 [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-primary [&_a:focus-visible]:ring-offset-2
             "
         >
-            <li>
+            {/* <li>
                 <Link href="/">Home</Link>
-            </li>
+            </li> */}
             <li>
                 <Link href="/swearjar/list">Swear Jars</Link>
             </li>
