@@ -1,9 +1,9 @@
 "use client"
 import Link from "next/link";
+import { signIn } from 'next-auth/react';
 import { useForm, FieldError } from "react-hook-form";
-import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/shadcn/button"
 import ErrorAlert from "@/components/shared/ErrorAlert";
