@@ -24,7 +24,7 @@ export async function POST(request: Request) {
             // Split the combined cookies string into individual cookies
             const cookiesArray = backendCookies.split(/,(?=\s*\w+=)/);
             cookiesArray.forEach((cookie) => {
-                console.log("cookie:", cookie)
+                // console.log("cookie:", cookie) // ! Debugging
                 headers.append('Set-Cookie', cookie.trim());
             });
         }

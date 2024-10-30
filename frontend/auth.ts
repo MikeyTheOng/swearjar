@@ -5,8 +5,50 @@ import { User as CustomUser } from "@/lib/types";
 
 import { loginSchema } from "@/lib/schema"
 import { ZodError } from "zod";
+import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 
 const AUTH_URL = process.env.AUTH_URL;
+const AUTH_SECRET = process.env.AUTH_SECRET;
+
+interface CustomJwtPayload extends JwtPayload {
+    UserId: string;
+    Email: string;
+    Name: string;
+    iat: number;
+    exp: number;
+}
+
+function getGolangJWT(): CustomJwtPayload {
+  const cookies = nextCookies();
+  const jwtCookie = cookies.get('jwt');
+  
+  if (!jwtCookie || !jwtCookie.value) {
+    throw new Error('JWT cookie not found');
+  }
+
+  try {
+    // Verify the JWT with the secret
+    const decodedToken = jwt.verify(jwtCookie.value, AUTH_SECRET as Secret) as CustomJwtPayload;
+    
+    // Check if the token has expired
+    const currentTime = Math.floor(Date.now() / 1000);
+    if (decodedToken.exp < currentTime) {
+      throw new Error('Token has expired');
+    }
+
+    // Return the claims
+    return {
+      UserId: decodedToken.UserId,
+      Email: decodedToken.Email,
+      Name: decodedToken.Name,
+      iat: decodedToken.iat,
+      exp: decodedToken.exp
+    };
+  } catch (error) {
+    console.error('Error validating JWT:', error);
+    throw new Error('Invalid token');
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
@@ -92,7 +134,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const result = await response.json();
           user = result.user;
-          console.log('Signed in successfully', user);
+          // console.log('Signed in successfully', user); // ! Debugging
 
           return user
         } catch (error) {
@@ -115,6 +157,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     jwt({ token, user }) {
+      // next-auth session refreshes whereas the jwt issued by golang does not, hence determine if the golang jwt has expired
+      const golangJWT = getGolangJWT();
+      if (golangJWT.exp < new Date().getTime() / 1000) {
+        console.log("Golang JWT has expired");
+        return null;
+      }
+
+      // ! Debugging
+      // console.log("Current Time:", new Date().toLocaleString()); 
+      // console.log("Golang JWT exp:", new Date(golangJWT.exp * 1000).toLocaleString()); 
+      
       const customUser = user as CustomUser;
 
       if (customUser) { // User is available during sign-in

@@ -1,16 +1,19 @@
+import { auth } from '@/auth';
+import { SwearJarApiResponse } from '@/lib/apiTypes';
+import { fetcher } from "@/lib/utils";
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from '@tanstack/react-query'
-import { fetcher } from "@/lib/utils";
 import type { Metadata } from 'next'
-import { SwearJarApiResponse } from '@/lib/apiTypes';
+import { redirect } from 'next/navigation';
 
 import BreadcrumbHeader from '@/components/layout/header/breadcrumbHeader';
 import DefaultContentLayout from "@/components/layout/content";
 import ErrorAlert from '@/components/shared/ErrorAlert';
 import MainContent from "./mainContent";
+
 
 export const metadata: Metadata = {
   title: 'Edit Swear Jar | SwearJar',
@@ -18,6 +21,11 @@ export const metadata: Metadata = {
 }
 
 export default async function EditSwearJarPage({ params }: { params: { id: string } }) {
+  const session = await auth()
+  if (!session) {
+    return redirect('/auth/login')
+  }
+
   const queryClient = new QueryClient()
   let errorMessage: string | null = null;
 

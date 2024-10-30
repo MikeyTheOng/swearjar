@@ -1,7 +1,8 @@
 "use client"
+import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from "react-hook-form";
-import toast from 'react-hot-toast';
+import { useSession } from 'next-auth/react';
 
 import { Button } from "@/components/ui/shadcn/button"
 import { Input } from "@/components/ui/shadcn/input"
@@ -17,6 +18,11 @@ interface SignUpFormData {
 }
 export default function SignUp() {
     const router = useRouter();
+    const { data: session, status } = useSession();
+    if (status === 'authenticated') {
+        router.push('/swearjar/list');
+    }
+    
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
             Name: "",
