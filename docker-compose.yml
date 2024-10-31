@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_AUTH_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/.env.local:/app/frontend/.env.local
+    env_file:
+      - ./frontend/.env.local
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/.env:/app/cmd/../.env

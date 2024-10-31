@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 import DefaultContentLayout from "@/components/layout/content";
 import MainContent from "./mainContent";
@@ -28,19 +29,48 @@ export default async function SwearJarPage({ params }: { params: { id: string } 
   const queryClient = new QueryClient()
   let errorMessage: string | null = null;
   try {
+    const cookieStore = cookies();
+    const cookieString = cookieStore.getAll()
+      .map(cookie => `${cookie.name}=${cookie.value}`)
+      .join('; ');
+
     // Fetch all data in parallel
     await Promise.all([
       queryClient.prefetchQuery<SwearJarApiResponse>({
         queryKey: [`swearjar?id=${params.id}`],
-        queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar?id=${params.id}`),
+        queryFn: () => fetcher<SwearJarApiResponse>(
+          `/api/swearjar?id=${params.id}`,
+          undefined,
+          {
+            headers: {
+              Cookie: cookieString
+            }
+          }
+        ),
       }),
       queryClient.prefetchQuery<RecentSwearsApiResponse>({
         queryKey: [`swear?id=${params.id}`],
-        queryFn: () => fetcher<RecentSwearsApiResponse>(`/api/swear?id=${params.id}`),
+        queryFn: () => fetcher<RecentSwearsApiResponse>(
+          `/api/swear?id=${params.id}`,
+          undefined,
+          {
+            headers: {
+              Cookie: cookieString
+            }
+          }
+        ),
       }),
       queryClient.prefetchQuery<SwearJarTrendApiResponse>({
         queryKey: ["swearjar", "trend", params.id, "days"],
-        queryFn: () => fetcher<SwearJarTrendApiResponse>(`/api/swearjar/trend?id=${params.id}&period=days`),
+        queryFn: () => fetcher<SwearJarTrendApiResponse>(
+          `/api/swearjar/trend?id=${params.id}&period=days`,
+          undefined,
+          {
+            headers: {
+              Cookie: cookieString
+            }
+          }
+        ),
       })
     ]);
 
