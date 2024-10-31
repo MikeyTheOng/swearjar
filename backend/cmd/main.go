@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
@@ -15,7 +17,17 @@ import (
 )
 
 func main() {
-	err := godotenv.Load("../.env")
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal("Error getting working directory")
+	}
+	log.Printf("Working directory: %s", dir)
+	envPath, err := filepath.Abs("../.env")
+	if err != nil {
+		log.Fatal("Error getting absolute path for .env")
+	}
+	log.Printf("Checking .env at: %s", envPath)
+	err = godotenv.Load(envPath)
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
