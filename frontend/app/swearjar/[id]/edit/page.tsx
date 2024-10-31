@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 import BreadcrumbHeader from '@/components/layout/header/breadcrumbHeader';
 import DefaultContentLayout from "@/components/layout/content";
@@ -30,9 +31,22 @@ export default async function EditSwearJarPage({ params }: { params: { id: strin
   let errorMessage: string | null = null;
 
   try {
+    const cookieStore = cookies();
+    const cookieString = cookieStore.getAll()
+      .map(cookie => `${cookie.name}=${cookie.value}`)
+      .join('; ');
+
     await queryClient.prefetchQuery<SwearJarApiResponse>({
       queryKey: [`swearjar?id=${params.id}`],
-      queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar?id=${params.id}`),
+      queryFn: () => fetcher<SwearJarApiResponse>(
+        `/api/swearjar?id=${params.id}`,
+        undefined,
+        {
+          headers: {
+            Cookie: cookieString
+          }
+        }
+      ),
     })
   } catch (error) {
     console.error("Error during prefetch:", error);

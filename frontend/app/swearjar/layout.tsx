@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation'
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
@@ -22,9 +23,22 @@ export default async function SwearJarLayout({
 
     const queryClient = new QueryClient()
     try {
+        const cookieStore = cookies();
+        const cookieString = cookieStore.getAll()
+            .map(cookie => `${cookie.name}=${cookie.value}`)
+            .join('; ');
+
         await queryClient.prefetchQuery<SwearJarListApiResponse>({
             queryKey: ['swearjar'],
-            queryFn: () => fetcher<SwearJarListApiResponse>('/api/swearjar'),
+            queryFn: () => fetcher<SwearJarListApiResponse>(
+                '/api/swearjar',
+                undefined,
+                {
+                    headers: {
+                        Cookie: cookieString
+                    }
+                }
+            ),
         })
     } catch (error) {
         console.error("Error during prefetch:", error);
