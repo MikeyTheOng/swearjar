@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   frontend:
+    image: mikeytheong/swearjar-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -17,6 +18,7 @@ services:
       - backend
 
   backend:
+    image: mikeytheong/swearjar-backend:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
