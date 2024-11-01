@@ -2,7 +2,13 @@ import { auth } from "@/auth";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/shadcn/button";
 import { Mail } from "lucide-react";
+import { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+    title: 'Onboarding | SwearJar',
+    description: 'Onboarding page for new users',
+}
 
 export default async function Onboarding() {
     const session = await auth();
@@ -25,7 +31,6 @@ export default async function Onboarding() {
         );
     }
 }
-
 
 async function OnboardingCard() {
     const session = await auth();

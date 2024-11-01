@@ -3,6 +3,12 @@ import BreadcrumbHeader from "@/components/layout/header/breadcrumbHeader";
 import { redirect } from "next/navigation";
 
 import MainContent from "./mainContent";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: 'Swear Jar List | SwearJar',
+    description: 'Your Collection of Swear Jars all in 1 page',
+}
 
 export default async function SwearJarListPage() {
     const session = await auth()

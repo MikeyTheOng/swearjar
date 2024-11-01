@@ -1,8 +1,14 @@
 import { auth } from "@/auth";
+import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import AuthCard from "@/components/app/auth/authCard";
 import ResetPasswordForm from "@/components/app/auth/resetPasswordForm";
+
+export const metadata: Metadata = {
+    title: 'Reset Password | SwearJar',
+    description: 'Reset your password',
+}
 
 export default async function ResetPassword() {
     const session = await auth();

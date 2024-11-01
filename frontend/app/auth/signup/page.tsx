@@ -1,9 +1,15 @@
 import { auth } from "@/auth";
+import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import AuthCard from "@/components/app/auth/authCard";
 import SignUpForm from "@/components/app/auth/signUpForm";
 
+export const metadata: Metadata = {
+    title: 'Sign Up | SwearJar',
+    description: 'Sign up for SwearJar',
+}
+  
 export default async function SignUp() {
   const session = await auth();
   if (session?.user) {

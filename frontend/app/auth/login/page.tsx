@@ -1,8 +1,14 @@
 import { auth } from "@/auth";
+import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import AuthCard from "@/components/app/auth/authCard";
 import LoginForm from "@/components/app/auth/loginForm";
+
+export const metadata: Metadata = {
+    title: 'Login | SwearJar',
+    description: 'Login to SwearJar',
+}
 
 export default async function Login({ searchParams }: { searchParams: { callbackUrl: string } }) {
   const session = await auth();

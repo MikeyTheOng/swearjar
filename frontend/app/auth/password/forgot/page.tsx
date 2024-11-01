@@ -3,6 +3,12 @@ import { redirect } from "next/navigation";
 
 import AuthCard from "@/components/app/auth/authCard";
 import ForgotPasswordForm from "@/components/app/auth/forgotPasswordForm";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: 'Forgot Password | SwearJar',
+    description: 'Reset your password',
+}
 
 export default async function ForgotPassword() {
     const session = await auth();
