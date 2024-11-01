@@ -12,9 +12,9 @@
     --card-foreground: 180 60% 5%;
     --popover: 180 47% 97%;
     --popover-foreground: 180 60% 5%;
-    --primary: 176 61% 55%;
-    --primary-foreground: 180 47% 97%;
-    --secondary: 337 61% 72%;
+    --primary: 176 61% 55%; /* #46d2c9 */
+    --primary-foreground: 180 47% 97%; 
+    --secondary: 337 61% 72%; /* #e38cad */
     --secondary-foreground: 180 60% 5%;
     --muted: 180 47% 97%;
     --muted-foreground: 180 60% 5%;
