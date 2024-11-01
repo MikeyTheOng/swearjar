@@ -39,7 +39,10 @@ export default async function RootLayout({
         <meta property="og:url" content="https://swearjar.michaelongning.com" />
         <meta property="og:title" content="SwearJar" />
         <meta property="og:description" content="Jar Your Habits" />
-        <meta property="og:image" content="https://swearjar.michaelongning.com/default-image.jpg" />
+        <meta property="og:image" content="https://swearjar.michaelongning.com/opengraph-image.png" />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
       </head>
       <body
         className={cn("bg-background-100 font-sans antialiased relative selection:bg-secondary selection:text-white")}
