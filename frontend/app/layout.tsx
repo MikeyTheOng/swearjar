@@ -17,8 +17,43 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NODE_ENV === 'production'
+      ? 'https://swearjar.michaelongning.com'
+      : 'http://localhost:3000'
+  ),
   title: "SwearJar",
   description: "Jar Your Habits",
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16' },
+      { url: '/favicon-32x32.png', sizes: '32x32' },
+      { url: '/favicon.ico' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
+  openGraph: {
+    type: 'website',
+    url: 'https://swearjar.michaelongning.com',
+    title: "SwearJar",
+    description: "Jar Your Habits",
+    images: [
+      { 
+        url: "https://swearjar.michaelongning.com/opengraph-image.png", 
+        width: 1200, 
+        height: 630,
+        type: 'image/png',
+      },
+    ],
+  },
+  twitter: {
+    title: "SwearJar",
+    description: "Jar Your Habits",
+    images: [
+      { url: "https://swearjar.michaelongning.com/opengraph-image.png", width: 1200, height: 630 },
+    ],
+  },
 };
 
 export default async function RootLayout({
@@ -30,26 +65,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={cn(poppins.className, "bg-background-100")}>
-      <head>
-        <title>SwearJar</title>
-        <meta name="description" content="Jar Your Habits" />
-
-        {/* Open Graph Meta Tags */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://swearjar.michaelongning.com" />
-        <meta property="og:title" content="SwearJar" />
-        <meta property="og:description" content="Jar Your Habits" />
-        <meta property="og:image" content="https://swearjar.michaelongning.com/opengraph-image.png" />
-        <meta property="og:image:type" content="image/png" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-      </head>
       <body
         className={cn("bg-background-100 font-sans antialiased relative selection:bg-secondary selection:text-white")}
       >
         <Providers>
           <SessionProvider session={session}>
-            {/* <nav className="bg-red-500 w-full h-12"></nav> */}
             <main>
               {children}
             </main>
