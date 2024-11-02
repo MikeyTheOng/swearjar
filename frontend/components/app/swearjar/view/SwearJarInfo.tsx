@@ -2,6 +2,7 @@ import { SwearJarWithOwners } from "@/lib/types";
 import { useAddSwear } from "@/hooks/useAddSwear";
 
 import { Button } from "@/components/ui/shadcn/button";
+import EmptyJar from "@/components/app/swearjar/view/EmptyJar";
 import { HiOutlinePencil } from "react-icons/hi";
 
 export default function SwearJarInfo({ activeSwears, ...swearJar }: { activeSwears: number } & SwearJarWithOwners) {
@@ -26,7 +27,7 @@ export default function SwearJarInfo({ activeSwears, ...swearJar }: { activeSwea
             </div>
             <hr className="border-foreground/20" />
             <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 border-secondary text-secondary bg-secondary/10 hover:bg-secondary/30 focus-visible:ring-secondary active:bg-secondary/30">Empty</Button>
+                <EmptyJar id={swearJar.SwearJarId} />
                 <Button className="flex-1" onClick={handleAddSwear}>Oops!</Button>
             </div>
         </div>
