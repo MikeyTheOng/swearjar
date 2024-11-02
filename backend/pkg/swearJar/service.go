@@ -4,16 +4,17 @@ import (
 	"errors"
 	"log"
 	"slices"
+	"time"
 
 	"github.com/mikeytheong/swearjar/backend/pkg/authentication"
 )
 
 type Service interface {
-	AddSwear(Swear) error
-	CreateSwearJar(Name string, Desc string, Owners []string) (SwearJarBase, error)
+	AddSwear(s Swear, userId string) error
+	CreateSwearJar(Name string, Desc string, Owners []string, userId string) (SwearJarBase, error)
 	UpdateSwearJar(sj SwearJarBase, userId string) error
 	GetSwearJarById(swearJarId string, userId string) (SwearJarWithOwners, error)
-	GetSwearJarsByUserId(userId string) ([]SwearJarBase, error)
+	GetSwearJarsByUserId(userId string) ([]SwearJarWithOwners, error)
 	GetSwearsWithUsers(swearJarId string, userId string) (RecentSwearsWithUsers, error)
 	SwearJarStats(swearJarId string, userId string) (SwearJarStats, error)
 	SwearJarTrend(swearJarId string, userId string, period string) ([]ChartData, error)
@@ -26,11 +27,11 @@ type Repository interface {
 	UpdateSwearJar(SwearJarBase) error
 	GetSwearJarById(swearJarId string) (SwearJarWithOwners, error)
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
-	GetSwearJarsByUserId(swearJarId string) ([]SwearJarBase, error)
+	GetSwearJarsByUserId(userId string) ([]SwearJarWithOwners, error)
 	GetSwearsWithUsers(swearJarId string, limit int) (RecentSwearsWithUsers, error)
 	SwearJarStats(swearJarId string) (SwearJarStats, error)
 	SwearJarTrend(swearJarId string, period string, numOfDataPoints int) ([]ChartData, error)
-	ClearSwearJar(swearJarId string) error
+	ClearSwearJar(swearJarId string, userId string) error
 }
 
 type service struct {
@@ -42,16 +43,27 @@ func NewService(r Repository) Service {
 	return &service{r}
 }
 
-func (s *service) CreateSwearJar(Name string, Desc string, Owners []string) (SwearJarBase, error) {
+func (s *service) CreateSwearJar(Name string, Desc string, Owners []string, userId string) (SwearJarBase, error) {
+	if len(Owners) == 0 {
+		return SwearJarBase{}, errors.New("at least one owner is required")
+	}
+
+	now := time.Now()
 	sj := SwearJarBase{
-		Name:   Name,
-		Desc:   Desc,
-		Owners: Owners,
+		Name:          Name,
+		Desc:          Desc,
+		Owners:        Owners,
+		CreatedAt:     now,
+		CreatedBy:     userId,
+		LastUpdatedAt: now,
+		LastUpdatedBy: userId,
 	}
 
 	return s.r.CreateSwearJar(sj)
 }
+
 func (s *service) UpdateSwearJar(sj SwearJarBase, userId string) error {
+	// Check if user is an existing owner of the SwearJar
 	isOwner, err := s.IsOwner(sj.SwearJarId, userId)
 	if err != nil {
 		return err
@@ -60,17 +72,21 @@ func (s *service) UpdateSwearJar(sj SwearJarBase, userId string) error {
 		return errors.New("user is not an owner of this SwearJar")
 	}
 
-	if slices.Contains(sj.Owners, userId) {
-		return s.r.UpdateSwearJar(sj)
+	// User cannot remove themselves as an owner
+	if !slices.Contains(sj.Owners, userId) {
+		return errors.New("User making the request cannot be removed as an owner")
 	}
-	return errors.New("User making the request cannot be removed as an owner")
+
+	sj.LastUpdatedAt = time.Now()
+	sj.LastUpdatedBy = userId
+	return s.r.UpdateSwearJar(sj)
 }
 
-func (s *service) AddSwear(swear Swear) error {
-	if isOwner, err := s.IsOwner(swear.SwearJarId, swear.UserId); err != nil {
+func (s *service) AddSwear(swear Swear, userId string) error {
+	if isOwner, err := s.IsOwner(swear.SwearJarId, userId); err != nil {
 		return err
 	} else if !isOwner {
-		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", swear.UserId, swear.SwearJarId)
+		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", userId, swear.SwearJarId)
 		return authentication.ErrUnauthorized
 	}
 
@@ -94,7 +110,7 @@ func (s *service) GetSwearsWithUsers(swearJarId string, userId string) (RecentSw
 	return RecentSwearsWithUsers{Swears: data.Swears, Users: data.Users}, nil
 }
 
-func (s *service) GetSwearJarsByUserId(userId string) ([]SwearJarBase, error) {
+func (s *service) GetSwearJarsByUserId(userId string) ([]SwearJarWithOwners, error) {
 	return s.r.GetSwearJarsByUserId(userId)
 }
 
@@ -161,5 +177,5 @@ func (s *service) ClearSwearJar(swearJarId string, userId string) error {
 		return authentication.ErrUnauthorized
 	}
 
-	return s.r.ClearSwearJar(swearJarId)
+	return s.r.ClearSwearJar(swearJarId, userId)
 }

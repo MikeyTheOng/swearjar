@@ -64,6 +64,7 @@ export default function SwearJarForm({ swearJarId }: { swearJarId?: string }) {
                 return response.json();
             }),
         onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['swearjar'] });
             queryClient.invalidateQueries({ queryKey: [`swearjar?id=${swearJarId}`] });
             toast.success(`${data.swearJar.Name} updated successfully!`, { position: "top-center" });
             setTimeout(() => {
@@ -76,34 +77,38 @@ export default function SwearJarForm({ swearJarId }: { swearJarId?: string }) {
         }
     });
 
-    const createSwearJar = async (data: SwearJarWithOwners) => {
-        const response = await fetch('/api/swearjar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Create swear jar failed: ${errorData.error || response.statusText}`);
+    const createMutation = useMutation({
+        mutationFn: (data: SwearJarWithOwners) => 
+            fetch('/api/swearjar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            }).then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(`Create swear jar failed: ${errorData.error || response.statusText}`);
+                    });
+                }
+                return response.json();
+            }),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['swearjar'] });
+            toast.success('Swear Jar created successfully!', { position: "top-center" });
+            setTimeout(() => {
+                router.push(`/swearjar/${data.swearJar.SwearJarId}/view`)
+            }, 2000);
+        },
+        onError: (error) => {
+            console.error('Create swear jar failed:', error);
+            toast.error("Something went wrong!", { id: 'create-swearjar-error', position: "top-center" });
         }
-        const resData = await response.json();
-        toast.success('Swear Jar created successfully!', { position: "top-center" });
-        return resData;
-    };
+    });
 
     const onSubmit = async (data: SwearJarWithOwners) => {
-        try {
-            if (isEditMode) {
-                editMutation.mutate(data);
-            } else {
-                const resData = await createSwearJar(data);
-                setTimeout(() => {
-                    router.push(`/swearjar/${resData.swearJar.SwearJarId}/view`)
-                }, 2000);
-            }
-        } catch (error) {
-            console.error(`${isEditMode ? 'Update' : 'Create'} swear jar failed:`, error);
-            toast.error("Something went wrong!", { id: `${isEditMode ? 'edit' : 'create'}-swearjar-error`, position: "top-center" });
+        if (isEditMode) {
+            editMutation.mutate(data);
+        } else {
+            createMutation.mutate(data);
         }
     };
 

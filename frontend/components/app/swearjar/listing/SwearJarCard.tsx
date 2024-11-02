@@ -1,8 +1,9 @@
+import { formatDistanceToNow } from "@/lib/time";
+import { SwearJarBase, User } from "@/lib/types";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { GiMasonJar } from "react-icons/gi";
 import { SlArrowRight } from "react-icons/sl";
-
-import { SwearJarBase } from "@/lib/types";
 
 interface SwearJarCardProps {
     swearJar: SwearJarBase;
@@ -25,7 +26,9 @@ export default function SwearJarCard({ swearJar }: SwearJarCardProps) {
                         </div>
                     </div>
                     <div className="flex items-center">
-                        <p className="ml-9 text-foreground/30 text-[10px] font-normal italic">Timothy Chang • 15h ago</p>
+                        {swearJar.LastUpdatedAt && swearJar.LastUpdatedBy && (
+                            <LastUpdated lastUpdatedAt={swearJar.LastUpdatedAt} lastUpdatedBy={swearJar.LastUpdatedBy} />
+                        )}
                     </div>
                 </div>
                 <div className="absolute right-0 inset-y-0 mr-2 flex items-center">
@@ -34,4 +37,9 @@ export default function SwearJarCard({ swearJar }: SwearJarCardProps) {
             </CardContent>
         </Card>
     );
+}
+
+const LastUpdated = ({ lastUpdatedAt, lastUpdatedBy }: { lastUpdatedAt: Date, lastUpdatedBy: User }) => {
+    const timeAgo = formatDistanceToNow(lastUpdatedAt, { addSuffix: true });
+    return <p className="ml-9 text-foreground/30 text-[10px] font-normal italic">{lastUpdatedBy.Name} • {timeAgo}</p>
 }
