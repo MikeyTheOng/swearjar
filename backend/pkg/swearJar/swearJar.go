@@ -23,5 +23,5 @@ type SwearJarWithOwners struct {
 }
 
 type SwearJarStats struct {
-	ActiveSwears int `json:"activeSwears" bson:"activeSwears"`
+	ActiveSwears int `bson:"ActiveSwears"`
 }

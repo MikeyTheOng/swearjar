@@ -583,7 +583,7 @@ func (r *MongoRepository) SwearJarStats(swearJarId string) (swearJar.SwearJarSta
 			},
 		},
 		{
-			"$count": "activeSwears",
+			"$count": "ActiveSwears",
 		},
 	}
 
@@ -599,7 +599,7 @@ func (r *MongoRepository) SwearJarStats(swearJarId string) (swearJar.SwearJarSta
 
 	stats := swearJar.SwearJarStats{}
 	if len(result) > 0 {
-		stats.ActiveSwears = int(result[0]["activeSwears"].(int32))
+		stats.ActiveSwears = int(result[0]["ActiveSwears"].(int32))
 	}
 
 	return stats, nil
