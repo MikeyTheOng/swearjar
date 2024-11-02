@@ -32,6 +32,7 @@ export default function EmptyJar({ id }: { id: string }) {
             return response.json();
         },
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['swearjar'] });
             queryClient.invalidateQueries({ queryKey: [`swearjar/stats?id=${id}`] });
             setOpen(false);
         },
