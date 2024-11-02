@@ -19,7 +19,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NODE_ENV === 'production'
-      ? 'https://swearjar.michaelongning.com'
+      ? 'https://swearjar.ongspace.com'
       : 'http://localhost:3000'
   ),
   title: "SwearJar",
@@ -35,13 +35,13 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
   openGraph: {
     type: 'website',
-    url: 'https://swearjar.michaelongning.com',
+    url: 'https://swearjar.ongspace.com',
     title: "SwearJar",
     description: "Jar Your Habits",
     images: [
-      { 
-        url: "https://swearjar.michaelongning.com/opengraph-image.png", 
-        width: 1200, 
+      {
+        url: "https://swearjar.ongspace.com/opengraph-image.png",
+        width: 1200,
         height: 630,
         type: 'image/png',
       },
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     title: "SwearJar",
     description: "Jar Your Habits",
     images: [
-      { url: "https://swearjar.michaelongning.com/opengraph-image.png", width: 1200, height: 630 },
+      { url: "https://swearjar.ongspace.com/opengraph-image.png", width: 1200, height: 630 },
     ],
   },
 };

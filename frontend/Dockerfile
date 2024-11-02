@@ -22,8 +22,7 @@ WORKDIR /app/frontend
 COPY --from=deps /app/frontend/node_modules ./node_modules
 COPY . .
 
-ENV NEXT_PUBLIC_AUTH_URL="https://swearjar.michaelongning.com"
-
+ENV NEXT_PUBLIC_AUTH_URL="https://swearjar.ongspace.com"
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
