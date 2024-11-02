@@ -34,8 +34,8 @@ export default function SwearJarSelector({ selectedSwearJar, setSelectedSwearJar
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
             <CommandDialog open={open} onOpenChange={setOpen} dialogContentClassName="w-[359px] sm:w-full">
-                <CommandInput placeholder="Search for Swear Jar by name..." className="w-full h-12 bg-white rounded-md border border-input/10" />
-                <CommandList className="bg-white max-h-[204px] sm:max-h-[248px] overflow-y-auto">
+                <CommandInput placeholder="Search for Swear Jar by name..." className="w-full h-12 rounded-md border border-input/10" />
+                <CommandList className="max-h-[204px] sm:max-h-[248px] overflow-y-auto">
                     <CommandEmpty>No results found.</CommandEmpty>
                     <CommandGroup heading="Swear Jars" className={`${!data || data?.length === 0? 'hidden' : ''}`}>
                         {data?.map((swearJarOption) => (

@@ -71,7 +71,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
         <DialogTrigger className="flex items-center justify-center bottom-20 right-8 w-14 h-14 fixed bg-primary hover:bg-primary/70 rounded-full shadow-lg z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
           <PiTipJarLight size={40} />
         </DialogTrigger>
-        <DialogContent className="bg-white w-[425px]">
+        <DialogContent className="w-[425px]">
           {
             error ? <ErrorAlert message={error.message} /> :
               <>
