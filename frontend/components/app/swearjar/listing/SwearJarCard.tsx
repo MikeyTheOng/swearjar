@@ -40,7 +40,6 @@ export default function SwearJarCard({ swearJar }: SwearJarCardProps) {
 }
 
 const LastUpdated = ({ lastUpdatedAt, lastUpdatedBy }: { lastUpdatedAt: Date, lastUpdatedBy: User }) => {
-    console.log(lastUpdatedAt);
     const timeAgo = formatDistanceToNow(lastUpdatedAt, { addSuffix: true });
     return <p className="ml-9 text-foreground/30 text-[10px] font-normal italic">{lastUpdatedBy.Name} • {timeAgo}</p>
 }
