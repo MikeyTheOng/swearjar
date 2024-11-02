@@ -565,3 +565,42 @@ func (r *MongoRepository) useAuthToken(hashedToken string) error {
 
 	return nil
 }
+
+func (r *MongoRepository) SwearJarStats(swearJarId string) (swearJar.SwearJarStats, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
+	if err != nil {
+		return swearJar.SwearJarStats{}, fmt.Errorf("invalid SwearJarId: %v", err)
+	}
+
+	pipeline := []bson.M{
+		{
+			"$match": bson.M{
+				"SwearJarId": swearJarIdHex,
+				"Active":     true,
+			},
+		},
+		{
+			"$count": "activeSwears",
+		},
+	}
+
+	var result []bson.M
+	cursor, err := r.swears.Aggregate(ctx, pipeline)
+	if err != nil {
+		return swearJar.SwearJarStats{}, err
+	}
+	
+	if err = cursor.All(ctx, &result); err != nil {
+		return swearJar.SwearJarStats{}, err
+	}
+
+	stats := swearJar.SwearJarStats{}
+	if len(result) > 0 {
+		stats.ActiveSwears = int(result[0]["activeSwears"].(int32))
+	}
+
+	return stats, nil
+}

@@ -15,6 +15,7 @@ type Service interface {
 	GetSwearJarById(swearJarId string, userId string) (SwearJarWithOwners, error)
 	GetSwearJarsByUserId(userId string) ([]SwearJarBase, error)
 	GetSwearsWithUsers(swearJarId string, userId string) (RecentSwearsWithUsers, error)
+	SwearJarStats(swearJarId string, userId string) (SwearJarStats, error)
 	SwearJarTrend(swearJarId string, userId string, period string) ([]ChartData, error)
 }
 
@@ -26,6 +27,7 @@ type Repository interface {
 	GetSwearJarOwners(swearJarId string) (owners []string, err error)
 	GetSwearJarsByUserId(swearJarId string) ([]SwearJarBase, error)
 	GetSwearsWithUsers(swearJarId string, limit int) (RecentSwearsWithUsers, error)
+	SwearJarStats(swearJarId string) (SwearJarStats, error)
 	SwearJarTrend(swearJarId string, period string, numOfDataPoints int) ([]ChartData, error)
 }
 
@@ -108,6 +110,22 @@ func (s *service) GetSwearJarById(swearJarId string, userId string) (SwearJarWit
 	}
 
 	return swearJar, nil
+}
+
+func (s *service) SwearJarStats(swearJarId string, userId string) (SwearJarStats, error) {
+	if isOwner, err := s.IsOwner(swearJarId, userId); err != nil {
+		return SwearJarStats{}, err
+	} else if !isOwner {
+		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", userId, swearJarId)
+		return SwearJarStats{}, authentication.ErrUnauthorized
+	}
+
+	stats, err := s.r.SwearJarStats(swearJarId)
+	if err != nil {
+		return SwearJarStats{}, err
+	}
+
+	return stats, nil
 }
 
 func (s *service) SwearJarTrend(swearJarId string, userId string, period string) ([]ChartData, error) {

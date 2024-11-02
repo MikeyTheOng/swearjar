@@ -139,8 +139,8 @@ func (h *Handler) RegisterRoutes() http.Handler {
 			switch action {
 			case "trend":
 				h.ServeSwearJarTrend(w, r, swearJarId)
-			// case "stats": // TODO: Implement
-			// 	h.ServeSwearJarStats(w, r, swearJarId)
+			case "stats":
+				h.ServeSwearJarStats(w, r, swearJarId)
 			default:
 				http.Error(w, "Invalid action for GET", http.StatusNotFound)
 			}
@@ -665,7 +665,30 @@ func (h *Handler) GetSwearJarById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ServeSwearJarStats(w http.ResponseWriter, r *http.Request, swearJarId string) {
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
+	stats, err := h.sjService.SwearJarStats(swearJarId, userId)
+	if err != nil {
+		log.Printf("Error fetching SwearJar stats: %v", err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":  "SwearJar stats fetched successfully",
+		"data": stats,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swearJarId string) {
