@@ -117,19 +117,40 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})))
 
-	mux.Handle("/swearjar/{id}/trend", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/swearjar/{id}/{action}", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		parts := strings.Split(strings.TrimPrefix(path, "/swearjar/"), "/")
 
+		if len(parts) < 2 {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+
 		swearJarId := parts[0]
+		action := parts[1]
+
+		if swearJarId == "" {
+			http.Error(w, "Swear jar ID is required", http.StatusBadRequest)
+			return
+		}
 
 		switch r.Method {
 		case http.MethodGet:
-			if swearJarId == "" {
-				http.Error(w, "Swear jar ID is required", http.StatusBadRequest)
-				return
+			switch action {
+			case "trend":
+				h.ServeSwearJarTrend(w, r, swearJarId)
+			case "stats":
+				h.ServeSwearJarStats(w, r, swearJarId)
+			default:
+				http.Error(w, "Invalid action", http.StatusNotFound)
 			}
-			h.ServeSwearJarTrend(w, r, swearJarId)
+		case http.MethodPatch:
+			switch action {
+			case "clear":
+				h.ClearSwearJar(w, r, swearJarId)
+			default:
+				http.Error(w, "Invalid action", http.StatusNotFound)
+			}
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -644,6 +665,33 @@ func (h *Handler) GetSwearJarById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) ServeSwearJarStats(w http.ResponseWriter, r *http.Request, swearJarId string) {
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	stats, err := h.sjService.SwearJarStats(swearJarId, userId)
+	if err != nil {
+		log.Printf("Error fetching SwearJar stats: %v", err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"msg":  "SwearJar stats fetched successfully",
+		"data": stats,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
 func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swearJarId string) {
 	period := r.URL.Query().Get("period")
 	if period == "" {
@@ -684,6 +732,34 @@ func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swe
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) ClearSwearJar(w http.ResponseWriter, r *http.Request, swearJarId string) {
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	err = h.sjService.ClearSwearJar(swearJarId, userId)
+	if err != nil {
+		if errors.Is(err, authentication.ErrUnauthorized) {
+			RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]string{
+		"msg": "Successfully cleared swear jar",
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

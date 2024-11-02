@@ -71,7 +71,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
         <DialogTrigger className="flex items-center justify-center bottom-20 right-8 w-14 h-14 fixed bg-primary hover:bg-primary/70 rounded-full shadow-lg z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
           <PiTipJarLight size={40} />
         </DialogTrigger>
-        <DialogContent className="bg-white w-[425px]">
+        <DialogContent className="w-[425px]">
           {
             error ? <ErrorAlert message={error.message} /> :
               <>
@@ -96,7 +96,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
                       setOpen(false)
                     }}
                   >
-                    Submit
+                    Yes
                   </Button>
                 </DialogFooter>
               </>
@@ -112,7 +112,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
         <PiTipJarLight size={40} />
       </DrawerTrigger>
       <DrawerContent className="bg-white">
-        <Button className="absolute left-4 top-4 h-5 w-5 p-0 rounded-full bg-neutral-200 active:bg-neutral-400 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground" onClick={() => setOpen(false)}>
+        <Button className="absolute right-4 top-4 h-5 w-5 p-0 rounded-full bg-neutral-200 active:bg-neutral-400 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground" onClick={() => setOpen(false)}>
           <ChevronDown className="h-4 aspect-square stroke-[3] text-foreground" />
         </Button>
         {
@@ -137,7 +137,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
                     setOpen(false)
                   }}
                 >
-                  Submit
+                  Yes
                 </Button>
               </DrawerFooter>
             </>

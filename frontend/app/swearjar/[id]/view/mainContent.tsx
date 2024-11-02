@@ -1,6 +1,6 @@
 "use client"
 import { fetcher } from "@/lib/utils";
-import { SwearJarApiResponse } from "@/lib/apiTypes";
+import { SwearJarApiResponse, SwearJarStatsApiResponse } from "@/lib/apiTypes";
 import { SwearJarWithOwners } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 
@@ -15,6 +15,11 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
         queryFn: () => fetcher<SwearJarApiResponse>(`/api/swearjar?id=${swearJarId}`),
         refetchOnWindowFocus: "always",
     });
+    const { data: sjStats } = useQuery<SwearJarStatsApiResponse>({
+        queryKey: [`swearjar/stats?id=${swearJarId}`],
+        queryFn: () => fetcher<SwearJarStatsApiResponse>(`/api/swearjar/stats?id=${swearJarId}`),
+        refetchOnWindowFocus: "always",
+    });
     if (isLoading) return <span className="daisy-loading daisy-loading-dots daisy-loading-lg text-primary"></span>;
     if (!data?.swearJar) return <p>Swear Jar does not exist</p>;
     return (
@@ -26,7 +31,7 @@ export default function MainContent({ swearJarId }: { swearJarId: string }) {
                 <SwearJarTrends swearJarId={swearJarId} />
             </div>
             <div className="col-span-1 md:col-span-2 order-2 md:order-3 space-y-2">
-                <SwearJarInfo {...data.swearJar as SwearJarWithOwners} />
+                <SwearJarInfo {...data.swearJar as SwearJarWithOwners}  activeSwears={sjStats?.data.ActiveSwears || 0} />
                 <span className="hidden md:block">
                     <SwearJarRecent swearJarId={swearJarId} />
                 </span>

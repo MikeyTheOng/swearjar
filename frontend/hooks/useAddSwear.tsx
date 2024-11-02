@@ -44,6 +44,7 @@ export function useAddSwear(swearJarId: string) {
         onSuccess: (data, variables, context) => {
             queryClient.invalidateQueries({ queryKey: [`swearjar?id=${swearJarId}`] });
             queryClient.invalidateQueries({ queryKey: [`swear?id=${swearJarId}`] });
+            queryClient.invalidateQueries({ queryKey: [`swearjar/stats?id=${swearJarId}`] });
             queryClient.invalidateQueries({ queryKey: ["swearjar", "trend", swearJarId, "days"] });
             queryClient.invalidateQueries({ queryKey: ["swearjar", "trend", swearJarId, "weeks"] });
             queryClient.invalidateQueries({ queryKey: ["swearjar", "trend", swearJarId, "months"] });

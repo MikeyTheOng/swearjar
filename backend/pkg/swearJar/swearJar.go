@@ -21,3 +21,7 @@ type SwearJarWithOwners struct {
 	Owners     []authentication.UserResponse `bson:"Owners"`
 	CreatedAt  time.Time                     `bson:"CreatedAt"`
 }
+
+type SwearJarStats struct {
+	ActiveSwears int `bson:"ActiveSwears"`
+}
