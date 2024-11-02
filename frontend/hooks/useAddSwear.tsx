@@ -42,6 +42,7 @@ export function useAddSwear(swearJarId: string) {
             return { toastId };
         },
         onSuccess: (data, variables, context) => {
+            queryClient.invalidateQueries({ queryKey: ['swearjar'] });
             queryClient.invalidateQueries({ queryKey: [`swearjar?id=${swearJarId}`] });
             queryClient.invalidateQueries({ queryKey: [`swear?id=${swearJarId}`] });
             queryClient.invalidateQueries({ queryKey: [`swearjar/stats?id=${swearJarId}`] });
