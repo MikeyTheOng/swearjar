@@ -117,19 +117,39 @@ func (h *Handler) RegisterRoutes() http.Handler {
 		}
 	})))
 
-	mux.Handle("/swearjar/{id}/trend", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/swearjar/{id}/{action}", ProtectedRouteMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		parts := strings.Split(strings.TrimPrefix(path, "/swearjar/"), "/")
 
+		if len(parts) < 2 {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+
 		swearJarId := parts[0]
+		action := parts[1]
+
+		if swearJarId == "" {
+			http.Error(w, "Swear jar ID is required", http.StatusBadRequest)
+			return
+		}
 
 		switch r.Method {
 		case http.MethodGet:
-			if swearJarId == "" {
-				http.Error(w, "Swear jar ID is required", http.StatusBadRequest)
-				return
+			switch action {
+			case "trend":
+				h.ServeSwearJarTrend(w, r, swearJarId)
+			// case "stats": // TODO: Implement
+			// 	h.ServeSwearJarStats(w, r, swearJarId)
+			default:
+				http.Error(w, "Invalid action for GET", http.StatusNotFound)
 			}
-			h.ServeSwearJarTrend(w, r, swearJarId)
+		case http.MethodPost:
+			// if action == "clear" { // TODO: Implement
+			// 	h.ClearSwearJar(w, r, swearJarId)
+			// } else {
+			// 	http.Error(w, "Invalid action for POST", http.StatusNotFound)
+			// }
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -642,6 +662,10 @@ func (h *Handler) GetSwearJarById(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+}
+
+func (h *Handler) ServeSwearJarStats(w http.ResponseWriter, r *http.Request, swearJarId string) {
+
 }
 
 func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swearJarId string) {
