@@ -72,5 +72,6 @@ func GetSwearJarsPipeline(matchStage bson.M) mongo.Pipeline {
 			},
 			"Owners": 1,
 		}}},
+		{primitive.E{Key: "$sort", Value: bson.M{"LastUpdatedAt": -1}}},
 	}
 }
