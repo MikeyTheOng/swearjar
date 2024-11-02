@@ -96,7 +96,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
                       setOpen(false)
                     }}
                   >
-                    Submit
+                    Yes
                   </Button>
                 </DialogFooter>
               </>
@@ -137,7 +137,7 @@ export default function FloatingActionButton({ userId }: { userId: string }) {
                     setOpen(false)
                   }}
                 >
-                  Submit
+                  Yes
                 </Button>
               </DrawerFooter>
             </>
