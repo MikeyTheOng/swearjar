@@ -434,7 +434,7 @@ func (h *Handler) AddSwear(w http.ResponseWriter, r *http.Request) {
 		SwearJarId:       req.SwearJarId,
 		SwearDescription: req.SwearDescription,
 	}
-	err = h.sjService.AddSwear(s)
+	err = h.sjService.AddSwear(s, userId)
 	if err != nil {
 		if errors.Is(err, authentication.ErrUnauthorized) {
 			RespondWithError(w, http.StatusUnauthorized, err.Error())
@@ -557,7 +557,13 @@ func (h *Handler) CreateSwearJar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sj, err := h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners)
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sj, err := h.sjService.CreateSwearJar(req.Name, req.Desc, req.Owners, userId)
 	if err != nil {
 		log.Printf("Error creating SwearJar: %v", err)
 		RespondWithError(w, http.StatusBadRequest, err.Error())

@@ -56,23 +56,24 @@ func ConnectToDB() *mongo.Client {
 	return client
 }
 
-func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJarBase, error) {
+func (r *MongoRepository) GetSwearJarsByUserId(userId string) ([]swearJar.SwearJarWithOwners, error) {
 	userIdHex, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid UserId: %v", err)
 	}
 
-	filter := bson.M{"Owners": userIdHex}
-	cursor, err := r.swearJars.Find(context.TODO(), filter)
+	pipeline := GetSwearJarsPipeline(bson.M{"Owners": userIdHex})
+
+	cursor, err := r.swearJars.Aggregate(context.TODO(), pipeline)
 	if err != nil {
 		log.Printf("Error fetching swear jars by user ID: %v", err)
 		return nil, err
 	}
 	defer cursor.Close(context.TODO())
 
-	var swearJars []swearJar.SwearJarBase
+	var swearJars []swearJar.SwearJarWithOwners
 	for cursor.Next(context.TODO()) {
-		var sj swearJar.SwearJarBase
+		var sj swearJar.SwearJarWithOwners
 		if err := cursor.Decode(&sj); err != nil {
 			log.Printf("Error decoding swear jar: %v", err)
 			return nil, err
@@ -93,32 +94,7 @@ func (r *MongoRepository) GetSwearJarById(swearJarId string) (swearJar.SwearJarW
 		return swearJar.SwearJarWithOwners{}, fmt.Errorf("invalid SwearJarId: %v", err)
 	}
 
-	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.M{"_id": swearJarIdHex}}},
-		{{Key: "$lookup", Value: bson.M{
-			"from":         "users",
-			"localField":   "Owners",
-			"foreignField": "_id",
-			"as":           "Owners",
-		}}},
-		{{Key: "$project", Value: bson.M{
-			"_id":       1,
-			"Name":      1,
-			"Desc":      1,
-			"CreatedAt": 1,
-			"Owners": bson.M{
-				"$map": bson.M{
-					"input": "$Owners",
-					"as":    "owner",
-					"in": bson.M{
-						"_id":   "$$owner._id",
-						"Email": "$$owner.Email",
-						"Name":  "$$owner.Name",
-					},
-				},
-			},
-		}}},
-	}
+	pipeline := GetSwearJarsPipeline(bson.M{"_id": swearJarIdHex})
 
 	cursor, err := r.swearJars.Aggregate(context.TODO(), pipeline)
 	if err != nil {
@@ -149,13 +125,26 @@ func (r *MongoRepository) CreateSwearJar(sj swearJar.SwearJarBase) (swearJar.Swe
 		return swearJar.SwearJarBase{}, err
 	}
 
+	createdByID, err := primitive.ObjectIDFromHex(sj.CreatedBy)
+	if err != nil {
+		return swearJar.SwearJarBase{}, fmt.Errorf("invalid CreatedBy ID: %w", err)
+	}
+
+	lastUpdatedByID, err := primitive.ObjectIDFromHex(sj.LastUpdatedBy)
+	if err != nil {
+		return swearJar.SwearJarBase{}, fmt.Errorf("invalid LastUpdatedBy ID: %w", err)
+	}
+
 	result, err := r.swearJars.InsertOne(
 		context.TODO(),
 		bson.D{
 			{Key: "Name", Value: sj.Name},
 			{Key: "Desc", Value: sj.Desc},
 			{Key: "Owners", Value: ownerIDs},
-			{Key: "CreatedAt", Value: time.Now()},
+			{Key: "CreatedAt", Value: sj.CreatedAt},
+			{Key: "CreatedBy", Value: createdByID},
+			{Key: "LastUpdatedAt", Value: sj.LastUpdatedAt},
+			{Key: "LastUpdatedBy", Value: lastUpdatedByID},
 		},
 	)
 	if err != nil {
@@ -189,10 +178,17 @@ func (r *MongoRepository) UpdateSwearJar(sj swearJar.SwearJarBase) error {
 		return err
 	}
 
+	lastUpdatedByID, err := primitive.ObjectIDFromHex(sj.LastUpdatedBy)
+	if err != nil {
+		return fmt.Errorf("invalid LastUpdatedBy ID: %w", err)
+	}
+
 	update := bson.M{"$set": bson.M{
-		"Name":   sj.Name,
-		"Desc":   sj.Desc,
-		"Owners": ownerIDs,
+		"Name":          sj.Name,
+		"Desc":          sj.Desc,
+		"Owners":        ownerIDs,
+		"LastUpdatedAt": sj.LastUpdatedAt,
+		"LastUpdatedBy": lastUpdatedByID,
 	}}
 
 	result, err := r.swearJars.UpdateByID(context.TODO(), swearJarIdHex, update)
@@ -267,30 +263,56 @@ func (r *MongoRepository) SwearJarTrend(swearJarId string, period string, numOfD
 }
 
 func (r *MongoRepository) AddSwear(s swearJar.Swear) error {
-	userIdHex, err := primitive.ObjectIDFromHex(s.UserId)
+
+	session, err := r.client.StartSession()
 	if err != nil {
-		return fmt.Errorf("invalid UserId: %v", err)
+		return fmt.Errorf("failed to start session: %v", err)
 	}
+	defer session.EndSession(context.TODO())
 
-	swearJarIdHex, err := primitive.ObjectIDFromHex(s.SwearJarId)
-	if err != nil {
-		return fmt.Errorf("invalid SwearJarId: %v", err)
-	}
+	// Execute the transaction
+	_, err = session.WithTransaction(context.TODO(), func(sessCtx mongo.SessionContext) (interface{}, error) {
+		userIdHex, err := primitive.ObjectIDFromHex(s.UserId)
+		if err != nil {
+			return nil, fmt.Errorf("invalid UserId: %v", err)
+		}
 
-	_, err = r.swears.InsertOne(
-		context.TODO(),
-		bson.D{
-			{Key: "CreatedAt", Value: s.CreatedAt},
-			{Key: "Active", Value: s.Active},
-			{Key: "UserId", Value: userIdHex},
-			{Key: "SwearJarId", Value: swearJarIdHex},
-			{Key: "SwearDescription", Value: s.SwearDescription},
-		},
-	)
+		swearJarIdHex, err := primitive.ObjectIDFromHex(s.SwearJarId)
+		if err != nil {
+			return nil, fmt.Errorf("invalid SwearJarId: %v", err)
+		}
 
-	// Debugging
-	// const layout = "Jan 2, 2006 at 3:04pm (MST)"
-	// fmt.Printf("Added Swear{CreatedAt: %v, Active: %v, UserId: %V}\n", s.CreatedAt.Format(layout), s.Active, s.UserId.Hex())
+		_, err = r.swears.InsertOne(
+			sessCtx,
+			bson.D{
+				{Key: "CreatedAt", Value: s.CreatedAt},
+				{Key: "Active", Value: s.Active},
+				{Key: "UserId", Value: userIdHex},
+				{Key: "SwearJarId", Value: swearJarIdHex},
+				{Key: "SwearDescription", Value: s.SwearDescription},
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert swear: %v", err)
+		}
+
+		_, err = r.swearJars.UpdateOne(
+			sessCtx,
+			bson.M{"_id": swearJarIdHex},
+			bson.M{
+				"$set": bson.M{
+					"LastUpdatedAt": time.Now().UTC(),
+					"LastUpdatedBy": userIdHex,
+				},
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update swear jar: %v", err)
+		}
+
+		return nil, nil
+	})
+
 	return err
 }
 
@@ -592,7 +614,7 @@ func (r *MongoRepository) SwearJarStats(swearJarId string) (swearJar.SwearJarSta
 	if err != nil {
 		return swearJar.SwearJarStats{}, err
 	}
-	
+
 	if err = cursor.All(ctx, &result); err != nil {
 		return swearJar.SwearJarStats{}, err
 	}
@@ -605,26 +627,57 @@ func (r *MongoRepository) SwearJarStats(swearJarId string) (swearJar.SwearJarSta
 	return stats, nil
 }
 
-func (r *MongoRepository) ClearSwearJar(swearJarId string) error {
-	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
+func (r *MongoRepository) ClearSwearJar(swearJarId string, userId string) error {
+	session, err := r.client.StartSession()
 	if err != nil {
-		return fmt.Errorf("invalid SwearJarId: %v", err)
+		return fmt.Errorf("failed to start session: %v", err)
 	}
+	defer session.EndSession(context.TODO())
 
-	filter := bson.M{
-		"SwearJarId": swearJarIdHex,
-		"Active":     true,
-	}
-	update := bson.M{
-		"$set": bson.M{
-			"Active": false,
-		},
-	}
+	_, err = session.WithTransaction(context.TODO(), func(sessCtx mongo.SessionContext) (interface{}, error) {
+		swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
+		if err != nil {
+			return nil, fmt.Errorf("invalid SwearJarId: %v", err)
+		}
 
-	_, err = r.swears.UpdateMany(context.TODO(), filter, update)
-	if err != nil {
-		return fmt.Errorf("error clearing swear jar: %v", err)
-	}
+		userIdHex, err := primitive.ObjectIDFromHex(userId)
+		if err != nil {
+			return nil, fmt.Errorf("invalid UserId: %v", err)
+		}
 
-	return nil
+		// * 1. Update all active swears to inactive
+		filter := bson.M{
+			"SwearJarId": swearJarIdHex,
+			"Active":     true,
+		}
+		update := bson.M{
+			"$set": bson.M{
+				"Active": false,
+			},
+		}
+
+		_, err = r.swears.UpdateMany(sessCtx, filter, update)
+		if err != nil {
+			return nil, fmt.Errorf("error clearing swear jar: %v", err)
+		}
+
+		// * 2. Update the swear jar's lastUpdatedBy and lastUpdatedAt
+		_, err = r.swearJars.UpdateOne(
+			sessCtx,
+			bson.M{"_id": swearJarIdHex},
+			bson.M{
+				"$set": bson.M{
+					"LastUpdatedAt": time.Now().UTC(),
+					"LastUpdatedBy": userIdHex,
+				},
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update swear jar metadata: %v", err)
+		}
+
+		return nil, nil
+	})
+
+	return err
 }
