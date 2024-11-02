@@ -1,5 +1,5 @@
 import { auth } from '@/auth';
-import { RecentSwearsApiResponse, SwearJarApiResponse, SwearJarTrendApiResponse } from '@/lib/apiTypes';
+import { RecentSwearsApiResponse, SwearJarApiResponse, SwearJarTrendApiResponse, SwearJarStatsApiResponse } from '@/lib/apiTypes';
 import { fetcher } from "@/lib/utils";
 import {
   dehydrate,
@@ -64,6 +64,18 @@ export default async function SwearJarPage({ params }: { params: { id: string } 
         queryKey: ["swearjar", "trend", params.id, "days"],
         queryFn: () => fetcher<SwearJarTrendApiResponse>(
           `/api/swearjar/trend?id=${params.id}&period=days`,
+          undefined,
+          {
+            headers: {
+              Cookie: cookieString
+            }
+          }
+        ),
+      }),
+      queryClient.prefetchQuery<SwearJarStatsApiResponse>({
+        queryKey: ["swearjar", "stats", params.id],
+        queryFn: () => fetcher<SwearJarStatsApiResponse>(
+          `/api/swearjar/stats?id=${params.id}`,
           undefined,
           {
             headers: {

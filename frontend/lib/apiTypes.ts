@@ -25,3 +25,9 @@ export interface SwearJarTrendApiResponse extends BaseResponse {
         [key: string]: number | string; // This allows for one or more users with their respective swear counts
     }[];
 }
+
+export interface SwearJarStatsApiResponse extends BaseResponse {
+    data: {
+        ActiveSwears: number;
+    }
+}

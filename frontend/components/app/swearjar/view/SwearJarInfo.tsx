@@ -4,15 +4,15 @@ import { useAddSwear } from "@/hooks/useAddSwear";
 import { Button } from "@/components/ui/shadcn/button";
 import { HiOutlinePencil } from "react-icons/hi";
 
-export default function SwearJarInfo(swearJar: SwearJarWithOwners) {
+export default function SwearJarInfo({ activeSwears, ...swearJar }: { activeSwears: number } & SwearJarWithOwners) {
     const { handleAddSwear } = useAddSwear(swearJar.SwearJarId);
 
     return (
         <div className="w-full flex flex-col gap-2 border bg-white border-neutral-200 p-4 rounded-2xl">
             <div className="flex justify-between items-center">
                 <div className="flex items-end gap-1">
-                    <h1 className="text-[40px] leading-[2.25rem] font-bold tracking-tighter">$100</h1>
-                    <p className="text-xs">in <b>{swearJar.Name}</b></p>
+                    <h1 className="text-[40px] leading-[2.25rem] font-bold tracking-tighter">${activeSwears}</h1>
+                    <p className="text-xs">currently in <b>{swearJar.Name}</b></p>
                 </div>
                 <Button
                     variant="plain"
