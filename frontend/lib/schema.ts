@@ -38,9 +38,9 @@ export const swearJarBaseSchema = object({
     Desc: string().optional(),
     Owners: array(string()).optional(),
     CreatedAt: date().optional(),
-    CreatedBy: string().optional(),
+    CreatedBy: userSchema.optional(),
     LastUpdatedAt: date().optional(),
-    LastUpdatedBy: string().optional(),
+    LastUpdatedBy: userSchema.optional(),
 });
 
 export const swearJarWithIdSchema = swearJarBaseSchema.extend({
