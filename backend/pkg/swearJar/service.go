@@ -17,6 +17,7 @@ type Service interface {
 	GetSwearsWithUsers(swearJarId string, userId string) (RecentSwearsWithUsers, error)
 	SwearJarStats(swearJarId string, userId string) (SwearJarStats, error)
 	SwearJarTrend(swearJarId string, userId string, period string) ([]ChartData, error)
+	ClearSwearJar(swearJarId string, userId string) error
 }
 
 type Repository interface {
@@ -29,6 +30,7 @@ type Repository interface {
 	GetSwearsWithUsers(swearJarId string, limit int) (RecentSwearsWithUsers, error)
 	SwearJarStats(swearJarId string) (SwearJarStats, error)
 	SwearJarTrend(swearJarId string, period string, numOfDataPoints int) ([]ChartData, error)
+	ClearSwearJar(swearJarId string) error
 }
 
 type service struct {
@@ -147,4 +149,17 @@ func (s *service) SwearJarTrend(swearJarId string, userId string, period string)
 	}
 
 	return chartData, nil
+}
+
+func (s *service) ClearSwearJar(swearJarId string, userId string) error {
+	isOwner, err := s.IsOwner(swearJarId, userId)
+	if err != nil {
+		return err
+	}
+	if !isOwner {
+		log.Printf("User ID: %s is not an owner of SwearJar ID: %s", userId, swearJarId)
+		return authentication.ErrUnauthorized
+	}
+
+	return s.r.ClearSwearJar(swearJarId)
 }

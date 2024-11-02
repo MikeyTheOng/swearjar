@@ -604,3 +604,27 @@ func (r *MongoRepository) SwearJarStats(swearJarId string) (swearJar.SwearJarSta
 
 	return stats, nil
 }
+
+func (r *MongoRepository) ClearSwearJar(swearJarId string) error {
+	swearJarIdHex, err := primitive.ObjectIDFromHex(swearJarId)
+	if err != nil {
+		return fmt.Errorf("invalid SwearJarId: %v", err)
+	}
+
+	filter := bson.M{
+		"SwearJarId": swearJarIdHex,
+		"Active":     true,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"Active": false,
+		},
+	}
+
+	_, err = r.swears.UpdateMany(context.TODO(), filter, update)
+	if err != nil {
+		return fmt.Errorf("error clearing swear jar: %v", err)
+	}
+
+	return nil
+}

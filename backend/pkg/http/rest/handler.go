@@ -142,14 +142,15 @@ func (h *Handler) RegisterRoutes() http.Handler {
 			case "stats":
 				h.ServeSwearJarStats(w, r, swearJarId)
 			default:
-				http.Error(w, "Invalid action for GET", http.StatusNotFound)
+				http.Error(w, "Invalid action", http.StatusNotFound)
 			}
-		case http.MethodPost:
-			// if action == "clear" { // TODO: Implement
-			// 	h.ClearSwearJar(w, r, swearJarId)
-			// } else {
-			// 	http.Error(w, "Invalid action for POST", http.StatusNotFound)
-			// }
+		case http.MethodPatch:
+			switch action {
+			case "clear":
+				h.ClearSwearJar(w, r, swearJarId)
+			default:
+				http.Error(w, "Invalid action", http.StatusNotFound)
+			}
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -731,6 +732,34 @@ func (h *Handler) ServeSwearJarTrend(w http.ResponseWriter, r *http.Request, swe
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *Handler) ClearSwearJar(w http.ResponseWriter, r *http.Request, swearJarId string) {
+	userId, err := GetUserIdFromCookie(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	err = h.sjService.ClearSwearJar(swearJarId, userId)
+	if err != nil {
+		if errors.Is(err, authentication.ErrUnauthorized) {
+			RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := map[string]string{
+		"msg": "Successfully cleared swear jar",
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
