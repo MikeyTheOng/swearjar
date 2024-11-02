@@ -1,4 +1,4 @@
-import { array, boolean, object, string } from 'zod';
+import { array, boolean, date, object, string } from 'zod';
 
 // Sign Up Schema
 export const signUpSchema = object({
@@ -36,7 +36,11 @@ export const swearJarBaseSchema = object({
     SwearJarId: string().optional(),
     Name: string().min(1, 'Title is required'),
     Desc: string().optional(),
-    Owners: array(string()).optional(), // Owners + additionalOwners
+    Owners: array(string()).optional(),
+    CreatedAt: date().optional(),
+    CreatedBy: string().optional(),
+    LastUpdatedAt: date().optional(),
+    LastUpdatedBy: string().optional(),
 });
 
 export const swearJarWithIdSchema = swearJarBaseSchema.extend({
@@ -45,4 +49,6 @@ export const swearJarWithIdSchema = swearJarBaseSchema.extend({
 
 export const swearJarWithOwnersSchema = swearJarWithIdSchema.extend({
     Owners: array(userSchema),
+    CreatedBy: userSchema,
+    LastUpdatedBy: userSchema,
 });
